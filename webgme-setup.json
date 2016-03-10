@@ -1,0 +1,13 @@
+{
+  "components": {
+    "plugins": {
+      "ImportTorch": {
+        "src": "src/plugins/ImportTorch",
+        "test": "test/plugins/ImportTorch"
+      }
+    }
+  },
+  "dependencies": {
+    "plugins": {}
+  }
+}
