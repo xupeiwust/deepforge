@@ -2,11 +2,16 @@
   "name": "deepforge",
   "scripts": {
     "start": "node app.js",
+    "start-dev": "NODE_ENV=dev node app.js",
     "test": "node ./node_modules/mocha/bin/mocha --recursive test"
   },
   "version": "1.0.0",
   "dependencies": {
-    "webgme": "^1.1.0"
+    "webgme": "^1.1.0",
+    "webgme-autoviz": "dfst/webgme-autoviz",
+    "webgme-breadcrumbheader": "dfst/webgme-breadcrumbheader",
+    "webgme-chflayout": "^1.0.0",
+    "webgme-fab": "dfst/webgme-fab"
   },
   "devDependencies": {
     "mocha": "^2.2.5",

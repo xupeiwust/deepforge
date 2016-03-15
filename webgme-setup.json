@@ -5,9 +5,49 @@
         "src": "src/plugins/ImportTorch",
         "test": "test/plugins/ImportTorch"
       }
-    }
+    },
+    "layouts": {},
+    "visualizers": {},
+    "addons": {},
+    "decorators": {},
+    "seeds": {}
   },
   "dependencies": {
-    "plugins": {}
+    "plugins": {},
+    "layouts": {
+      "CHFLayout": {
+        "project": "webgme-chflayout",
+        "path": "node_modules/webgme-chflayout/src/layouts/CHFLayout",
+        "enabled": true
+      }
+    },
+    "visualizers": {
+      "FloatingActionButton": {
+        "src": "panels/FloatingActionButton/FloatingActionButtonPanel",
+        "title": "FloatingActionButton",
+        "panel": "src/visualizers/panels/FloatingActionButton",
+        "secondary": true,
+        "widget": "src/visualizers/widgets/FloatingActionButton",
+        "project": "webgme-fab"
+      },
+      "BreadcrumbHeader": {
+        "src": "panels/BreadcrumbHeader/BreadcrumbHeaderPanel",
+        "title": "BreadcrumbHeader",
+        "panel": "src/visualizers/panels/BreadcrumbHeader",
+        "secondary": true,
+        "project": "webgme-breadcrumbheader"
+      },
+      "AutoViz": {
+        "src": "panels/AutoViz/AutoVizPanel",
+        "title": "AutoViz",
+        "panel": "src/visualizers/panels/AutoViz",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/AutoViz",
+        "project": "webgme-autoviz"
+      }
+    },
+    "addons": {},
+    "decorators": {},
+    "seeds": {}
   }
 }
