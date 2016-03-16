@@ -28,7 +28,7 @@ describe('ImportTorch', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(testFixture.SEED_DIR, 'EmptyProject.json'),
+                    projectSeed: testFixture.path.join(testFixture.SEED_DIR, 'DevMinimal.zip'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
