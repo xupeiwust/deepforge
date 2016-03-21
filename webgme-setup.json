@@ -8,6 +8,10 @@
       "CreateTorchMeta": {
         "src": "src/plugins/CreateTorchMeta",
         "test": "test/plugins/CreateTorchMeta"
+      },
+      "GenerateArchitecture": {
+        "src": "src/plugins/GenerateArchitecture",
+        "test": "test/plugins/GenerateArchitecture"
       }
     },
     "layouts": {},
@@ -20,11 +24,19 @@
       },
       "nn": {
         "src": "src/seeds/nn"
+      },
+      "devTests": {
+        "src": "src/seeds/devTests"
       }
     }
   },
   "dependencies": {
-    "plugins": {},
+    "plugins": {
+      "TemplateCreator": {
+        "project": "webgme-simple-nodes",
+        "path": "node_modules/webgme-simple-nodes/src/plugins/TemplateCreator"
+      }
+    },
     "layouts": {
       "CHFLayout": {
         "project": "webgme-chflayout",

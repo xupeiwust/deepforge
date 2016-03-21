@@ -11,9 +11,11 @@
     "webgme-autoviz": "dfst/webgme-autoviz",
     "webgme-breadcrumbheader": "dfst/webgme-breadcrumbheader",
     "webgme-chflayout": "^1.0.0",
-    "webgme-fab": "dfst/webgme-fab"
+    "webgme-fab": "dfst/webgme-fab",
+    "webgme-simple-nodes": "brollb/webgme-simple-nodes"
   },
   "devDependencies": {
+    "jszip": "^2.5.0",
     "mocha": "^2.2.5",
     "rimraf": "^2.4.0",
     "chai": "^3.0.0"

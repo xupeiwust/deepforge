@@ -9,9 +9,11 @@ var config = require('webgme/config/config.default'),
 
 // The paths can be loaded from the webgme-setup.json
 config.plugin.basePaths.push('src/plugins');
+config.plugin.basePaths.push('node_modules/webgme-simple-nodes/src/plugins');
 config.visualization.layout.basePaths.push('node_modules/webgme-chflayout/src/layouts');
 config.seedProjects.basePaths.push('src/seeds/DevMinimal');
 config.seedProjects.basePaths.push('src/seeds/nn');
+config.seedProjects.basePaths.push('src/seeds/devTests');
 
 
 
@@ -28,6 +30,7 @@ config.requirejsPaths = {
   'BreadcrumbHeader': 'panels/BreadcrumbHeader/BreadcrumbHeaderPanel',
   'FloatingActionButton': 'panels/FloatingActionButton/FloatingActionButtonPanel',
   'CHFLayout': 'node_modules/webgme-chflayout/src/layouts/CHFLayout',
+  'TemplateCreator': 'node_modules/webgme-simple-nodes/src/plugins/TemplateCreator',
   'panels': './src/visualizers/panels',
   'widgets': './src/visualizers/widgets',
   'panels/AutoViz': './node_modules/webgme-autoviz/src/visualizers/panels/AutoViz',

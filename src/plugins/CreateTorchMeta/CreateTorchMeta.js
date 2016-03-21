@@ -8,7 +8,7 @@
 define([
     'plugin/PluginConfig',
     'plugin/PluginBase',
-    './js-yaml.min.js',
+    'deepforge/js-yaml.min',
     'text!deepforge/layers.yml'
 ], function (
     PluginConfig,
