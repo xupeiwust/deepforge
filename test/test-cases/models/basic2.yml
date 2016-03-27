@@ -1,0 +1,22 @@
+- type: Linear
+  id: 4
+  next:
+    - 7
+  attributes:
+    output: 300
+- type: Reshape
+  id: 5
+  next:
+    - 4
+  attributes:
+    dimensions: 100
+- type: Linear
+  id: 6
+  next: []
+  attributes:
+    output: 10
+- type: Tanh
+  id: 7
+  next:
+    - 6
+  attributes: {}

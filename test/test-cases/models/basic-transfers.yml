@@ -1,0 +1,60 @@
+- type: Reshape
+  id: 0
+  next:
+    - 2
+  attributes:
+    dimensions: 100
+- type: SoftMax
+  id: 1
+  next: []
+  attributes: {}
+- type: Linear
+  id: 2
+  next:
+    - 5
+  attributes:
+    output: 300
+- type: ReLU
+  id: 3
+  next:
+    - 6
+  attributes: {}
+- type: Sigmoid
+  id: 4
+  next:
+    - 7
+  attributes: {}
+- type: RReLU
+  id: 5
+  next:
+    - 10
+  attributes: {}
+- type: Linear
+  id: 6
+  next:
+    - 4
+  attributes:
+    output: 100
+- type: Linear
+  id: 7
+  next:
+    - 8
+  attributes:
+    output: 120
+- type: LeakyReLU
+  id: 8
+  next:
+    - 9
+  attributes: {}
+- type: Linear
+  id: 9
+  next:
+    - 1
+  attributes:
+    output: 5
+- type: Linear
+  id: 10
+  next:
+    - 3
+  attributes:
+    output: 100

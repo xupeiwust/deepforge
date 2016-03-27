@@ -13,63 +13,42 @@
 # This should have tests to verify that this document is up to date...
 # TODO
 
-# TODO: Add the following layers
-#VolumetricMaxUnpooling
-#ConcatTable
-#Jacobian
-#SpatialCrossMapLRN
-#CAddTable
-#TanhShrink
-#MixtureTable
-#SpatialConvolutionLocal
-#BatchNormalization
-#MulConstant
-#NarrowTable
-#SplitTable
-#DotProduct
-#SpatialBatchNormalization
-#DepthConcat
-#CMulTable
-#Parallel
-#Log
-#SpatialDropout
-#hessian
-#ELU
-#CSubTable
-#VolumetricAveragePooling
-#StochasticGradient
-#SpatialContrastiveNormalization
-#Bilinear
-#Padding
-#Container
-#VolumetricFullConvolution
-#Concat
-#SparseJacobian
-#Contiguous
-#L1Cost
-#JoinTable
-#CosineDistance
-#Index
-#SpatialDivisiveNormalization
-#L1Penalty
-#Sequential
-#Cosine
-#Clamp
-#SpatialConvolutionMM
-#LogSigmoid
-#Threshold
-#ParallelTable
-#CDivTable
-#SpatialFullConvolutionMap
-#GradientReversal
-#SpatialMaxUnpooling
-#Transpose
-#SpatialFullConvolution
-#FlattenTable
-#Normalize
-#SpatialSoftMax
-#SelectTable
-#SpatialFractionalMaxPooling
+Containers:
+    - Concat:
+        - dim:
+            min: 1  # TODO: Figure out exactly how this works
+
+Module:
+    - SpatialBatchNormalization:
+        - input:
+            ignore: true  # change this to `infer: 'dimensionality'`
+        - eps:
+            default: 0.00001
+        - momentum:
+            default: 0.1
+        - affine:
+            default: true
+
+    - BatchNormalization:
+        - input:
+            ignore: true  # change this to `infer: 'dimensionality'`
+        - eps:
+            default: 0.00001
+        - momentum:
+            default: 0.1
+        - affine:
+            default: true
+
+    - Threshold:
+        - threshold:
+            type: float
+            default: 1e-6
+        - value:
+            type: float
+            default: 0
+        - inplace:
+            type: boolean
+            default: false
 
 ConvLayer:
     - TemporalConvolution:
@@ -85,9 +64,8 @@ ConvLayer:
     - TemporalMaxPooling:
         - kernelWidth:
             min: 1
-        - step:
+        - step:  # FIXME: defaults to 'kernelWidth'
             min: 1
-            # TODO: What is the default?
 
     - TemporalSubSampling:
         - inputFrameSize:
@@ -101,11 +79,33 @@ ConvLayer:
     - LookupTable:
         - nIndex:
             min: 1
-            # TODO: What is the default?
         - sizes:
             min: 1
 
 # Spatial Modules
+    - SpatialConvolutionMM:
+        - nInputPlane:  # TODO: Infer this
+            min: 1
+        - nOutputPlane:
+            min: 1
+        - kernelWidth:
+            min: 1
+        - kernelHeight:
+            min: 1
+
+        - strideWidth:
+            min: 1
+            default: 1
+        - strideWidth:
+            min: 1
+            default: 1
+        - padWidth:
+            min: 0
+            default: 0
+        - padHeight:  # FIXME: this defaults to padWidth - not 0
+            min: 0
+            default: 0
+
     - SpatialConvolution:
         - nInputPlane:
             min: 1
@@ -216,6 +216,103 @@ ConvLayer:
         - kernel:
             min: 1
 
+    - SpatialCrossMapLRN:
+        - size:
+            min: 1
+        - alpha:
+            default: 0.0001
+        - beta:
+            default: 0.75
+        - k:
+            default: 1
+
+    - SpatialConvolutionLocal:
+        - nInputPlane:
+            min: 1
+        - nOutputPlane:
+            min: 1
+        - inputWidth:  # TODO: infer this
+            min: 1
+        - inputHeight:  # TODO: infer this
+            min: 1
+        - kernelWidth:
+            min: 1
+        - kernelHeight:
+            min: 1
+        - strideWidth:
+            min: 1
+            default: 1
+        - strideHeight:
+            min: 1
+            default: 1
+        - padWidth:
+            min: 0
+            default: 0
+        - padHeight:  # FIXME: this defaults to padWidth - not 0
+            min: 0
+            default: 0
+
+    - SpatialDropout:
+        - probability:
+            default: 0.5
+
+    - SpatialFractionalMaxPooling:
+        - poolWidth:
+            - min: 2
+        - poolHeight:
+            - min: 2
+        - outWidth:  # Optionally, these could be ratioW/H FIXME
+            - min: 1
+        - outHeight:
+            - min: 1
+
+    - SpatialDivisiveNormalization:
+        - nInputPlane:  # TODO: infer this
+            - default: 1
+        - kernel:  # TODO: this is a tensor type...
+        - threshold:
+            - default: 0.0001
+        - thresval:
+            - default: 0.0001  # FIXME: this defaults to "threshold"
+
+    - SpatialContrastiveNormalization:
+        - nInputPlane:  # TODO: infer this
+            - default: 1
+        - kernel:  # TODO: this is a tensor type...
+        - threshold:
+            - default: 0.0001
+        - thresval:
+            - default: 0.0001  # FIXME: this defaults to "threshold"
+
+    - SpatialFullConvolution:
+        - nInputPlane:  # TODO: should infer this
+            min: 1
+        - nOutputPlane:
+            min: 1
+        - kernelWidth:
+            min: 1
+        - kernelHeight:
+            min: 1
+        - strideWidth:
+            min: 1
+            default: 1
+        - strideHeight:
+            min: 1
+            default: 1
+        - padWidth:
+            min: 0
+            default: 0
+        - padHeight:
+            min: 0
+            default: 0
+        - adjWidth:
+            min: 0
+            default: 0
+        - adjHeight:
+            min: 0
+            default: 0
+        # Additional constraint:
+
 # Volumetric Modules
     - VolumetricConvolution:
         - nInputPlane:
@@ -317,7 +414,8 @@ SimpleLayer:
         - dimensions:
             type: list
     - View:
-        - sizes:
+        - sizes:  # list
+            type: list
             min: 0
     - Select:
         - dimensions:
@@ -359,6 +457,9 @@ TransferLayer:
     - MulConstant:
         - scalar:
             type: float
+            min: 1
+        - inplace:
+            default: false
 
 Criterion:
     - BCECriterion
@@ -379,6 +480,62 @@ Criterion:
     - MarginCriterion
     - ClassNLLCriterion
     - ParallelCriterion
+
+MiscLayers:
+    - Jacobian
+    - ConcatTable
+    - CMulTable
+    - CAddTable
+    - TanhShrink
+    - Padding:
+        - dim:
+        - pad:
+            min: 0
+        - nInputDim:  #  TODO: infer?
+            min: 1
+        - value:
+            min: 0
+            default: 0
+
+# TODO: Add the following layers
+#VolumetricMaxUnpooling
+    # Takes a poolingModule as an arg...
+
+#MixtureTable
+#NarrowTable
+#SplitTable
+#DotProduct
+#DepthConcat
+#Parallel
+#Log
+#hessian
+#ELU
+#CSubTable
+#VolumetricAveragePooling
+#StochasticGradient
+#Bilinear
+#VolumetricFullConvolution
+#SparseJacobian
+#Contiguous
+#L1Cost
+#JoinTable
+#CosineDistance
+#Index
+#L1Penalty
+#Cosine
+#Clamp
+#SpatialConvolutionMM
+#LogSigmoid
+#ParallelTable
+#CDivTable
+#SpatialFullConvolutionMap
+#GradientReversal
+#SpatialMaxUnpooling
+#Transpose
+#Normalize
+#SpatialSoftMax
+#SelectTable
+#FlattenTable
 
 # CONTAINERS and TableLayouts
 # Some of these are captured by the visual structure of the architecture and are not needed

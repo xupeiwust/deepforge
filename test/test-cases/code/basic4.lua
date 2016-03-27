@@ -1,5 +1,10 @@
 require 'nn'
 
+local nfeats = 500
+local nstates = {}
+local filtsize = 10
+local poolsize = 10
+
 -- a typical modern convolution network (conv+relu+pool)
 model = nn.Sequential()
 

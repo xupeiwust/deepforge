@@ -12,6 +12,14 @@
       "GenerateArchitecture": {
         "src": "src/plugins/GenerateArchitecture",
         "test": "test/plugins/GenerateArchitecture"
+      },
+      "GenerateYaml": {
+        "src": "src/plugins/GenerateYaml",
+        "test": "test/plugins/GenerateYaml"
+      },
+      "ImportYaml": {
+        "src": "src/plugins/ImportYaml",
+        "test": "test/plugins/ImportYaml"
       }
     },
     "layouts": {},

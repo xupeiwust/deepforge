@@ -1,0 +1,149 @@
+- type: LogSoftMax
+  id: /S/2
+  next: []
+  attributes: {}
+- type: SpatialMaxPooling
+  id: /S/7
+  next:
+    - /S/j
+  attributes:
+    strideWidth: 2
+    kernelHeight: 3
+    kernelWidth: 3
+- type: SpatialConvolution
+  id: /S/8
+  next:
+    - /S/C
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 256
+    nInputPlane: 384
+- type: Linear
+  id: /S/A
+  next:
+    - /S/W
+  attributes:
+    output: 4096
+- type: ReLU
+  id: /S/B
+  next:
+    - /S/7
+  attributes: {}
+- type: ReLU
+  id: /S/C
+  next:
+    - /S/R
+  attributes: {}
+- type: SpatialConvolution
+  id: /S/I
+  next:
+    - /S/a
+  attributes:
+    strideWidth: 4
+    kernelHeight: 11
+    kernelWidth: 11
+    nOutputPlane: 64
+    nInputPlane: 3
+- type: ReLU
+  id: /S/K
+  next:
+    - /S/X
+  attributes: {}
+- type: Dropout
+  id: /S/N
+  next:
+    - /S/A
+  attributes:
+    probability: 0.5
+- type: SpatialMaxPooling
+  id: /S/O
+  next:
+    - /S/d
+  attributes:
+    strideWidth: 2
+    kernelHeight: 3
+    kernelWidth: 3
+- type: Linear
+  id: /S/Q
+  next:
+    - /S/K
+  attributes:
+    output: 4096
+- type: SpatialConvolution
+  id: /S/R
+  next:
+    - /S/rc
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 256
+    nInputPlane: 256
+- type: ReLU
+  id: /S/T
+  next:
+    - /S/8
+  attributes: {}
+- type: ReLU
+  id: /S/W
+  next:
+    - /S/z
+  attributes: {}
+- type: Linear
+  id: /S/X
+  next:
+    - /S/2
+  attributes:
+    output: 5
+- type: View
+  id: /S/Yp
+  next:
+    - /S/N
+  attributes:
+    sizes: 9216
+- type: ReLU
+  id: /S/a
+  next:
+    - /S/O
+  attributes: {}
+- type: SpatialConvolution
+  id: /S/d
+  next:
+    - /S/B
+  attributes:
+    strideWidth: 1
+    kernelHeight: 5
+    kernelWidth: 5
+    nOutputPlane: 192
+    nInputPlane: 64
+- type: SpatialConvolution
+  id: /S/j
+  next:
+    - /S/T
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 384
+    nInputPlane: 192
+- type: ReLU
+  id: /S/rc
+  next:
+    - /S/s
+  attributes: {}
+- type: SpatialMaxPooling
+  id: /S/s
+  next:
+    - /S/Yp
+  attributes:
+    strideWidth: 2
+    kernelHeight: 3
+    kernelWidth: 3
+- type: Dropout
+  id: /S/z
+  next:
+    - /S/Q
+  attributes:
+    probability: 0.5

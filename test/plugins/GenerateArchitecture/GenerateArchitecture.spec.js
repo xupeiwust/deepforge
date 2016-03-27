@@ -8,7 +8,7 @@ var testFixture = require('../../globals'),
     path = testFixture.path,
     jszip = require('jszip'),
     fs = require('fs'),
-    TEST_CASE_DIR = path.join(__dirname, '..', 'test-cases'),
+    TEST_CASE_DIR = path.join(__dirname, '..', '..', 'test-cases', 'code'),
     SEED_DIR = path.join(testFixture.SEED_DIR, '..', 'devTests');
 
 describe('GenerateArchitecture', function () {
@@ -85,8 +85,8 @@ describe('GenerateArchitecture', function () {
 
     describe('test cases', function() {
         var cases = [
-            ['/R', 'basic.lua'],
-            ['/e', 'basic-transfers.lua']
+            ['/w', 'basic.lua'],
+            ['/d', 'basic-transfers.lua']
         ];
 
         var runTest = function(pair, done) {

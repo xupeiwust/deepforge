@@ -24,6 +24,15 @@ define([
         return attr.output || 1;
     };
 
+    dimensionality.View = function(type, attr, prev) {
+        // If there are no -1's then return the attributes
+        // TODO
+        // Else, use the previous dimensions to get the amount of data
+        // then infer the omitted dimension
+        // TODO
+        return attr.output || 1;
+    };
+
     var PassThru = function(type, attr, prev) {
         if (!prev) {
             throw 'Cannot determine prev args of ' + type;
@@ -49,6 +58,9 @@ define([
         'LeakyReLU',
         'AddConstant',
         'MulConstant',
+
+        'BatchNormalization',
+        'SpatialBatchNormalization',
 
         // Math
         'Mul',  // Does this really leave the size the same?

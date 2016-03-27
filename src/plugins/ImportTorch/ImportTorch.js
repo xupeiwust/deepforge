@@ -6,11 +6,16 @@
  */
 
 define([
-    'plugin/PluginConfig',
+    'deepforge/layer-args',
+    './lua',
+    './nn',
     'plugin/PluginBase'
 ], function (
-    PluginConfig,
-    PluginBase) {
+    LayerDict,
+    luajs,
+    createNNSearcher,
+    PluginBase
+) {
     'use strict';
 
     /**
@@ -57,57 +62,8 @@ define([
     ImportTorch.prototype.getConfigStructure = function () {
         return [
             {
-                name: 'species',
-                displayName: 'Animal Species',
-                regex: '^[a-zA-Z]+$',
-                regexMessage: 'Name can only contain English characters!',
-                description: 'Which species does the animal belong to.',
-                value: 'Horse',
-                valueType: 'string',
-                readOnly: false
-            },
-            {
-                name: 'age',
-                displayName: 'Age',
-                description: 'How old is the animal.',
-                value: 3,
-                valueType: 'number',
-                minValue: 0,
-                maxValue: 10000,
-                readOnly: false
-            },
-            {
-                name: 'carnivore',
-                displayName: 'Carnivore',
-                description: 'Does the animal eat other animals?',
-                value: false,
-                valueType: 'boolean',
-                readOnly: false
-            },
-            {
-                name: 'classification',
-                displayName: 'Classification',
-                description: '',
-                value: 'Vertebrates',
-                valueType: 'string',
-                valueItems: [
-                    'Vertebrates',
-                    'Invertebrates',
-                    'Unknown'
-                ]
-            },
-            {
-                name: 'color',
-                displayName: 'Color',
-                description: 'The hex color code for the animal.',
-                readOnly: false,
-                value: '#FF0000',
-                regex: '^#([A-Fa-f0-9]{6})$',
-                valueType: 'string'
-            },
-            {
-                name: 'anAsset',
-                displayName: 'Document',
+                name: 'srcHash',
+                displayName: 'Torch Source Code',
                 description: '',
                 value: '',
                 valueType: 'asset',
@@ -127,41 +83,65 @@ define([
      * @param {function(string, plugin.PluginResult)} callback - the result callback
      */
     ImportTorch.prototype.main = function (callback) {
-        // Use self to access core, project, result, logger etc from PluginBase.
-        // These are all instantiated at this point.
-        var self = this,
-            nodeObject;
+        var srcHash = this.getCurrentConfig().srcHash;
 
+        if (!srcHash) {
+            return callback('Torch code not provided.', this.result);
+        }
 
-        // Using the logger.
-        self.logger.debug('This is a debug message.');
-        self.logger.info('This is an info message.');
-        self.logger.warn('This is a warning message.');
-        self.logger.error('This is an error message.');
+        this.blobClient.getMetadata(srcHash)
+            .then(mdata => {  // Create the new model
+                var name = mdata.name.replace('.lua', '');
+                this.tgtNode = this.core.createNode({
+                    base: this.META.Architecture,
+                    parent: this.rootNode
+                });
+                this.core.setAttribute(this.tgtNode, 'name', name);
+                return this.blobClient.getObjectAsString(srcHash);
+            })
+            .then(src => {  // Retrieved the source code
+                this.logger.debug('Retrieved the torch src');
+                this.context = luajs.newContext();
+                this.context.loadStdLib();
 
-        // Using the coreAPI to make changes.
+                this.loadNNMock();
 
-        nodeObject = self.activeNode;
+                // Cross compile to js and run
+                this.bin = this.context.loadString(src);
+                this.bin();
 
-        self.core.setAttribute(nodeObject, 'name', 'My new obj');
-        self.core.setRegistry(nodeObject, 'position', {x: 70, y: 70});
+                this.afterExecution();
 
+                return this.save('ImportTorch updated model.');
+            })
+            .then(() => {  // changes saved successfully
+                this.result.setSuccess(true);
+                callback(null, this.result);
+            })
+            .fail(err =>
+                callback(err, this.result)
+            );
+    };
 
-        // Obtain the current user configuration.
-        var currentConfig = self.getCurrentConfig();
-        self.logger.info('Current configuration ' + JSON.stringify(currentConfig, null, 4));
+    // Create the 'nn' shim and add it to the global context
+    ImportTorch.prototype.loadNNMock = function () {
+        // This needs a refactor...
+        //   createNN(this)
+        var lib = createNNSearcher(this).bind(this.context);
 
-        // This will save the changes. If you don't want to save;
-        // exclude self.save and call callback directly from this scope.
-        self.save('ImportTorch updated model.', function (err) {
-            if (err) {
-                callback(err, self.result);
-                return;
+        // Create a "searcher" to allow this 'nn' to be in the lib path
+        this.context._G.get('package').set('searchers', [function(name) {
+            if (name === 'nn') {
+                return lib;
             }
-            self.result.setSuccess(true);
-            callback(null, self.result);
-        });
+        }]);
 
+        // Some scripts don't include `require 'nn'`. I may have to add the
+        // "nn" package to the global scope...
+    };
+
+    ImportTorch.prototype.afterExecution = function () {
+        // TODO
     };
 
     return ImportTorch;

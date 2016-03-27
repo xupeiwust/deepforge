@@ -1,0 +1,216 @@
+- type: Threshold
+  id: 0
+  next:
+    - 17
+  attributes:
+    inplace: null
+    value: 0.000001
+    threshold: 0
+- type: ReLU
+  id: 1
+  next:
+    - 2
+  attributes: {}
+- type: SpatialMaxPooling
+  id: 2
+  next:
+    - 11
+  attributes:
+    strideWidth: 2
+    kernelHeight: 2
+    kernelWidth: 2
+- type: View
+  id: 3
+  next:
+    - 14
+  attributes:
+    sizes: 25088
+- type: SpatialConvolution
+  id: 4
+  next:
+    - 21
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 512
+    nInputPlane: 512
+- type: ReLU
+  id: 5
+  next:
+    - 10
+  attributes: {}
+- type: SpatialConvolution
+  id: 6
+  next:
+    - 29
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 128
+    nInputPlane: 64
+- type: SpatialMaxPooling
+  id: 7
+  next:
+    - 6
+  attributes:
+    strideWidth: 2
+    kernelHeight: 2
+    kernelWidth: 2
+- type: ReLU
+  id: 8
+  next:
+    - 18
+  attributes: {}
+- type: Linear
+  id: 9
+  next:
+    - 0
+  attributes:
+    output: 4096
+- type: SpatialMaxPooling
+  id: 10
+  next:
+    - 4
+  attributes:
+    strideWidth: 2
+    kernelHeight: 2
+    kernelWidth: 2
+- type: SpatialConvolution
+  id: 11
+  next:
+    - 23
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 512
+    nInputPlane: 256
+- type: SpatialConvolution
+  id: 12
+  next:
+    - 26
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 64
+    nInputPlane: 3
+- type: Dropout
+  id: 13
+  next:
+    - 9
+  attributes:
+    probability: 0.5
+- type: Linear
+  id: 14
+  next:
+    - 16
+  attributes:
+    output: 4096
+- type: SpatialMaxPooling
+  id: 15
+  next:
+    - 20
+  attributes:
+    strideWidth: 2
+    kernelHeight: 2
+    kernelWidth: 2
+- type: Threshold
+  id: 16
+  next:
+    - 13
+  attributes:
+    inplace: null
+    value: 0.000001
+    threshold: 0
+- type: Dropout
+  id: 17
+  next:
+    - 27
+  attributes:
+    probability: 0.5
+- type: SpatialConvolution
+  id: 18
+  next:
+    - 1
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 256
+    nInputPlane: 256
+- type: SpatialConvolution
+  id: 19
+  next:
+    - 28
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 512
+    nInputPlane: 512
+- type: SpatialConvolution
+  id: 20
+  next:
+    - 8
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 256
+    nInputPlane: 128
+- type: ReLU
+  id: 21
+  next:
+    - 19
+  attributes: {}
+- type: LogSoftMax
+  id: 22
+  next: []
+  attributes: {}
+- type: ReLU
+  id: 23
+  next:
+    - 25
+  attributes: {}
+- type: SpatialMaxPooling
+  id: 24
+  next:
+    - 3
+  attributes:
+    strideWidth: 2
+    kernelHeight: 2
+    kernelWidth: 2
+- type: SpatialConvolution
+  id: 25
+  next:
+    - 5
+  attributes:
+    strideWidth: 1
+    kernelHeight: 3
+    kernelWidth: 3
+    nOutputPlane: 512
+    nInputPlane: 512
+- type: ReLU
+  id: 26
+  next:
+    - 7
+  attributes: {}
+- type: Linear
+  id: 27
+  next:
+    - 22
+  attributes:
+    output: 10
+- type: ReLU
+  id: 28
+  next:
+    - 24
+  attributes: {}
+- type: ReLU
+  id: 29
+  next:
+    - 15
+  attributes: {}

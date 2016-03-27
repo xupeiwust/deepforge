@@ -1,0 +1,39 @@
+- type: Tanh
+  id: 8
+  next:
+    - 12
+  attributes: {}
+- type: Tanh
+  id: 9
+  next:
+    - 14
+  attributes: {}
+- type: Linear
+  id: 10
+  next:
+    - 8
+  attributes:
+    output: 150
+- type: Concat
+  id: 11
+  next: []
+  attributes:
+    dim: 1
+- type: Linear
+  id: 12
+  next:
+    - 11
+  attributes:
+    output: 50
+- type: Linear
+  id: 13
+  next:
+    - 9
+  attributes:
+    output: 150
+- type: Linear
+  id: 14
+  next:
+    - 11
+  attributes:
+    output: 30

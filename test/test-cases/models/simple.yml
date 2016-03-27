@@ -1,0 +1,11 @@
+- type: Linear
+  id: 11
+  next: []
+  attributes:
+    output: 10
+- type: Reshape
+  id: 12
+  next:
+    - 11
+  attributes:
+    dimensions: 100
