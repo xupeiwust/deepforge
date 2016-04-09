@@ -11,6 +11,7 @@
     "webgme-autoviz": "dfst/webgme-autoviz",
     "webgme-breadcrumbheader": "dfst/webgme-breadcrumbheader",
     "webgme-chflayout": "^1.0.0",
+    "webgme-easydag": "dfst/webgme-easydag",
     "webgme-fab": "dfst/webgme-fab"
   },
   "devDependencies": {
