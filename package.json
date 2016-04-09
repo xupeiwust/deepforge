@@ -12,8 +12,9 @@
     "webgme-autoviz": "dfst/webgme-autoviz",
     "webgme-breadcrumbheader": "dfst/webgme-breadcrumbheader",
     "webgme-chflayout": "^1.0.0",
-    "webgme-fab": "dfst/webgme-fab",
-    "webgme-simple-nodes": "brollb/webgme-simple-nodes"
+    "webgme-simple-nodes": "brollb/webgme-simple-nodes",
+    "webgme-easydag": "dfst/webgme-easydag",
+    "webgme-fab": "dfst/webgme-fab"
   },
   "devDependencies": {
     "jszip": "^2.5.0",

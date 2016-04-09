@@ -11,6 +11,7 @@ var config = require('webgme/config/config.default'),
 config.plugin.basePaths.push('src/plugins');
 config.plugin.basePaths.push('node_modules/webgme-simple-nodes/src/plugins');
 config.visualization.layout.basePaths.push('node_modules/webgme-chflayout/src/layouts');
+config.visualization.decoratorPaths.push('node_modules/webgme-easydag/src/decorators');
 config.seedProjects.basePaths.push('src/seeds/DevMinimal');
 config.seedProjects.basePaths.push('src/seeds/nn');
 config.seedProjects.basePaths.push('src/seeds/devTests');
@@ -20,12 +21,15 @@ config.seedProjects.basePaths.push('src/seeds/devTests');
 config.visualization.panelPaths.push('node_modules/webgme-fab/src/visualizers/panels');
 config.visualization.panelPaths.push('node_modules/webgme-breadcrumbheader/src/visualizers/panels');
 config.visualization.panelPaths.push('node_modules/webgme-autoviz/src/visualizers/panels');
+config.visualization.panelPaths.push('node_modules/webgme-easydag/src/visualizers/panels');
 
 
 // Visualizer descriptors
 config.visualization.visualizerDescriptors.push('./src/visualizers/Visualizers.json');
 // Add requirejs paths
 config.requirejsPaths = {
+  'EllipseDecorator': 'node_modules/webgme-easydag/src/decorators/EllipseDecorator',
+  'EasyDAG': 'panels/EasyDAG/EasyDAGPanel',
   'AutoViz': 'panels/AutoViz/AutoVizPanel',
   'BreadcrumbHeader': 'panels/BreadcrumbHeader/BreadcrumbHeaderPanel',
   'FloatingActionButton': 'panels/FloatingActionButton/FloatingActionButtonPanel',
@@ -33,6 +37,8 @@ config.requirejsPaths = {
   'TemplateCreator': 'node_modules/webgme-simple-nodes/src/plugins/TemplateCreator',
   'panels': './src/visualizers/panels',
   'widgets': './src/visualizers/widgets',
+  'panels/EasyDAG': './node_modules/webgme-easydag/src/visualizers/panels/EasyDAG',
+  'widgets/EasyDAG': './node_modules/webgme-easydag/src/visualizers/widgets/EasyDAG',
   'panels/AutoViz': './node_modules/webgme-autoviz/src/visualizers/panels/AutoViz',
   'widgets/AutoViz': './node_modules/webgme-autoviz/src/visualizers/widgets/AutoViz',
   'panels/BreadcrumbHeader': './node_modules/webgme-breadcrumbheader/src/visualizers/panels/BreadcrumbHeader',

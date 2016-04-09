@@ -75,10 +75,23 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/AutoViz",
         "project": "webgme-autoviz"
+      },
+      "EasyDAG": {
+        "src": "panels/EasyDAG/EasyDAGPanel",
+        "title": "EasyDAG",
+        "panel": "src/visualizers/panels/EasyDAG",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/EasyDAG",
+        "project": "webgme-easydag"
       }
     },
     "addons": {},
-    "decorators": {},
+    "decorators": {
+      "EllipseDecorator": {
+        "project": "webgme-easydag",
+        "path": "node_modules/webgme-easydag/src/decorators/EllipseDecorator"
+      }
+    },
     "seeds": {}
   }
 }
