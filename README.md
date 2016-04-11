@@ -12,9 +12,7 @@ After cloning the repo, run
 npm install && npm start
 ```
 
-Now, navigate to `localhost:8080` in a browser and create a new project. Select `Caffe` as the seed and start creating your neural nets!
-
-There are examples in the `Examples` directory.
+Now, navigate to `localhost:8888` in a browser and create a new project. Select `nn` as the seed and start creating your neural nets!
 
 ## Caffe Support?
 DeepForge uses Torch to perform the actual training and testing of the models. If you are interested in DeepForge using Caffe for actual training and testing, check out [DeepForge-Caffe](https://github.com/dfst/deepforge-caffe).
