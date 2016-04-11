@@ -104,9 +104,9 @@ describe('utils', function () {
 
     describe('matching architectures', function() {
         var cases = [
-            ['/I', 'concat-parallel'],
-            ['/x', 'concat-y'],
-            ['/2B', 'concat-y-bad-conn']  // disconnected graph
+            ['/q', 'concat-parallel'],
+            ['/L', 'concat-y'],
+            ['/W', 'concat-y-bad-conn']  // disconnected graph
         ];
 
         cases.forEach(pair => it('should validate ' + pair[1],
@@ -115,9 +115,9 @@ describe('utils', function () {
 
     describe('mismatching architectures', function() {
         var cases = [
-            ['/u', 'concat-y'],
-            ['/x', 'concat-parallel'],
-            ['/t', 'concat-y'],
+            ['/W', 'concat-y'],
+            ['/L', 'concat-parallel'],
+            ['/q', 'concat-y'],
             ['/2B', 'concat-y']
         ];
 
