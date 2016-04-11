@@ -197,15 +197,15 @@ define([
         // TODO: Put each group of nodes on their own META sheet
 
         if (attrs) {  // Add the attributes
-            attrs.forEach(name => {
+            attrs.forEach((name, index) => {
                 var desc = null;
                 if (typeof name !== 'string') {
                     desc = name[Object.keys(name)[0]];
                     name = Object.keys(name)[0];
                 }
-                if (!(desc && desc.ignore)) {
-                    this.addAttribute(name, node, desc);
-                }
+                desc = desc || {};
+                desc.argindex = index;
+                this.addAttribute(name, node, desc);
             });
         }
         this.logger.debug(`added ${name} to the meta`);
@@ -217,10 +217,8 @@ define([
         var initial,
             schema = {};
 
-        def = def || {};
-
         schema.type = def.type || 'integer';
-        if (schema.type === 'list') {  // FIXME
+        if (schema.type === 'list') {  // FIXME: add support for lists
             schema.type = 'string';
         }
 
@@ -233,15 +231,19 @@ define([
             schema.max = +def.max;
         }
 
+        // Add the infer flag
+        if (def.infer) {
+            schema.infer = def.infer;
+        }
+
+        // Add the argindex flag
+        schema.argindex = def.argindex;
+
         // Create the attribute and set the schema
         this.core.setAttributeMeta(node, name, schema);
 
         // Determine a default value
-        initial = def.default || def.min || null;
-        if (def.type === 'boolean') {
-            initial = def.default || false;
-        }
-
+        initial = def.hasOwnProperty('default') ? def.default : def.min || null;
         if (initial !== null) {  // optional attribute - set default value
             this.core.setAttribute(node, name, initial);
         }

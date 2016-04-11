@@ -21,7 +21,7 @@ Containers:
 Module:
     - SpatialBatchNormalization:
         - input:
-            ignore: true  # change this to `infer: 'dimensionality'`
+            infer: dimensionality  # change this to `infer: 'dimensionality'`
         - eps:
             default: 0.00001
         - momentum:
@@ -31,7 +31,7 @@ Module:
 
     - BatchNormalization:
         - input:
-            ignore: true  # change this to `infer: 'dimensionality'`
+            infer: dimensionality  # change this to `infer: 'dimensionality'`
         - eps:
             default: 0.00001
         - momentum:
@@ -354,12 +354,12 @@ ConvLayer:
 SimpleLayer:
     - Linear:  # FIXME: These should contain the actual args
         - input:
-            ignore: true
+            infer: dimensionality
         - output:
             min: 1
     - SparseLinear: 
         - input: 
-            ignore: true
+            infer: dimensionality
         - output:
             min: 1
 

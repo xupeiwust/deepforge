@@ -15,7 +15,7 @@ define([
 ], function (
     PluginBase,
     Constants,
-    LAYER_ARGS,
+    createLayerDict,
     dimensionality,
     _
 ) {
@@ -56,6 +56,11 @@ define([
         return '0.1.0';
     };
 
+    GenerateArchitecture.prototype.main = function () {
+        this.LayerDict = createLayerDict(this.core, this.META);
+        return PluginBase.prototype.main.apply(this, arguments);
+    };
+
     GenerateArchitecture.prototype.createOutputFiles = function (tree) {
         var layers = tree[Constants.CHILDREN],
             result = {},
@@ -78,7 +83,7 @@ define([
                 break;
             } else {
                 // args
-                args = GenerateArchitecture.createArgString(layers[i]);
+                args = this.createArgString(layers[i]);
                 template = _.template('model:add(nn.{{= name }}' + args + ')');
                 snippet = template(layers[i]);
                 code += '\n' + snippet;
@@ -89,12 +94,12 @@ define([
         return result;
     };
 
-    GenerateArchitecture.createArgString = function (layer) {
+    GenerateArchitecture.prototype.createArgString = function (layer) {
         if (CreateLayerArgs[layer.name]) {
             return '(' + CreateLayerArgs[layer.name](layer).join(', ') + ')';
         }
         // fall back on default...
-        return '(' + LAYER_ARGS[layer.name].map(arg => layer[arg.name]) + ')';
+        return '(' + this.LayerDict[layer.name].map(arg => layer[arg.name]) + ')';
     };
 
     GenerateArchitecture.getDimArgs = function (layer) {

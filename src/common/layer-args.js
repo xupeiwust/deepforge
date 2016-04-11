@@ -1,42 +1,50 @@
 define([
-    'text!deepforge/layers.yml',
-    'deepforge/js-yaml.min'
 ], function(
-    LAYER_TEXT,
-    yaml
 ) {
     'use strict';
 
-    // default arg
-    var cleanArg = function(arg) {
-        var name = Object.keys(arg)[0],
-            result = arg[name] || {type: 'integer'};
+    var prepAttribute = function(core, node, attr) {
+        var result = {name: attr},
+            schema = core.getAttributeMeta(node, attr);
 
-        result.name = name;
+        for (var key in schema) {
+            result[key] = schema[key];
+        }
+
         return result;
     };
 
-    // Create the layer dictionary
-    var LayerDict = {},
-        layerObj = yaml.load(LAYER_TEXT),
-        absLayers = Object.keys(layerObj),
-        layer,
-        layers;
+    var isArgument = function(arg) {
+        return arg.hasOwnProperty('argindex');
+    };
 
-    // Basically, create a dictionary of the second level of keys
-    for (var i = absLayers.length; i--;) {
-        layers = layerObj[absLayers[i]];
-        for (var j = layers.length; j--;) {
-            layer = layers[j];
-            if (typeof layer === 'string') {
-                LayerDict[layers[j]] = [];
-            } else {
-                layer = Object.keys(layer)[0];
-                LayerDict[layer] = (layers[j][layer] || [])
-                    .map(cleanArg);
-            }
+    var sortByIndex = function(a, b) {
+        return a.argindex > b.argindex;
+    };
+
+    var createLayerDict = function(core, meta) {
+        var node,
+            names = Object.keys(meta),
+            attributes,
+            layers = {};
+
+        for (var i = names.length; i--;) {
+            node = meta[names[i]];
+            layers[names[i]] = core.getValidAttributeNames(node)
+                .map(attr => prepAttribute(core, node, attr))
+                .filter(isArgument)
+                .sort(sortByIndex);
         }
-    }
 
-    return LayerDict;
+        return layers;
+    };
+
+    // When provided with the META, create the given LayerDict object
+    //  - Sort (and filter) by argindex
+    //  - add name attribute to schema
+    //  - store this array under the META name
+
+    // LayerDict contains:
+    //  name: [{schema (including name)}, {schema+name}]
+    return createLayerDict;
 });

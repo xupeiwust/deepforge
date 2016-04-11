@@ -4,7 +4,7 @@ define([
     'common/util/assert',
     './lua'
 ], function(
-    LayerDict,
+    createLayerDict,
     assert,
     luajs
 ) {
@@ -14,7 +14,8 @@ define([
     var createSearcher = function(plugin) {
         var core = plugin.core,
             META = plugin.META,
-            parent = plugin.tgtNode;
+            parent = plugin.tgtNode,
+            LayerDict = createLayerDict(core, META);
 
         var connect = function(src, dst) {
             var conn = core.createNode({
@@ -64,7 +65,9 @@ define([
                     value = value.valueOf();
                 }
 
-                if (!this._attrs[i].ignore) {
+                // TODO: Update this to check if inferred and the value matches
+                // our inferred value. If so, skip it
+                if (!this._attrs[i].infer) {
                     core.setAttribute(node, name, (value === undefined ? null : value));
                 }
             }

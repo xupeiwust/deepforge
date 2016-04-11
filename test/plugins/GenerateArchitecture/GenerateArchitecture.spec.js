@@ -85,8 +85,9 @@ describe('GenerateArchitecture', function () {
 
     describe('test cases', function() {
         var cases = [
-            ['/w', 'basic.lua'],
-            ['/d', 'basic-transfers.lua']
+            ['/E', 'basic.lua'],
+            ['/S', 'basic-transfers.lua']
+            // TODO: Add more tests
         ];
 
         var runTest = function(pair, done) {
