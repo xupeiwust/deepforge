@@ -266,9 +266,11 @@ function read_numeral(curr, next){
     } else {
         var buff = [first];
         var ch = curr();
-        while (lisdigit(ch) || ch == '.'){
+        var prev = first;
+        while (lisdigit(ch) || ch == '.' || ch == 'e' || (prev == 'e' && ch == '-')){
             buff.push(ch);
             next();
+            prev = ch;
             ch = curr();
         }
 
@@ -470,6 +472,7 @@ function lex(s){
     }
 }
 exports.lex = lex;
+
     })(modules.lex);
 
     (function(exports){

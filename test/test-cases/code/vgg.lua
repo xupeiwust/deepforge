@@ -40,11 +40,10 @@ end
 local classifier = nn.Sequential()
 classifier:add(nn.View(512*7*7))
 classifier:add(nn.Linear(512*7*7, 4096))
--- Add support for 1e-6:to luajs
-classifier:add(nn.Threshold(0, 0.000001))
+classifier:add(nn.Threshold(0, 1e-6))
 classifier:add(nn.Dropout(0.5))
 classifier:add(nn.Linear(4096, 4096))
-classifier:add(nn.Threshold(0, 0.000001))
+classifier:add(nn.Threshold(0, 1e-6))
 classifier:add(nn.Dropout(0.5))
 classifier:add(nn.Linear(4096, nClasses))
 classifier:add(nn.LogSoftMax())
