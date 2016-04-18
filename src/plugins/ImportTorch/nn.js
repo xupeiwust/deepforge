@@ -2,7 +2,7 @@
 define([
     'deepforge/layer-args',
     'common/util/assert',
-    './lua'
+    'deepforge/lua'
 ], function(
     createLayerDict,
     assert,

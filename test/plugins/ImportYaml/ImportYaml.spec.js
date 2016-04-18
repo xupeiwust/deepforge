@@ -54,7 +54,12 @@ describe('ImportYaml', function () {
                 commitHash = importResult.commitHash;
                 core = importResult.core;
                 rootNode = importResult.rootNode;
-                checker = new GraphChecker(core);
+                checker = new GraphChecker({
+                    core: core,
+                    ignore: {
+                        attributes: ['calculateDimensionality', 'dimensionalityTransform']
+                    }
+                });
                 return project.createBranch('test', commitHash);
             })
             .then(function () {
