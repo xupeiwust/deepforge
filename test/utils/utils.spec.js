@@ -50,7 +50,12 @@ describe('utils', function () {
             .then(function (importResult) {
                 project = importResult.project;
                 core = importResult.core;
-                checker = new GraphChecker(core);
+                checker = new GraphChecker({
+                    core: core,
+                    ignore: {
+                        attributes: ['calculateDimensionality', 'dimensionalityTransform']
+                    }
+                });
                 commitHash = importResult.commitHash;
                 return project.createBranch('test', commitHash);
             })
@@ -104,9 +109,9 @@ describe('utils', function () {
 
     describe('matching architectures', function() {
         var cases = [
-            ['/q', 'concat-parallel'],
-            ['/L', 'concat-y'],
-            ['/W', 'concat-y-bad-conn']  // disconnected graph
+            ['/8', 'concat-parallel'],
+            ['/6', 'concat-y'],
+            ['/U', 'concat-y-bad-conn']  // disconnected graph
         ];
 
         cases.forEach(pair => it('should validate ' + pair[1],
@@ -115,13 +120,29 @@ describe('utils', function () {
 
     describe('mismatching architectures', function() {
         var cases = [
-            ['/W', 'concat-y'],
-            ['/L', 'concat-parallel'],
-            ['/q', 'concat-y'],
-            ['/2B', 'concat-y']
+            ['/U', 'concat-y'],
+            ['/6', 'concat-parallel'],
+            ['/8', 'concat-y'],
+            ['/F', 'concat-y']
         ];
 
         cases.forEach(pair => it('should validate ' + pair[1],
             run.bind(this, pair[0], pair[1], false)));
+    });
+
+    describe('ignore option', function() {
+        it('should ignore attributes as specified', function(done) {
+            core.loadByPath(rootNode, '/6')
+                .then(node => {
+                    return core.loadChildren(node);
+                })
+                .then(children => {
+                    var nodes = checker.gme(children).nodes(),
+                        violations = nodes.filter(node => node.attributes && node.attributes.calculateDimensionality);
+
+                    assert.equal(violations.length, 0, JSON.stringify(violations[0], null, 2));
+                })
+                .nodeify(done);
+        });
     });
 });

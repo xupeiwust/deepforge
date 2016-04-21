@@ -8,7 +8,7 @@ var testFixture = require('../../globals'),
     path = testFixture.path,
     jszip = require('jszip'),
     fs = require('fs'),
-    TEST_CASE_DIR = path.join(__dirname, '..', '..', 'test-cases', 'code'),
+    TEST_CASE_DIR = path.join(__dirname, '..', '..', 'test-cases', 'generated-code'),
     SEED_DIR = path.join(testFixture.SEED_DIR, '..', 'devTests');
 
 describe('GenerateArchitecture', function () {
@@ -85,9 +85,12 @@ describe('GenerateArchitecture', function () {
 
     describe('test cases', function() {
         var cases = [
-            ['/E', 'basic.lua'],
-            ['/S', 'basic-transfers.lua']
+            ['/F', 'basic.lua'],
+            ['/P', 'basic-transfers.lua'],
+            ['/O', 'overfeat.lua']
             // TODO: Add more tests
+            // Need a concat test
+            // TODO
         ];
 
         var runTest = function(pair, done) {

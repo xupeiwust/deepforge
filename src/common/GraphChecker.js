@@ -4,8 +4,35 @@ define([
     yaml
 ) {
 
-    var Importer = function(core) {
-        this._core = core;
+    var Importer = function(opts) {
+        opts = opts || {};
+        this._core = opts.core;
+
+        // Add attributes to ignore
+        this._ignore = opts.ignore || {};
+    };
+
+    var rmFields = function(nodes, ignored) {
+        var fields = Object.keys(ignored),
+            entries,
+            n;
+
+        for (var i = fields.length; i--;) {
+            entries = ignored[fields[i]];
+            if (entries instanceof Array) {
+                for (var j = entries.length; j--;) {
+                    for (n = nodes.length; n--;) {
+                        if (nodes[n][fields[i]]) {
+                            delete nodes[n][fields[i]][entries[j]];
+                        }
+                    }
+                }
+            } else {  // remove entire field
+                for (n = nodes.length; n--;) {
+                    delete nodes[n][fields[i]];
+                }
+            }
+        }
     };
 
     Importer.prototype.gme = function(children) {
@@ -33,12 +60,18 @@ define([
             src.next.push(gmeToId[dstId]);
         });
 
-        return new Nodes(this._core, nodes);
+        // Removed ignored fields
+        rmFields(nodes, this._ignore);
+
+        return new Nodes({core: this._core, ignore: this._ignore}, nodes);
     };
 
     Importer.prototype.yaml = function(text) {
         var nodes = yaml.load(text);
-        return new Nodes(this._core, nodes);
+
+        rmFields(nodes, this._ignore);
+
+        return new Nodes({core: this._core, ignore: this._ignore}, nodes);
     };
 
     var Exporter = function(nodes) {
@@ -49,8 +82,8 @@ define([
         return yaml.dump(this._nodes);
     };
 
-    var Operator = function(core, nodes, fn) {
-        Importer.call(this, core);
+    var Operator = function(opts, nodes, fn) {
+        Importer.call(this, opts);
         this._nodes = nodes;
         this._fn = fn;
         this.to = this;
@@ -64,7 +97,7 @@ define([
             return this._fn(this._nodes, nodes);
         });
 
-    var Nodes = function(core, nodes) {
+    var Nodes = function(opts, nodes) {
         this._nodes = nodes;
 
         nodes.forEach(node => {
@@ -73,7 +106,7 @@ define([
         });
 
         // Operations
-        this.map = new Operator(core, nodes, _modelMatches);
+        this.map = new Operator(opts, nodes, _modelMatches);
         this.to = new Exporter(nodes);
     };
 
@@ -108,8 +141,9 @@ define([
         return ptrs.indexOf('src') !== -1 && ptrs.indexOf('dst') !== -1;
     };
 
-    var GraphChecker = function(core) {
-        Importer.call(this, core);
+    var GraphChecker = function(opts) {
+        opts = opts || {};
+        Importer.call(this, opts);
     };
 
     GraphChecker.prototype = new Importer();

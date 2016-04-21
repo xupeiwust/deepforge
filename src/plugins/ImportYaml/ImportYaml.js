@@ -118,6 +118,10 @@ define([
                     nodes = converter.yaml(src).nodes(),
                     nodeMap = {};
 
+                if (nodes.length === 0) {
+                    throw Error('No nodes found. Is the file valid yaml?');
+                }
+
                 nodes.forEach(node => nodeMap[node.id] = this.createNode(node));
 
                 // Create all the connections

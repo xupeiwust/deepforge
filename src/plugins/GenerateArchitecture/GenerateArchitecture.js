@@ -10,7 +10,7 @@ define([
     //'TemplateCreator/Constants'
     'TemplateCreator/templates/Constants',
     'deepforge/layer-args',
-    'deepforge/dimensionality',
+    './dimensionality',
     'underscore'
 ], function (
     PluginBase,
@@ -95,41 +95,14 @@ define([
     };
 
     GenerateArchitecture.prototype.createArgString = function (layer) {
-        if (CreateLayerArgs[layer.name]) {
-            return '(' + CreateLayerArgs[layer.name](layer).join(', ') + ')';
-        }
-        // fall back on default...
-        return '(' + this.LayerDict[layer.name].map(arg => layer[arg.name]) + ')';
-    };
-
-    GenerateArchitecture.getDimArgs = function (layer) {
-        var prev = layer[Constants.PREV][0],  // Assuming all inputs have the same dims
-            fn = null;
-
-        // Only return getDimArgs if 
-        if (prev[Constants.PREV][0]) {
-            fn = GenerateArchitecture.getDimArgs.bind(null, prev);
-        }
-
-        return [prev.name, prev, fn];
-    };
-
-    // Custom Layer Argument Generators
-    // These return an array of argument values
-    var CreateLayerArgs = {};
-
-    CreateLayerArgs.Linear = function(layer) {
-        var args = GenerateArchitecture.getDimArgs(layer),
-            dims = dimensionality.apply(null, args);
-
-        return [dims, layer.output];
-    };
-
-    CreateLayerArgs.Add = function(layer) {
-        var args = GenerateArchitecture.getDimArgs(layer),
-            dims = dimensionality.apply(null, args);
-
-        return [dims, layer.isScalar];
+        return '(' + this.LayerDict[layer.name].map(arg => {
+            var value = layer[arg.name];
+            // Infer if value is unset and infer.dimensionality is set
+            if (!value && arg.infer === 'dimensionality') {
+                value = dimensionality(layer[Constants.PREV][0]);
+            }
+            return value;
+        }).join(', ') + ')';
     };
 
     return GenerateArchitecture;

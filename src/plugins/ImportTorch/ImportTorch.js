@@ -7,7 +7,7 @@
 
 define([
     'deepforge/layer-args',
-    './lua',
+    'deepforge/lua',
     './nn',
     'plugin/PluginBase'
 ], function (
