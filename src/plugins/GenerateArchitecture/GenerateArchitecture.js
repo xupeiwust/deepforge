@@ -6,9 +6,8 @@
  */
 
 define([
-    'TemplateCreator/TemplateCreator',
-    //'TemplateCreator/Constants'
-    'TemplateCreator/templates/Constants',
+    'SimpleNodes/SimpleNodes',
+    'SimpleNodes/Constants',
     'deepforge/layer-args',
     './dimensionality',
     'underscore'
@@ -31,7 +30,6 @@ define([
     var GenerateArchitecture = function () {
         // Call base class' constructor.
         PluginBase.call(this);
-        this.generator = this;
     };
 
     // Prototypal inheritance from PluginBase.

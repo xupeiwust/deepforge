@@ -43,9 +43,9 @@
   },
   "dependencies": {
     "plugins": {
-      "TemplateCreator": {
+      "SimpleNodes": {
         "project": "webgme-simple-nodes",
-        "path": "node_modules/webgme-simple-nodes/src/plugins/TemplateCreator"
+        "path": "node_modules/webgme-simple-nodes/src/plugins/SimpleNodes"
       }
     },
     "layouts": {

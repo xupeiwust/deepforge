@@ -35,7 +35,7 @@ config.requirejsPaths = {
   'BreadcrumbHeader': 'panels/BreadcrumbHeader/BreadcrumbHeaderPanel',
   'FloatingActionButton': 'panels/FloatingActionButton/FloatingActionButtonPanel',
   'CHFLayout': 'node_modules/webgme-chflayout/src/layouts/CHFLayout',
-  'TemplateCreator': 'node_modules/webgme-simple-nodes/src/plugins/TemplateCreator',
+  'SimpleNodes': 'node_modules/webgme-simple-nodes/src/plugins/SimpleNodes',
   'panels': './src/visualizers/panels',
   'widgets': './src/visualizers/widgets',
   'panels/EasyDAG': './node_modules/webgme-easydag/src/visualizers/panels/EasyDAG',

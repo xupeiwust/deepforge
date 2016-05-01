@@ -1,5 +1,5 @@
 define([
-    'TemplateCreator/templates/Constants',
+    'SimpleNodes/Constants',
     'deepforge/lua'
 ], function(
     Constants,

@@ -14,7 +14,7 @@
     "webgme-chflayout": "^1.0.0",
     "webgme-easydag": "dfst/webgme-easydag",
     "webgme-fab": "dfst/webgme-fab",
-    "webgme-simple-nodes": "brollb/webgme-simple-nodes"
+    "webgme-simple-nodes": "^2.0.0"
   },
   "devDependencies": {
     "jszip": "^2.5.0",

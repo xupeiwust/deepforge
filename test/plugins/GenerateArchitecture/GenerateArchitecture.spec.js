@@ -67,7 +67,7 @@ describe('GenerateArchitecture', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/960660211',
+                activeNode: '/4',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -117,17 +117,17 @@ describe('GenerateArchitecture', function () {
                 // Retrieve the code from the blob and check it!
                 var blobClient = new BlobClient(gmeConfig, logger);
 
-                blobClient.getObject(codeHash, (err, obj) => {
+                blobClient.getObjectAsString(codeHash, (err, actual) => {
                     // Unzip first...
                     var zip = new jszip(),
                         filename,
                         actual;
 
-                    zip.load(obj);
-                    filename = Object.keys(zip.files)
-                        .filter(name => name.indexOf('.lua') > -1)[0];
+                    //zip.load(obj);
+                    //filename = Object.keys(zip.files)
+                        //.filter(name => name.indexOf('.lua') > -1)[0];
 
-                    actual = zip.files[filename].asText();
+                    //actual = zip.files[filename].asText();
                     expect(actual).to.equal(expected);
                     done();
                 });

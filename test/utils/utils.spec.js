@@ -122,8 +122,7 @@ describe('utils', function () {
         var cases = [
             ['/J', 'concat-y'],
             ['/i', 'concat-parallel'],
-            ['/z', 'concat-y'],
-            ['/O', 'concat-y']
+            ['/z', 'concat-y']
         ];
 
         cases.forEach(pair => it('should validate ' + pair[1],
@@ -132,7 +131,7 @@ describe('utils', function () {
 
     describe('ignore option', function() {
         it('should ignore attributes as specified', function(done) {
-            core.loadByPath(rootNode, '/6')
+            core.loadByPath(rootNode, '/J')
                 .then(node => {
                     return core.loadChildren(node);
                 })
