@@ -120,18 +120,18 @@ describe('utils', function () {
 
     describe('mismatching architectures', function() {
         var cases = [
-            ['/J', 'concat-y'],
-            ['/i', 'concat-parallel'],
-            ['/z', 'concat-y']
+            ['/l', 'concat-y'],
+            ['/y', 'concat-parallel'],
+            ['/s', 'concat-y']
         ];
 
-        cases.forEach(pair => it('should validate ' + pair[1],
+        cases.forEach(pair => it('should NOT validate ' + pair[1],
             run.bind(this, pair[0], pair[1], false)));
     });
 
     describe('ignore option', function() {
         it('should ignore attributes as specified', function(done) {
-            core.loadByPath(rootNode, '/J')
+            core.loadByPath(rootNode, '/Z')
                 .then(node => {
                     return core.loadChildren(node);
                 })
