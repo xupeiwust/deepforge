@@ -65,7 +65,7 @@ describe('GenerateYaml', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/4',
+                activeNode: '/4'
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {

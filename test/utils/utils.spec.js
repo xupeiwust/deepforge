@@ -38,7 +38,7 @@ describe('utils', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: path.join(SEED_DIR, 'devUtilTests', 'devUtilTests.zip'),
+                    projectSeed: path.join(SEED_DIR, 'devUtilTests', 'devUtilTests.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
@@ -109,9 +109,9 @@ describe('utils', function () {
 
     describe('matching architectures', function() {
         var cases = [
-            ['/z', 'concat-parallel'],
-            ['/i', 'concat-y'],
-            ['/J', 'concat-y-bad-conn']  // disconnected graph
+            ['/l', 'concat-parallel'],
+            ['/Z', 'concat-y'],
+            ['/y', 'concat-y-bad-conn']  // disconnected graph
         ];
 
         cases.forEach(pair => it('should validate ' + pair[1],

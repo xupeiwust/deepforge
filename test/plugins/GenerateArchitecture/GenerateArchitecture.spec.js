@@ -34,7 +34,7 @@ describe('GenerateArchitecture', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(SEED_DIR, 'devTests.zip'),
+                    projectSeed: testFixture.path.join(SEED_DIR, 'devTests.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
