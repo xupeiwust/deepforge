@@ -61,7 +61,7 @@ describe('CreateExecution', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/1',
+                activeNode: '/1'
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {

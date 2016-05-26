@@ -81,8 +81,7 @@ define([
 
         // Add the operation definitions to the territory
         var metanodes = this._client.getAllMetaNodes(),
-            operation = metanodes.find(n => n.getAttribute('name') === 'Operation'),
-            operations;
+            operation = metanodes.find(n => n.getAttribute('name') === 'Operation');
 
         // Get all the meta nodes that are instances of Operations
         metanodes.map(n => n.getId())
@@ -384,7 +383,7 @@ define([
             .then(result => {
                 if (result.status === STORAGE_CONSTANTS.SYNCED) {
                     // Throw out the changes... warn the user?
-                    console.log('SYNCED!');
+                    this._logger.info('SYNCED!');
                 } else {
                     // Throw out the changes... warn the user?
                     this._logger.warn(`Could not create operation after ${srcOpName}`);
@@ -392,16 +391,6 @@ define([
             })
             .fail(err => this._logger.error(`Could not create operation after ${srcOpName}: ${err}`));
 
-            // Create the connection between the given data ports!
-            //connId = this._client.createChild({
-                //parentId: parentId,
-                //baseId: this.getConnectionId()
-//});
-                //this._client.makePointer(connId, 'src', srcPortId);
-                //this._client.makePointer(connId, 'dst', dstPortId);
-                //
-                //this._client.completeTransaction(`Created ${typeId} operation after ${nodeId}`);
-                console.log('doing stuff with the core');
         } else if (pairs.length > 1) {
             // Else, prompt!
             // TODO

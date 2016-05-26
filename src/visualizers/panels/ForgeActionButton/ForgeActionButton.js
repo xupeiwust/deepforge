@@ -32,7 +32,6 @@ define([
         var baseName,
             node = this.client.getNode(nodeId),
             base = this.client.getNode(node.getMetaTypeId()),
-            base,
             actions,
             i;
 

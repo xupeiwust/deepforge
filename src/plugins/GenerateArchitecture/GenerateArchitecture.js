@@ -65,7 +65,7 @@ define([
         for (var i = 0; i < layers.length; i++) {
             if (layers[i][Constants.NEXT].length > 1) {
                 // no support for 
-                console.error('No support for parallel layers... yet');
+                this.logger.error('No support for parallel layers... yet');
                 break;
             } else {
                 // args

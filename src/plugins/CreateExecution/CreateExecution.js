@@ -60,7 +60,7 @@ define([
         }
 
         return this.createExecution(this.activeNode)
-            .then(node => {
+            .then(() => {
                 this.result.setSuccess(true);
                 callback(null, this.result);
             })
@@ -103,7 +103,7 @@ define([
                 );
             })
             .then(() => {  // datamapping is set!
-                this.updateReferences(copies, dataMapping)
+                this.updateReferences(copies, dataMapping);
                 this.boxOperations(opTuples.map(o => o[0]), tgtNode);
                 return this.save(`Created execution of ${name}`);
             })
@@ -152,8 +152,7 @@ define([
     CreateExecution.prototype.sortIOByName = function (container) {
         return container.sort((a, b) =>
             // sort by name
-            this.core.getAttribute(a, 'name') < this.core.getAttribute(b, 'name')
-                ? 1 : -1
+            this.core.getAttribute(a, 'name') < this.core.getAttribute(b, 'name') ? 1 : -1
         );
     };
 

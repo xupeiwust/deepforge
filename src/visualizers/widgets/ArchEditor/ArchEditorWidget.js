@@ -1,4 +1,4 @@
-/*globals define, WebGMEGlobal*/
+/*globals define*/
 /*jshint browser: true*/
 
 /**
@@ -18,7 +18,7 @@ define([
     'use strict';
 
     var ArchEditorWidget,
-        WIDGET_CLASS = 'arch-editor',
+        // WIDGET_CLASS = 'arch-editor',
         DEFAULT_COLOR = '#ffb74d',
         LAYER_COLORS = {
             Containers: '#ffb74d',

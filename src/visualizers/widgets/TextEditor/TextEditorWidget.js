@@ -1,4 +1,4 @@
-/*globals define, WebGMEGlobal*/
+/*globals define*/
 /*jshint browser: true*/
 
 /**
@@ -7,9 +7,11 @@
 
 define([
     './lib/ace',
+    'underscore',
     'css!./styles/TextEditorWidget.css'
 ], function (
-    ace
+    ace,
+    _
 ) {
     'use strict';
 
@@ -20,38 +22,32 @@ define([
         this._logger = logger.fork('Widget');
 
         this._el = container;
-	this.editor = ace.edit(this._el[0]);
-	this.editor.getSession().setMode('ace/mode/lua');
+        this.editor = ace.edit(this._el[0]);
+        this.editor.getSession().setMode('ace/mode/lua');
 
-	// Get the config from component settings for themes
-	// TODO
-	this.editor.setOptions({
+        // Get the config from component settings for themes
+        // TODO
+        this.editor.setOptions({
             fontSize: '12pt'
         });
-	this.editor.$blockScrolling = Infinity;
-	this.DELAY = 250;
-	// this.editor.setTheme('ace/theme/monokai');
+        this.editor.$blockScrolling = Infinity;
+        this.DELAY = 250;
+        // this.editor.setTheme('ace/theme/monokai');
 
         this.editor.on('input', _.debounce(this.saveText.bind(this), this.DELAY));
-	this.currentHeader = '';
-	this.activeNode = null;
+        this.currentHeader = '';
+        this.activeNode = null;
         this._initialize();
 
         this._logger.debug('ctor finished');
     };
 
     TextEditorWidget.prototype._initialize = function () {
-        var width = this._el.width(),
-            height = this._el.height(),
-            self = this;
-
         // set widget class
         this._el.addClass(WIDGET_CLASS);
     };
 
-    TextEditorWidget.prototype.onWidgetContainerResize = function (width, height) {
-        // TODO
-        //this.editor.setSize(width, height);
+    TextEditorWidget.prototype.onWidgetContainerResize = function () {
     };
 
     // Adding/Removing/Updating items
@@ -61,21 +57,21 @@ define([
 
     TextEditorWidget.prototype.addNode = function (desc) {
         // Set the current text based on the given
-	// Create the header
+        // Create the header
         var header = this.getHeader(desc) + '\n';
 
-	this.activeNode = desc.id;
+        this.activeNode = desc.id;
         this.editor.setValue(header + desc.text, -1);
-	this.currentHeader = header;
+        this.currentHeader = header;
     };
 
     TextEditorWidget.prototype.saveText = function () {
         var text = this.editor.getValue().replace(this.currentHeader, '');
         if (this.activeNode) {
             this.saveTextFor(this.activeNode, text);
-	} else {
+        } else {
             this._logger.error(`Active node is invalid! (${this.activeNode})`);
-	}
+        }
     };
 
     TextEditorWidget.prototype.removeNode = function (gmeId) {
@@ -85,10 +81,10 @@ define([
         }
     };
 
-    TextEditorWidget.prototype.updateNode = function (desc) {
+    TextEditorWidget.prototype.updateNode = function (/*desc*/) {
         // TODO: Handle concurrent editing... Currently, last save wins and there are no
-	// updates after opening the node. Supporting multiple users editing the same
-	// operation/layer is important but more work than it is worth for now
+        // updates after opening the node. Supporting multiple users editing the same
+        // operation/layer is important but more work than it is worth for now
         //var currentText = this.editor.getValue().replace(this.currentHeader, '');
         //if (this.activeNode === desc.id && desc.text !== currentText) {
             //this.addNode(desc);

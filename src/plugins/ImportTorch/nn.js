@@ -1,3 +1,4 @@
+/* globals define */
 // This is the searcher for the mock library
 define([
     'deepforge/layer-args',
@@ -10,10 +11,10 @@ define([
 ) {
     'use strict';
 
-    var nop = function() {};
     var createSearcher = function(plugin) {
         var core = plugin.core,
             META = plugin.META,
+            logger = plugin.logger.fork('nn'),
             parent = plugin.tgtNode,
             LayerDict = createLayerDict(core, META);
 
@@ -41,8 +42,7 @@ define([
         };
 
         Layer.prototype._node = function() {
-            var attrs = this._attrs,
-                name,
+            var name,
                 node,
                 value;
 
@@ -83,11 +83,11 @@ define([
             this._outputs = [];
         };
 
-        Container.prototype.add = function(self, tlayer) {
-            console.error('Add is not overridden!');
+        Container.prototype.add = function() {
+            logger.error('Add is not overridden!');
         };
 
-        var Sequential = function(attrs, args) {
+        var Sequential = function(/*attrs, args*/) {
             Container.call(this);
         };
 
@@ -95,8 +95,7 @@ define([
 
         Sequential.prototype.add = function(self, tlayer) {
             var layer = tlayer.get('_node'),
-                nodes = layer._inputs,
-                conn;
+                nodes = layer._inputs;
 
             // If this._inputs is empty, add the layer to the inputs list
             if (this._inputs.length === 0) {  // first node
@@ -146,15 +145,12 @@ define([
         var CreateLayer = function(type) {
             var res = luajs.newContext()._G,
                 attrs = [].slice.call(arguments, 1),
-                proto,
                 node;
 
             if (LAYERS[type]) {
                 node = new LAYERS[type](LayerDict[type] || [], attrs);
-                proto = LAYERS[type].prototype;
             } else {  // Call generic Layer with type name
                 node = new Layer(type, LayerDict[type] || [], attrs);
-                proto = Layer.prototype;
             }
 
             res.set('_node', node);

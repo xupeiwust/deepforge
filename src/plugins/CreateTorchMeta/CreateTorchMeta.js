@@ -51,8 +51,7 @@ define([
     CreateTorchMeta.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
-        var self = this,
-            nodeObject;
+        var self = this;
 
         if (!this.META.Language) {
             callback('"Language" container required to run plugin', this.result);

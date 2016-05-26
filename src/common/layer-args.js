@@ -1,3 +1,4 @@
+/* globals define*/
 define([
 ], function(
 ) {
@@ -25,7 +26,6 @@ define([
     var createLayerDict = function(core, meta) {
         var node,
             names = Object.keys(meta),
-            attributes,
             layers = {};
 
         for (var i = names.length; i--;) {

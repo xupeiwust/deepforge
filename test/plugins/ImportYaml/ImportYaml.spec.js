@@ -13,7 +13,6 @@ describe('ImportYaml', function () {
     var gmeConfig = testFixture.getGmeConfig(),
         Q = testFixture.Q,
         GraphChecker = testFixture.requirejs('deepforge/GraphChecker'),
-        TEST_CASE_DIR = path.join(__dirname, '..', '..', 'test-cases', 'code'),
         YAML_DIR = path.join(__dirname, '..', '..', 'test-cases', 'models'),
         expect = testFixture.expect,
         logger = testFixture.logger.fork('ImportYaml'),
@@ -22,7 +21,6 @@ describe('ImportYaml', function () {
         blobClient = new BlobClient(gmeConfig, logger),
         projectName = 'testProject',
         pluginName = 'ImportYaml',
-        rootNode,
         checker,
         core,
         project,
@@ -53,7 +51,6 @@ describe('ImportYaml', function () {
                 project = importResult.project;
                 commitHash = importResult.commitHash;
                 core = importResult.core;
-                rootNode = importResult.rootNode;
                 checker = new GraphChecker({
                     core: core,
                     ignore: {
@@ -85,7 +82,7 @@ describe('ImportYaml', function () {
                 namespace: 'nn',
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '',
+                activeNode: ''
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -103,7 +100,7 @@ describe('ImportYaml', function () {
                 namespace: 'nn',
                 project: project,
                 branchName: 'test',
-                activeNode: '',
+                activeNode: ''
             },
             data = fs.readFileSync(path.join(YAML_DIR, name), 'utf8'),
             ymlFile = path.join(YAML_DIR, name.replace(/lua$/, 'yml')),

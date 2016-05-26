@@ -68,7 +68,7 @@ describe.skip('ExecutePipeline', function () {
                 commitHash: commitHash,
                 namespace: 'pipeline',
                 branchName: 'test',
-                activeNode: '/s',
+                activeNode: '/s'
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {

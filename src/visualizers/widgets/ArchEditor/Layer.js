@@ -1,7 +1,10 @@
+/*globals define*/
 define([
-    'widgets/EasyDAG/DAGItem'
+    'widgets/EasyDAG/DAGItem',
+    'underscore'
 ], function(
-    DAGItem
+    DAGItem,
+    _
 ) {
     var Layer = function(parentEl, desc) {
         this.id = desc.id;
