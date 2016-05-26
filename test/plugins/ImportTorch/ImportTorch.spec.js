@@ -34,7 +34,6 @@ describe('ImportTorch', function () {
         blobClient = new BlobClient(gmeConfig, logger),
         projectName = 'testProject',
         pluginName = 'ImportTorch',
-        rootNode,
         checker,
         core,
         project,
@@ -65,7 +64,6 @@ describe('ImportTorch', function () {
                 project = importResult.project;
                 commitHash = importResult.commitHash;
                 core = importResult.core;
-                rootNode = importResult.rootNode;
                 checker = new GraphChecker({
                     core: core,
                     ignore: {
@@ -101,7 +99,7 @@ describe('ImportTorch', function () {
                 namespace: 'nn',
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '',
+                activeNode: ''
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -119,7 +117,7 @@ describe('ImportTorch', function () {
                 namespace: 'nn',
                 project: project,
                 branchName: 'test',
-                activeNode: '',
+                activeNode: ''
             },
             data = fs.readFileSync(path.join(TEST_CASE_DIR, name), 'utf8'),
             ymlFile = path.join(YAML_DIR, name.replace(/lua$/, 'yml')),

@@ -6,7 +6,6 @@
 'use strict';
 var testFixture = require('../../globals'),
     path = testFixture.path,
-    jszip = require('jszip'),
     fs = require('fs'),
     TEST_CASE_DIR = path.join(__dirname, '..', '..', 'test-cases', 'generated-code'),
     SEED_DIR = path.join(testFixture.DF_SEED_DIR, 'devTests');
@@ -68,7 +67,7 @@ describe('GenerateArchitecture', function () {
                 namespace: 'nn',
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/4',
+                activeNode: '/4'
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -105,7 +104,7 @@ describe('GenerateArchitecture', function () {
                     namespace: 'nn',
                     commitHash: commitHash,
                     branchName: 'test',
-                    activeNode: id,
+                    activeNode: id
                 },
                 expected = fs.readFileSync(path.join(TEST_CASE_DIR, name), 'utf8')
                     .replace(/\n$/, '');
@@ -120,16 +119,6 @@ describe('GenerateArchitecture', function () {
                 var blobClient = new BlobClient(gmeConfig, logger);
 
                 blobClient.getObjectAsString(codeHash, (err, actual) => {
-                    // Unzip first...
-                    var zip = new jszip(),
-                        filename,
-                        actual;
-
-                    //zip.load(obj);
-                    //filename = Object.keys(zip.files)
-                        //.filter(name => name.indexOf('.lua') > -1)[0];
-
-                    //actual = zip.files[filename].asText();
                     expect(actual).to.equal(expected);
                     done();
                 });

@@ -14,11 +14,11 @@ define([
 
     _.extend(OperationNode.prototype, DAGItem.prototype);
 
-    OperationNode.prototype.updatePort = function(desc) {
+    OperationNode.prototype.updatePort = function(/*desc*/) {
         // TODO
     };
 
-    OperationNode.prototype.addPort = function(desc) {
+    OperationNode.prototype.addPort = function(/*desc*/) {
         // TODO
     };
 

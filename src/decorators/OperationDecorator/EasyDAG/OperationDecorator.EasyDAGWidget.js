@@ -28,6 +28,7 @@ define([
 
     _.extend(OperationDecorator.prototype, DecoratorBase.prototype);
 
+    OperationDecorator.prototype.DECORATOR_ID = DECORATOR_ID;
     OperationDecorator.prototype.expand = function() {
         DecoratorBase.prototype.expand.call(this);
         // Add the ports for data inputs/outputs
@@ -36,7 +37,7 @@ define([
         //var outputs = this._node.outputs;
     };
 
-    OperationDecorator.prototype._highlightPort = function(name) {
+    OperationDecorator.prototype._highlightPort = function(/*name*/) {
         // Highlight port with the given name
         // TODO
     };

@@ -1,3 +1,4 @@
+/* globals define */
 define([
     'SimpleNodes/Constants',
     'deepforge/lua'

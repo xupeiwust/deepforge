@@ -1,5 +1,4 @@
 // This is used by the test/plugins tests
-/*globals requireJS*/
 /*jshint node:true*/
 /**
  * @author pmeijer / https://github.com/pmeijer
@@ -16,14 +15,13 @@ var testFixture = require('webgme/test/_globals'),
 var WebGME = testFixture.WebGME,
     gmeConfig = require(WEBGME_CONFIG_PATH),
     getGmeConfig = function getGmeConfig() {
-    'use strict';
-    // makes sure that for each request it returns with a unique object and tests will not interfere
-    if (!gmeConfig) {
-        // if some tests are deleting or unloading the config
-        gmeConfig = require(WEBGME_CONFIG_PATH);
-    }
-    return JSON.parse(JSON.stringify(gmeConfig));
-};
+        // makes sure that for each request it returns with a unique object and tests will not interfere
+        if (!gmeConfig) {
+            // if some tests are deleting or unloading the config
+            gmeConfig = require(WEBGME_CONFIG_PATH);
+        }
+        return JSON.parse(JSON.stringify(gmeConfig));
+    };
 
 WebGME.addToRequireJsPaths(gmeConfig);
 

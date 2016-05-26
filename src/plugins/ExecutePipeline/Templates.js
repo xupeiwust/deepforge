@@ -1,3 +1,4 @@
+/*globals define*/
 define([
     'text!./entry.ejs',
     'text!./main.ejs',

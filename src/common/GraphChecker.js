@@ -1,3 +1,4 @@
+/* globals define */
 define([
     'deepforge/js-yaml.min'
 ], function(
@@ -148,28 +149,11 @@ define([
 
     GraphChecker.prototype = new Importer();
 
-    // Check if two models are isomorphic
-    var modelMatches = function(gmeNodes, text) {
-        var nodes = convertNodes(gmeNodes),
-            soln = yaml.load(text);
-
-        nodes.concat(soln).forEach(node => {
-            node.next = node.next || [];
-            node.attributes = node.attributes || {};
-        });
-
-        return _modelMatches(nodes, soln);
-    };
-
     //////////////// Operators ////////////////
+    // Check if two models are isomorphic
     var _modelMatches = function(soln, nodes) {
         var nodeMap = createMap(nodes),
-            solnMap = createMap(soln),
-            sInits,  // soln start nodes
-            nInits,  // 'nodes' start nodes
-            resMap = {},  // soln node id to node id
-            solnIds = soln.map(n => n.id),
-            nodeIds = nodes.map(n => n.id);
+            solnMap = createMap(soln);
 
         if (nodes.length !== soln.length) {
             return false;
@@ -187,8 +171,7 @@ define([
     };
 
     var getMostConstrained = function(soln, nodes) {
-        var options = soln.map(sn => [sn, nodes.filter(n => nodesMatch(sn, n))]),
-            startId;
+        var options = soln.map(sn => [sn, nodes.filter(n => nodesMatch(sn, n))]);
 
         options.sort((a, b) => b[1].length < a[1].length);
         return options[0];
@@ -199,8 +182,7 @@ define([
             nodes = Object.keys(nodeMap).map(id => nodeMap[id]),
             snode = solnMap[id],
             options,
-            used,
-            node;
+            used;
 
         mappings = mappings || {};
 
@@ -247,14 +229,16 @@ define([
             snext.push(startId);
         }
 
+        var inferNext = (prev, curr) => {
+            mappings2 = inferGraph(curr, solnMap, nodeMap, mappings2);
+            return prev && mappings;
+        };
+
         for (var i = options.length; i--;) {
             mappings[id] = options[i].id;  // need to clone the object
 
             mappings2 = clone(mappings);
-            result = snext.reduce((prev, curr) => {
-                mappings2 = inferGraph(curr, solnMap, nodeMap, mappings2);
-                return prev && mappings;
-            }, true);
+            result = snext.reduce(inferNext, true);
 
             if (result) {
                 return mappings2;

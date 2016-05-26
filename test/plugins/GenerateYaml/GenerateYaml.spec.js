@@ -13,7 +13,6 @@ describe('GenerateYaml', function () {
         expect = testFixture.expect,
         logger = testFixture.logger.fork('GenerateYaml'),
         PluginCliManager = testFixture.WebGME.PluginCliManager,
-        GraphChecker = testFixture.requirejs('deepforge/GraphChecker'),
         projectName = 'testProject',
         pluginName = 'GenerateYaml',
         project,
@@ -31,7 +30,7 @@ describe('GenerateYaml', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(BASE_DIR, 'devTests', 'devTests.webgmex'),
+                    projectSeed: path.join(BASE_DIR, 'devTests', 'devTests.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,

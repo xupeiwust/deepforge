@@ -1,15 +1,12 @@
-/*globals WebGMEGlobal*/
+/*globals define*/
 // These are actions defined for specific meta types. They are evaluated from
 // the context of the ForgeActionButton
 define([], function() {
-    var ROOT_ID = '',
-        CREATE_MODEL_TXT = 'Create new model';
-
-    var createNewArchitecture = function(type) {
+    var createNewArchitecture = function() {
         return createNew.call(this, 'Architecture');
     };
 
-    var createNewPipeline = function(type) {
+    var createNewPipeline = function() {
         return createNew.call(this, 'Pipeline');
     };
 
@@ -28,8 +25,7 @@ define([], function() {
     var downloadButton = function() {
         var id = this._currentNodeId,
             node = this.client.getNode(id),
-            hash = node.getAttribute('data'),
-            url;
+            hash = node.getAttribute('data');
 
         if (hash) {
             return '/rest/blob/download/' + hash;

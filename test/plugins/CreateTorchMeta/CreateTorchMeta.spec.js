@@ -66,7 +66,7 @@ describe('CreateTorchMeta', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/960660211',
+                activeNode: '/960660211'
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -90,7 +90,7 @@ describe('CreateTorchMeta', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/960660211',
+                activeNode: '/960660211'
             },
             META_NAMES = [  // Some Torch layer names to look up
                 'ReLU',
@@ -136,7 +136,7 @@ describe('CreateTorchMeta', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/960660211',
+                activeNode: '/960660211'
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -186,7 +186,7 @@ describe('CreateTorchMeta', function () {
                     project: project,
                     commitHash: commitHash,
                     branchName: 'test',
-                    activeNode: '/960660211',
+                    activeNode: '/960660211'
                 };
 
             manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {

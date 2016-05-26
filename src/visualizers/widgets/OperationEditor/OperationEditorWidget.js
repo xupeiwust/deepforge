@@ -1,4 +1,4 @@
-/*globals define, WebGMEGlobal*/
+/*globals define */
 /*jshint browser: true*/
 
 /**
@@ -15,8 +15,8 @@ define([
 ) {
     'use strict';
 
-    var OperationEditorWidget,
-        WIDGET_CLASS = 'operation-editor';
+    var OperationEditorWidget;
+        //WIDGET_CLASS = 'operation-editor';
 
     OperationEditorWidget = function (logger, container) {
         TextEditorWidget.call(this, logger, container);
@@ -26,21 +26,21 @@ define([
 
     OperationEditorWidget.prototype.getHeader = function (desc) {
         // Add comment about the inputs, attributes and references
-	var inputs = desc.inputs.map(pair => `-- ${pair[0]} (${pair[1]})`).join('\n'),
-	    refs = desc.references.map(name => `-- ${name}`).join('\n'),
-	    header = [
+        var inputs = desc.inputs.map(pair => `-- ${pair[0]} (${pair[1]})`).join('\n'),
+            refs = desc.references.map(name => `-- ${name}`).join('\n'),
+            header = [
                 `-- Editing "${desc.name}"`,
-                `-- `,
-                `-- Defined variables:`
-	    ];
+                '-- ',
+                '-- Defined variables:'
+            ];
 
         if (inputs) {
             header.push(inputs);
-	}
+        }
         if (refs) {
             header.push(refs);
-	}
-	header.push(`--`);
+        }
+        header.push('--');
         return header.join('\n');
     };
 
