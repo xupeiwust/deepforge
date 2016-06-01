@@ -34,5 +34,9 @@ define([
         ].join('\n');
     };
 
+    DeserializeEditorWidget.prototype.updateNode = function() {
+        // nop
+    };
+
     return DeserializeEditorWidget;
 });

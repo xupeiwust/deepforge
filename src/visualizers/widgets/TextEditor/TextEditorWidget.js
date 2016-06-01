@@ -60,15 +60,15 @@ define([
     TextEditorWidget.prototype.addNode = function (desc) {
         // Set the current text based on the given
         // Create the header
-        var header = this.getHeader(desc) + '\n';
+        var header = this.getHeader(desc);
 
         this.activeNode = desc.id;
-        this.editor.setValue(header + desc.text, 2);
+        this.editor.setValue(header + '\n' + desc.text, 2);
         this.currentHeader = header;
     };
 
     TextEditorWidget.prototype.saveText = function () {
-        var text = this.editor.getValue().replace(this.currentHeader, '');
+        var text = this.editor.getValue().replace(this.currentHeader + '\n', '');
         if (this.activeNode) {
             this.saveTextFor(this.activeNode, text);
         } else {
@@ -85,7 +85,8 @@ define([
 
     TextEditorWidget.prototype.updateNode = function (desc) {
         // Check for header changes
-        if (this.activeNode === desc.id) {
+        if (this.activeNode === desc.id &&
+            this.getHeader(desc) !== this.currentHeader) {
             this.addNode(desc);
         }
         // TODO: Handle concurrent editing... Currently, last save wins and there are no
