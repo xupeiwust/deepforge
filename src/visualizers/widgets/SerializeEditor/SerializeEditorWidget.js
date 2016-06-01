@@ -33,5 +33,9 @@ define([
         ].join('\n');
     };
 
+    SerializeEditorWidget.prototype.updateNode = function() {
+        // nop
+    };
+
     return SerializeEditorWidget;
 });
