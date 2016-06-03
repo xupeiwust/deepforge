@@ -35,7 +35,7 @@ define([
     ForgeActionButton.prototype.findActionsFor = function(nodeId) {
         var node = this.client.getNode(nodeId),
             base = this.client.getNode(node.getMetaTypeId()),
-            isMeta = base.getId() === node.getId(),
+            isMeta = base && base.getId() === node.getId(),
             suffix = isMeta ? '_META' : '',
             basename;
 
