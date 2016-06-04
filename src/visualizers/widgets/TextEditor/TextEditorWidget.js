@@ -24,8 +24,11 @@ define([
         this._el = container;
         this._el.css({height: '100%'});
         this.editor = ace.edit(this._el[0]);
-        this.editor.getSession().setMode('ace/mode/lua');
-
+        this.editor.getSession().setOptions({
+            mode: 'ace/mode/lua',
+            tabSize: 3,
+            useSoftTabs: true
+        });
         // Get the config from component settings for themes
         // TODO
         this.editor.setOptions({
