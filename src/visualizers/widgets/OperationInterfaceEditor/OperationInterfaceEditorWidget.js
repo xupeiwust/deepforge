@@ -91,13 +91,5 @@ define([
         this.addRefTo(target.node.id);
     };
 
-    OperationInterfaceEditorWidget.prototype.removeItem = function(item) {
-        if (item.desc.isPointer) {
-            this.removePtr(item.name);
-        } else {
-            this.removeSubtreeAt(item.id);
-        }
-    };
-
     return OperationInterfaceEditorWidget;
 });
