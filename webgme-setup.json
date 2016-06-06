@@ -167,6 +167,9 @@
       },
       "project": {
         "src": "src/seeds/project"
+      },
+      "minimal": {
+        "src": "src/seeds/minimal"
       }
     }
   },
