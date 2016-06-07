@@ -8,11 +8,13 @@ DeepForge is an open-source visual development environment for deep learning. Cu
 
 ## Quick Setup
 + install NodeJS, Torch, and MongoDB
-+ `sudo mongod`
-+ `git clone https://github.com/dfst/deepforge.git`
-+ `cd deepforge`
-+ `npm install`
-+ `npm run local`
++ start mongodb locally
+```
+git clone https://github.com/dfst/deepforge.git
+cd deepforge
+npm install
+npm run local
+```
 + Navigate to `http://localhost:8888`
 
 [Full Installation Guide](https://github.com/dfst/deepforge/wiki/Installation-Guide)
