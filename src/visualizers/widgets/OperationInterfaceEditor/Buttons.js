@@ -113,10 +113,25 @@ define([
 
     };
 
+    var Delete = function(params) {
+        EasyDAGButtons.DeleteOne.call(this, params);
+    };
+
+    _.extend(Delete.prototype, EasyDAGButtons.DeleteOne.prototype);
+
+    Delete.prototype._onClick = function(item) {
+        // Check if it is a pointer or 
+        if (item.desc.isPointer) {
+            this.removePtr(item.name);
+        } else {
+            this.deleteNode(item.id);
+        }
+    };
+
     return {
         AddOutput: AddOutput,
         AddInput: AddInput,
         AddRef: AddRef,
-        Delete: EasyDAGButtons.Delete
+        Delete: Delete
     };
 });
