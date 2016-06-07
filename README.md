@@ -7,13 +7,9 @@
 DeepForge is an open-source visual development environment for deep learning. Currently, it supports Convolutional Neural Networks but we are planning on supporting additional deep learning classifiers such as RNNs and LSTMs. Additional features include real-time collaborative editing and version control.
 
 ## Quick Setup
-After cloning the repo, run
+[Install Torch7](http://torch.ch/docs/getting-started.html#)
 
-```
-npm install && npm start
-```
-
-Now, navigate to `localhost:8888` in a browser and create a new project. Select `nn` as the seed and start creating your neural nets!
+[Install DeepForge](https://github.com/dfst/deepforge/wiki/Installation-Guide)
 
 ## Caffe Support?
 DeepForge uses Torch to perform the actual training and testing of the models. If you are interested in DeepForge using Caffe for actual training and testing, check out [DeepForge-Caffe](https://github.com/dfst/deepforge-caffe).
