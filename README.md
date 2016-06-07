@@ -12,8 +12,7 @@ DeepForge is an open-source visual development environment for deep learning. Cu
 ```
 git clone https://github.com/dfst/deepforge.git
 cd deepforge
-npm install
-npm run local
+npm install && npm run local
 ```
 + Navigate to `http://localhost:8888`
 
