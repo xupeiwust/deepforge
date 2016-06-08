@@ -178,6 +178,8 @@ define([
         });
     };
 
+    var returnToLastPipeline = () => 
+        WebGMEGlobal.State.registerActiveObject(window.DeepForge.lastPipeline);
     return {
         // Meta nodes
         MyPipelines_META: [
@@ -213,6 +215,14 @@ define([
                 name: 'Upload artifact',
                 icon: 'swap_vert',
                 action: uploadArtifact
+            }
+        ],
+        Operation_META: [
+            {
+                name: 'Return to Pipeline',
+                icon: 'input',
+                filter: () => window.DeepForge && window.DeepForge.lastPipeline,
+                action: returnToLastPipeline
             }
         ],
 

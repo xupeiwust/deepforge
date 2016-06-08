@@ -37,14 +37,19 @@ define([
             base = this.client.getNode(node.getMetaTypeId()),
             isMeta = base && base.getId() === node.getId(),
             suffix = isMeta ? '_META' : '',
+            actions,
             basename;
 
-        while (base && !ACTIONS[basename]) {
+        while (base && !(actions && actions.length)) {
             basename = base.getAttribute('name') + suffix;
             base = this.client.getNode(base.getBaseId());
+            actions = ACTIONS[basename];
+            if (actions) {
+                actions = actions.filter(action => !action.filter || action.filter());
+            }
         }
 
-        return ACTIONS[basename] || [];
+        return actions || [];
     };
 
     ForgeActionButton.prototype.onNodeLoad = function(nodeId) {
