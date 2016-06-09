@@ -12,6 +12,7 @@ Install dependencies:
 + npm (version 2.x)
 + Torch7
 + MongoDB
++ [git-lfs](https://git-lfs.github.com/)
 
 First, start mongodb locally.
 ```
