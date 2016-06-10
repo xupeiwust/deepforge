@@ -264,6 +264,7 @@ define([
             inputs;
 
         // Execute any special operation types here - not on an executor
+        this.logger.debug(`Executing operation "${name}"`);
         if (localTypeId !== null) {
             return this.executeLocalOperation(localTypeId, node);
         } else {
@@ -485,7 +486,7 @@ define([
                     });
 
                 // For all the nextPortIds, decrement the corresponding operation's incoming counts
-                hasReadyOps = resultPorts.map(id => this.opFor[id])
+                hasReadyOps = nextPortIds.map(id => this.getSiblingIdContaining(id))
                     .reduce((l1, l2) => l1.concat(l2), [])
 
                     // decrement the incoming counts for each operation id
@@ -493,7 +494,7 @@ define([
                     .indexOf(0) > -1;
 
                 this.completedCount++;
-                this.logger.info(`Operation "${name}" completed. ` + 
+                this.logger.debug(`Operation "${name}" completed. ` + 
                     `${this.totalCount - this.completedCount} remaining.`);
                 if (hasReadyOps) {
                     this.executeReadyOperations();
@@ -543,10 +544,6 @@ define([
             .then(inputs => {
                 // For each input, match the connection with the input name
                 //   [ name, type ] => [ name, type, node ]
-                if (inputs.length > 1) {
-                    this.logger.warn('multiple inputs not yet fully supported!');
-                }
-
                 // For each input,
                 //  - create the deserializer
                 //  - put it in inputs/<name>/init.lua
