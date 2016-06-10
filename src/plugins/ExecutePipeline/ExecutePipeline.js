@@ -39,6 +39,8 @@ define([
         CreateExecution.call(this);
         this.pluginMetadata = pluginMetadata;
 
+        this._currentSave = Q();
+
         // Cache
         this.nodes = {};
 
@@ -110,6 +112,16 @@ define([
         })
         .then(() => this.executePipeline())
         .fail(e => this.logger.error(e));
+    };
+
+    // Override 'save' to prevent race conditions while saving
+    ExecutePipeline.prototype.save = function (msg) {
+        // When 'save'  is called, it should still finish any current save op
+        // before continuing
+        this._currentSave = this._currentSave
+            .then(() => CreateExecution.prototype.save.call(this, msg));
+
+        return this._currentSave;
     };
 
     ExecutePipeline.prototype.clearResults = function () {
