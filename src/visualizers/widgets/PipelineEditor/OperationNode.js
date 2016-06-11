@@ -60,6 +60,20 @@ define([
         this._visiblePorts = null;
     };
 
+    OperationNode.prototype.removePort = function(id) {
+        // Find the given port and remove it
+        [this.inputs, this.outputs]  // Look for the port in both lists
+            .forEach(ports => {
+                var port = ports.find(p => p.id === id),
+                    i;
+
+                if (port) {
+                    i = ports.indexOf(port);
+                    ports.splice(i, 1);
+                }
+            });
+    };
+
     OperationNode.prototype.updatePort = function(/*desc*/) {
         // TODO
     };
