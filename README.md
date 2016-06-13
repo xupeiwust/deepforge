@@ -1,4 +1,4 @@
-[![Release State](https://img.shields.io/badge/state-pre--alpha-red.svg)](https://img.shields.io/badge/state-pre--alpha-red.svg)
+[![Release State](https://img.shields.io/badge/state-alpha-orange.svg)](https://img.shields.io/badge/state-alpha-orange.svg)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 [![Build Status](https://travis-ci.org/dfst/deepforge.svg?branch=master)](https://travis-ci.org/dfst/deepforge)
 [![Join the chat at https://gitter.im/dfst/deepforge](https://badges.gitter.im/dfst/deepforge.svg)](https://gitter.im/dfst/deepforge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

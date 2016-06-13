@@ -8,7 +8,7 @@
     "test": "node ./node_modules/mocha/bin/mocha --recursive test",
     "watch-test": "./node_modules/nodemon/bin/nodemon.js --exec 'node ./node_modules/mocha/bin/mocha --recursive test'"
   },
-  "version": "0.4.0",
+  "version": "0.5.0",
   "dependencies": {
     "dotenv": "^2.0.0",
     "lodash.difference": "^4.1.2",
