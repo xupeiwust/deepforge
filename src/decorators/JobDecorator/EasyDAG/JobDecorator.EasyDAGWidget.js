@@ -32,6 +32,7 @@ define([
         options.skipAttributes = {
             name: true,
             status: true,
+            execFiles: true,
             stdout: true,
             debug: true
         };

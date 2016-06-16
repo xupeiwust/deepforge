@@ -429,8 +429,7 @@ define([
                     this.outputLineCount[jobId] = actualLine + 1;
                     return executor.getOutput(hash, currentLine, actualLine+1)
                         .then(outputLines => {
-                            var job = this.nodes[jobId],
-                                stdout = this.core.getAttribute(job, 'stdout'),
+                            var stdout = this.core.getAttribute(job, 'stdout'),
                                 output = outputLines.map(o => o.output).join(''),
                                 jobName = this.core.getAttribute(job, 'name');
 
@@ -462,7 +461,6 @@ define([
             .then(stdout => {
                 this.core.setAttribute(job, 'stdout', stdout);
                 if (info.status !== 'SUCCESS') {
-                    name = this.core.getAttribute(this.nodes[opId], 'name');
                     // Download all files
                     this.result.addArtifact(info.resultHashes[name + '-all-files']);
                     // Set the job to failed! Store the error
@@ -470,7 +468,6 @@ define([
                     this.logger.info(`Setting ${jobId} status to "fail"`);
                     this.onPipelineComplete(`Operation "${opId}" failed! ${JSON.stringify(info)}`);  // Failed
                 } else {
-                    name = this.core.getAttribute(this.nodes[opId], 'name');
                     if (this.debug) {
                         this.result.addArtifact(info.resultHashes[name + '-all-files']);
                     }

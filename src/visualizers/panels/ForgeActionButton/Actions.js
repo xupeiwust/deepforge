@@ -114,11 +114,24 @@ define([
         };
     });
 
+    ////////////// Downloading files //////////////
+    var downloadAttrs = [
+            'data',
+            'execFiles'
+        ],
+        download = {};
+
+    downloadAttrs.forEach(attr => {
+        download[attr] = function() {
+            return downloadButton.call(this, attr);
+        };
+    });
+
     // Add download model button
-    var downloadButton = function() {
+    var downloadButton = function(attr) {
         var id = this._currentNodeId,
             node = this.client.getNode(id),
-            hash = node.getAttribute('data');
+            hash = node.getAttribute(attr);
 
         if (hash) {
             return '/rest/blob/download/' + hash;
@@ -231,7 +244,14 @@ define([
             {
                 name: 'Download',
                 icon: 'play_for_work',
-                href: downloadButton  // function to create href url
+                href: download.data  // function to create href url
+            }
+        ],
+        Job: [
+            {
+                name: 'Download Execution Files',
+                icon: 'play_for_work',
+                href: download.execFiles
             }
         ],
         Pipeline: [
