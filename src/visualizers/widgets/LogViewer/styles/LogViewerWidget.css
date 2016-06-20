@@ -7,4 +7,29 @@
  */
 
 .log-viewer {
-  outline: none; }
+  outline: none;
+}
+.log-viewer .ansi-black {
+    color: #000000;
+}
+.log-viewer .ansi-red {
+    color: rgb(194, 54, 33);
+}
+.log-viewer .ansi-green {
+    color: rgb(37, 188, 36);
+}
+.log-viewer .ansi-yellow {
+    color: rgb(173, 173, 39);
+}
+.log-viewer .ansi-blue {
+    color: rgb(73, 46, 225);
+}
+.log-viewer .ansi-magenta {
+    color: rgb(211, 56, 211);
+}
+.log-viewer .ansi-cyan {
+    color: rgb(51, 187, 200);
+}
+.log-viewer .ansi-gray {
+    color: rgb(203, 204, 205);
+}
