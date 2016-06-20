@@ -129,12 +129,19 @@ define([
         return this._currentSave;
     };
 
+    ExecutePipeline.prototype.isInputData = function (node) {
+        var prnt = this.core.getParent(node);
+        return this.core.isTypeOf(prnt, this.META.Inputs);
+    };
+
     ExecutePipeline.prototype.clearResults = function () {
         var nodes = Object.keys(this.nodes).map(id => this.nodes[id]);
         // Clear the pipeline's results
         this.logger.info('Clearing all intermediate execution results');
 
         nodes.filter(node => this.core.isTypeOf(node, this.META.Data))
+            // Only input data nodes should be cleared. Outputs will be overwritten
+            .filter(node => this.isInputData(node))
             .forEach(conn => this.core.delAttribute(conn, 'data'));
 
         // Set the status for each job to 'pending'
