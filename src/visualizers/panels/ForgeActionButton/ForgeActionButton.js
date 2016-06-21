@@ -2,6 +2,7 @@
 /*jshint browser: true*/
 
 define([
+    'blob/BlobClient',
     'js/Constants',
     'panel/FloatingActionButton/FloatingActionButton',
     'deepforge/viz/PipelineControl',
@@ -12,6 +13,7 @@ define([
     'q',
     'text!./PluginConfig.json'
 ], function (
+    BlobClient,
     CONSTANTS,
     PluginButton,
     PipelineControl,
@@ -29,6 +31,9 @@ define([
         this._pluginConfig = JSON.parse(PluginConfig);
         this._client = this.client;
         this._actions = [];
+        this._blobClient = new BlobClient({
+            logger: this.logger.fork('BlobClient')
+        });
 
         this.logger.debug('ctor finished');
     };
@@ -196,6 +201,42 @@ define([
         });
 
         AddNodeDialog.prompt(types, deferred.resolve);
+        return deferred.promise;
+    };
+
+    ForgeActionButton.prototype.uploadFile = function(event) {
+        var deferred = Q.defer(),
+            file,
+
+            files,
+            afName,
+            artifact;
+
+        // cancel event and hover styling
+        event.stopPropagation();
+        event.preventDefault();
+
+        // fetch FileList object
+        files = event.target.files || event.dataTransfer.files;
+
+        // should only receive one file
+        if (files && files.length > 0) {
+            if (files.length > 1) {
+                this.logger.warn('Received multiple files. Using only the first');
+            }
+
+            afName = 'imported-architecture';
+            artifact = this._blobClient.createArtifact(afName);
+
+            file = files[0];
+            artifact.addFileAsSoftLink(file.name, file, (err, hash) => {
+                if (err) {
+                    deferred.reject(err);
+                    return;
+                }
+                deferred.resolve(hash);
+            });
+        }
         return deferred.promise;
     };
 

@@ -81,7 +81,10 @@ define([
                 return this.save('ImportTorch updated model.');
             })
             .then(() => {  // changes saved successfully
+                var name = this.core.getAttribute(this.tgtNode, 'name');
                 this.result.setSuccess(true);
+                this.createMessage(this.tgtNode,
+                    `Successfully imported ${name} architecture`);
                 callback(null, this.result);
             })
             .fail(err =>
