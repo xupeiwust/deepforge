@@ -8,7 +8,7 @@ define([
     'q',
     'text!./metadata.json',
     './templates/index',
-    './LocalExecutor',
+    'deepforge/plugin/LocalExecutor',
     'executor/ExecutorClient',
     'underscore'
 ], function (
@@ -278,7 +278,7 @@ define([
     ExecutePipeline.prototype.executeOperation = function (jobId) {
         var node = this.getOperation(jobId),
             name = this.core.getAttribute(node, 'name'),
-            localTypeId = this.getLocalOpType(node),
+            localTypeId = this.getLocalOperationType(node),
             artifact,
             artifactName,
             files,
@@ -810,21 +810,6 @@ define([
     };
 
     //////////////////////////// Special Operations ////////////////////////////
-    ExecutePipeline.prototype.getLocalOpType = function (node) {
-        var type;
-        for (var i = LocalExecutor.TYPES.length; i--;) {
-            type = LocalExecutor.TYPES[i];
-            if (!this.META[type]) {
-                this.logger.warn(`Missing local operation: ${type}`);
-                continue;
-            }
-            if (this.isMetaTypeOf(node, this.META[type])) {
-                return type;
-            }
-        }
-        return null;
-    };
-
     ExecutePipeline.prototype.executeLocalOperation = function (type, node) {
         // Retrieve the given LOCAL_OP type
         if (!this[type]) {

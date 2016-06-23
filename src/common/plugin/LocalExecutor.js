@@ -61,13 +61,13 @@ define([
             })
             .then(matchingArtifact => {
                 hash = matchingArtifact && this.core.getAttribute(matchingArtifact, 'data');
-                // If no hash, just 
+                // If no hash, just continue (the subsequent ops will receive 'nil')
                 if (!hash) {
                     return this.onOperationComplete(node);
                 } else {
                     return this.getOutputs(node)
-                        .then(outputTuples => {
-                            var outputs = outputTuples.map(tuple => tuple[2]),
+                        .then(outputPairs => {
+                            var outputs = outputPairs.map(pair => pair[2]),
                                 paths;
 
                             paths = outputs.map(output => this.core.getPath(output));
@@ -145,13 +145,31 @@ define([
                 this.logger.info(`saving hashes: ${hashes.map(h => `"${h}"`)}`);
                 this.onOperationComplete(node);
             });
-
-        // Overwrite existing node w/ this name?
-        // TODO
     };
 
-    LocalExecutor.TYPES = Object.keys(LocalExecutor.prototype)
-        .filter(name => name.indexOf('_') !== 0);
+    // Helper methods
+    LocalExecutor.prototype.getLocalOperationType = function(node) {
+        var type;
+        for (var i = LocalExecutor.OPERATIONS.length; i--;) {
+            type = LocalExecutor.OPERATIONS[i];
+            if (!this.META[type]) {
+                this.logger.warn(`Missing local operation: ${type}`);
+                continue;
+            }
+            if (this.isMetaTypeOf(node, this.META[type])) {
+                return type;
+            }
+        }
+        return null;
+    };
+
+    LocalExecutor.prototype.isLocalOperation = function(node) {
+        return !!this.getLocalOperationType(node);
+    };
+
+    LocalExecutor.OPERATIONS = Object.keys(LocalExecutor.prototype)
+        .filter(name => name.indexOf('_') !== 0)
+        .filter(name => name !== 'isLocalOperation' && name !== 'getLocalOperationType');
     
     return LocalExecutor;
 });
