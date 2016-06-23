@@ -61,13 +61,13 @@ define([
             })
             .then(matchingArtifact => {
                 hash = matchingArtifact && this.core.getAttribute(matchingArtifact, 'data');
-                // If no hash, just 
+                // If no hash, just continue (the subsequent ops will receive 'nil')
                 if (!hash) {
                     return this.onOperationComplete(node);
                 } else {
                     return this.getOutputs(node)
-                        .then(outputTuples => {
-                            var outputs = outputTuples.map(tuple => tuple[2]),
+                        .then(outputPairs => {
+                            var outputs = outputPairs.map(pair => pair[2]),
                                 paths;
 
                             paths = outputs.map(output => this.core.getPath(output));
@@ -145,9 +145,6 @@ define([
                 this.logger.info(`saving hashes: ${hashes.map(h => `"${h}"`)}`);
                 this.onOperationComplete(node);
             });
-
-        // Overwrite existing node w/ this name?
-        // TODO
     };
 
     // Helper methods
