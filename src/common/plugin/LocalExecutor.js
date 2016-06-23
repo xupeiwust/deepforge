@@ -150,8 +150,29 @@ define([
         // TODO
     };
 
-    LocalExecutor.TYPES = Object.keys(LocalExecutor.prototype)
-        .filter(name => name.indexOf('_') !== 0);
+    // Helper methods
+    LocalExecutor.prototype.getLocalOperationType = function(node) {
+        var type;
+        for (var i = LocalExecutor.OPERATIONS.length; i--;) {
+            type = LocalExecutor.OPERATIONS[i];
+            if (!this.META[type]) {
+                this.logger.warn(`Missing local operation: ${type}`);
+                continue;
+            }
+            if (this.isMetaTypeOf(node, this.META[type])) {
+                return type;
+            }
+        }
+        return null;
+    };
+
+    LocalExecutor.prototype.isLocalOperation = function(node) {
+        return !!this.getLocalOperationType(node);
+    };
+
+    LocalExecutor.OPERATIONS = Object.keys(LocalExecutor.prototype)
+        .filter(name => name.indexOf('_') !== 0)
+        .filter(name => name !== 'isLocalOperation' && name !== 'getLocalOperationType');
     
     return LocalExecutor;
 });
