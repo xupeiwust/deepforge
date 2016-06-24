@@ -61,7 +61,7 @@ define([
             .attr('ry', 1)
             .attr('height', 1)
             .attr('width', 1)
-            .attr('fill', 'red');
+            .attr('fill', '#f44336');
 
 
         this.panel.transition()
@@ -77,7 +77,6 @@ define([
             .each('end', () => {
                 // Add the given nodes to the panel
                 this.showNodes(nodes, deferred.resolve);
-                //setTimeout(this.destroyIfInactive.bind(this), CLOSING_GRACE);
             });
 
         // Event handling
