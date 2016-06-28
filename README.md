@@ -20,8 +20,8 @@ Next, follow the postinstall instructions to start MongoDB and DeepForge!
 
 Finally, navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more, detailed instructions,check out our [wiki](https://github.com/dfst/deepforge/wiki/Installation-Guide).
 
-## Caffe Support?
-DeepForge uses Torch to perform the actual training and testing of the models. If you are interested in DeepForge using Caffe for actual training and testing, check out [DeepForge-Caffe](https://github.com/dfst/deepforge-caffe).
 
 ## Interested in contributing?
 Contributions are welcome! Either fork the project and submit some PR's or shoot me an email about getting more involved!
+
+Sponsored by [Digital Reasoning](http://www.digitalreasoning.com/)
