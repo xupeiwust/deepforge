@@ -7,7 +7,7 @@ var config = require('./config.webgme'),
 require('dotenv').load({silent: true});
 
 // Add/overwrite any additional settings here
-config.server.port = process.env.PORT || config.server.port;
+config.server.port = +process.env.PORT || config.server.port;
 config.mongo.uri = process.env.MONGO_URI || config.mongo.uri;
 config.requirejsPaths.deepforge = './src/common';
 config.seedProjects.defaultProject = 'project';
