@@ -118,7 +118,7 @@ define([
                 this.core.addMember(this.activeNode, 'executions', tgtNode);
 
                 return this.project.createTag(
-                    execName.replace(/ /g, '_'),
+                    execName.replace(/[ -]/g, '_'),
                     this.currentHash
                 );
             })
