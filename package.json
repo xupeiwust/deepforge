@@ -9,7 +9,7 @@
     "watch-test": "./node_modules/nodemon/bin/nodemon.js --exec 'node ./node_modules/mocha/bin/mocha --recursive test'",
     "build-nn": "node ./utils/nn-parser.js"
   },
-  "version": "0.7.0",
+  "version": "0.8.0",
   "dependencies": {
     "dotenv": "^2.0.0",
     "lodash.difference": "^4.1.2",
