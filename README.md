@@ -18,7 +18,7 @@ curl -o- https://raw.githubusercontent.com/dfst/deepforge/master/install.sh | ba
 
 Next, start deepforge with `deepforge start`!
 
-Finally, navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more, detailed instructions,check out our [wiki](https://github.com/dfst/deepforge/wiki/Installation-Guide).
+Finally, navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more, detailed instructions, check out the [wiki](https://github.com/dfst/deepforge/wiki/Installation-Guide).
 
 ## Interested in contributing?
 Contributions are welcome! Either fork the project and submit some PR's or shoot me an email about getting more involved!
