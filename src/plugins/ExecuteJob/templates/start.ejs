@@ -15,8 +15,10 @@ var COMMAND_PREFIX = '<%= START_CMD %>',
     requirejs = require('webgme').requirejs;
 
 requirejs([
+    'q',
     'blob/BlobClient'
 ], function(
+    Q,
     BlobClient
 ) {
     var url = process.env.ORIGIN_URL || 'http://127.0.0.1:8888',
@@ -74,9 +76,31 @@ requirejs([
         process.stdout.write(result.join('\n'));
     };
 
-    // Run 'th init.lua' and merge the stdout, stderr
-    var job = spawn('th', ['init.lua']);
-    job.stdout.on('data', onStdout);
-    job.stderr.on('data', data => process.stdout.write(data));
-    job.on('close', code => process.exit(code));
+    var getData = function(ipath, hash) {
+        // Download the data and put it in the given path
+        var deferred = Q.defer();
+
+        return blobClient.getObject(hash)
+            .then(buffer => fs.writeFile(ipath, buffer, (err, result) => {
+                if (err) {
+                    console.error('Retrieving ' + ipath + ' failed!');
+                    deferred.reject(err);
+                }
+                console.error('Retrieved ' + ipath);
+                deferred.resolve(err);
+            }));
+    };
+
+    // Download the large files
+    var inputData = JSON.parse(fs.readFileSync('./input-data.json')),
+        inputPaths = Object.keys(inputData);
+
+    // Request the data from the blob
+    Q.all(inputPaths.map(ipath => getData(ipath, inputData[ipath]))).then(() => {
+        // Run 'th init.lua' and merge the stdout, stderr
+        var job = spawn('th', ['init.lua']);
+        job.stdout.on('data', onStdout);
+        job.stderr.on('data', data => process.stdout.write(data));
+        job.on('close', code => process.exit(code));
+    });
 });

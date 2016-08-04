@@ -340,17 +340,19 @@ define([
                     );
                 })
                 .then(mds => {
-                    // get (input, filename) tuples
+                    // Record the large files
+                    var inputData = {};
                     mds.forEach((metadata, i) => {
                         // add the hashes for each input
                         var input = inputs[i], 
                             name = metadata.name,
                             hash = files.inputAssets[input];
 
-                        data['inputs/' + input + '/' + name] = hash;
+                        inputData['inputs/' + input + '/' + name] = hash;
                     });
 
                     delete files.inputAssets;
+                    files['input-data.json'] = JSON.stringify(inputData, null, 2);
 
                     // Add pointer assets
                     Object.keys(files.ptrAssets)
