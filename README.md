@@ -16,6 +16,12 @@ Simply run the following command to install deepforge with its dependencies:
 curl -o- https://raw.githubusercontent.com/dfst/deepforge/master/install.sh | bash
 ```
 
+Or, if you already have NodeJS (v6) installed, simply run
+
+```
+npm install -g deepforge
+```
+
 Next, start deepforge with `deepforge start`!
 
 Finally, navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more, detailed instructions, check out the [wiki](https://github.com/dfst/deepforge/wiki/Installation-Guide).
