@@ -53,6 +53,7 @@ define([
         this._oldMetadataByName = {};  // name -> id
         this.lastAppliedCmd = {};
         this.canceled = false;
+        this.changes = {};
         this.logManager = null;
     };
 
@@ -80,7 +81,7 @@ define([
     ExecuteJob.prototype.main = function (callback) {
         // Check the activeNode to make sure it is a valid node
         var type = this.core.getMetaType(this.activeNode),
-            typeName = type && this.core.getAttribute(type, 'name');
+            typeName = type && this.getAttribute(type, 'name');
 
         if (typeName !== 'Job') {
             return callback(`Cannot execute ${typeName} (expected Job)`, this.result);
@@ -116,10 +117,90 @@ define([
         });
     };
 
+    ExecuteJob.prototype.delAttribute = function (node, attr) {
+        return this.setAttribute(node, attr, null);
+    };
+
+    ExecuteJob.prototype.setAttribute = function (node, attr, value) {
+        var nodeId = this.core.getPath(node);
+
+        if (!this.changes[nodeId]) {
+            this.changes[nodeId] = {};
+        }
+        this.changes[nodeId][attr] = value;
+    };
+
+    ExecuteJob.prototype.getAttribute = function (node, attr) {
+        var nodeId = this.core.getPath(node),
+            base,
+            baseId;
+
+        // Check the changes; fallback on actual node
+        if (this.changes[nodeId] && this.changes[nodeId][attr] !== undefined) {
+            // If deleted the attribute, get the default (inherited) value
+            if (this.changes[nodeId][attr] === null) {
+                base = this.core.getBase(node);
+                baseId = this.core.getPath(base);
+                return this.getAttribute(baseId, attr);
+            }
+            return this.changes[nodeId][attr];
+        }
+
+        return this.core.getAttribute(node, attr);
+    };
+
+    ExecuteJob.prototype._applyNodeChanges = function (node, changes) {
+        var attr,
+            value;
+
+        for (var i = changes.length; i--;) {
+            attr = changes[i][0];
+            value = changes[i][1];
+            if (value !== null) {
+                this.core.setAttribute(node, attr, value);
+            } else {
+                this.core.delAttribute(node, attr);
+            }
+        }
+        return node;
+    };
+
+    ExecuteJob.prototype.applyChanges = function () {
+        var nodeIds = Object.keys(this.changes),
+            attrs,
+            value,
+            changes,
+            promises = [],
+            changesFor = {},
+            id,
+            promise;
+
+        for (var i = nodeIds.length; i--;) {
+            changes = [];
+            attrs = Object.keys(this.changes[nodeIds[i]]);
+            for (var a = attrs.length; a--;) {
+                value = this.changes[nodeIds[i]][attrs[a]];
+                changes.push([attrs[a], value]);
+            }
+            changesFor[nodeIds[i]] = changes;
+            promise = this.core.loadByPath(this.rootNode, nodeIds[i]);
+            promises.push(promise);
+        }
+
+        this.changes = {};
+        return Q.all(promises).then(nodes => {
+            for (var i = nodes.length; i--;) {
+                id = this.core.getPath(nodes[i]);
+                this._applyNodeChanges(nodes[i], changesFor[id]);
+            }
+        });
+    };
+
     // Override 'save' to notify the user on fork
     ExecuteJob.prototype.save = function (msg) {
-        var name = this.core.getAttribute(this.activeNode, 'name');
+        var name = this.getAttribute(this.activeNode, 'name');
         return this.updateForkName(name)
+            .then(() => this.applyChanges())
             .then(() => PluginBase.prototype.save.call(this, msg))
             .then(result => {
                 var msg;
@@ -168,7 +249,7 @@ define([
             conns,
             executionNode = this.core.getParent(this.activeNode);
 
-        this.pipelineName = this.core.getAttribute(executionNode, 'name');
+        this.pipelineName = this.getAttribute(executionNode, 'name');
         return this.core.loadSubTree(executionNode)
             .then(nodes => {
                 this.inputPortsFor = {};
@@ -210,9 +291,9 @@ define([
                     child = jobChildren[i];
                     if (this.isMetaTypeOf(child, this.META.Metadata)) {
                         id = this.core.getPath(child);
-                        name = this.core.getAttribute(child, 'name');
+                        name = this.getAttribute(child, 'name');
                         base = this.core.getBase(child);
-                        type = this.core.getAttribute(base, 'name');
+                        type = this.getAttribute(base, 'name');
 
                         this._markForDeletion[nodeId][id] = child;
                         // namespace by metadata type
@@ -245,8 +326,8 @@ define([
         delete this.lastAppliedCmd[nodeId];
         delete this._markForDeletion[nodeId];
 
-        this.core.delAttribute(job, 'jobId');
-        this.core.delAttribute(job, 'secret');
+        this.delAttribute(job, 'jobId');
+        this.delAttribute(job, 'secret');
     };
 
     ExecuteJob.prototype.resultMsg = function(msg) {
@@ -256,10 +337,10 @@ define([
 
     ExecuteJob.prototype.onOperationCanceled = function(op) {
         var job = this.core.getParent(op),
-            name = this.core.getAttribute(op, 'name'),
+            name = this.getAttribute(op, 'name'),
             msg = `"${name}" canceled!`;
 
-        this.core.setAttribute(job, 'status', 'canceled');
+        this.setAttribute(job, 'status', 'canceled');
         this.resultMsg(msg);
         this.onComplete(op, null);
     };
@@ -269,14 +350,14 @@ define([
     ExecuteJob.prototype.onComplete = function (opNode, err) {
         var job = this.core.getParent(opNode),
             exec = this.core.getParent(job),
-            name = this.core.getAttribute(job, 'name'),
+            name = this.getAttribute(job, 'name'),
             jobId = this.core.getPath(job),
             status = err ? 'fail' : (this.canceled ? 'canceled' : 'success'),
             msg = err ? `${name} execution failed!` :
                 `${name} executed successfully!`,
             promise = Q();
 
-        this.core.setAttribute(job, 'status', status);
+        this.setAttribute(job, 'status', status);
         this.logger.info(`Setting ${name} (${jobId}) status to ${status}`);
         this.clearOldMetadata(job);
 
@@ -286,10 +367,10 @@ define([
         }
         if (err) {
             this.logger.warn(`${name} failed: ${err}`);
-            this.core.setAttribute(exec, 'status', 'failed');
+            this.setAttribute(exec, 'status', 'failed');
         } else if (this.canceled) {
             // Should I set this to 'canceled'?
-            this.core.setAttribute(exec, 'status', 'canceled');
+            this.setAttribute(exec, 'status', 'canceled');
         } else {
             // Check if all the other jobs are successful. If so, set the
             // execution status to 'success'
@@ -301,16 +382,16 @@ define([
 
                     for (var i = nodes.length; i--;) {
                         type = this.core.getMetaType(nodes[i]);
-                        typeName = this.core.getAttribute(type, 'name');
+                        typeName = this.getAttribute(type, 'name');
 
                         if (typeName === 'Job' &&
-                            this.core.getAttribute(nodes[i], 'status') !== 'success') {
+                            this.getAttribute(nodes[i], 'status') !== 'success') {
                             execSuccess = false;
                         }
                     }
 
                     if (execSuccess) {
-                        this.core.setAttribute(exec, 'status', 'success');
+                        this.setAttribute(exec, 'status', 'success');
                     }
                 });
         }
@@ -347,14 +428,14 @@ define([
             '- Was this project created using a different blob location?'
         ].join('\n    ');
 
-        this.core.setAttribute(job, 'stdout', consoleErr);
+        this.setAttribute(job, 'stdout', consoleErr);
         this.onOperationFail(node, `Blob retrieval failed for "${name}": ${e}`);
     };
 
     ExecuteJob.prototype.executeJob = function (job) {
         return this.getOperation(job).then(node => {
             var jobId = this.core.getPath(job),
-                name = this.core.getAttribute(node, 'name'),
+                name = this.getAttribute(node, 'name'),
                 localTypeId = this.getLocalOperationType(node),
                 artifact,
                 artifactName,
@@ -482,7 +563,7 @@ define([
     };
 
     ExecuteJob.prototype.executeDistOperation = function (job, opNode, hash) {
-        var name = this.core.getAttribute(opNode, 'name'),
+        var name = this.getAttribute(opNode, 'name'),
             jobId = this.core.getPath(job),
             isHttps = typeof window === 'undefined' ? false :
                 window.location.protocol !== 'http:',
@@ -496,17 +577,17 @@ define([
 
         this.outputLineCount[jobId] = 0;
         // Set the job status to 'running'
-        this.core.setAttribute(job, 'status', 'queued');
-        this.core.delAttribute(job, 'stdout');
+        this.setAttribute(job, 'status', 'queued');
+        this.delAttribute(job, 'stdout');
         this.logManager.deleteLog(jobId);
         this.logger.info(`Setting ${jobId} status to "queued" (${this.currentHash})`);
         this.logger.debug(`Making a commit from ${this.currentHash}`);
         this.save(`Queued "${name}" operation in ${this.pipelineName}`)
             .then(() => executor.createJob({hash}))
             .then(info => {
-                this.core.setAttribute(job, 'jobId', info.hash);
+                this.setAttribute(job, 'jobId', info.hash);
                 if (info.secret) {  // o.w. it is a cached job!
-                    this.core.setAttribute(job, 'secret', info.secret);
+                    this.setAttribute(job, 'secret', info.secret);
                 }
                 return this.watchOperation(executor, hash, opNode, job);
             })
@@ -544,7 +625,7 @@ define([
         this.logger.info('Creating entry files...');
         return this.getOutputs(node)
             .then(outputs => {
-                var name = this.core.getAttribute(node, 'name'),
+                var name = this.getAttribute(node, 'name'),
                     content = {};
 
                 // inputs and outputs
@@ -597,13 +678,13 @@ define([
 
             return inheritanceLvl[aId] > inheritanceLvl[bId];
         }).map(node =>
-            `require './${this.core.getAttribute(node, 'name')}.lua'`
+            `require './${this.getAttribute(node, 'name')}.lua'`
         ).join('\n');
 
         // Create the class files
         classNodes.forEach(node => {
-            var name = this.core.getAttribute(node, 'name');
-            files[`classes/${name}.lua`] = this.core.getAttribute(node, 'code');
+            var name = this.getAttribute(node, 'name');
+            files[`classes/${name}.lua`] = this.getAttribute(node, 'code');
         });
 
         // Create the custom layers file
@@ -614,7 +695,7 @@ define([
         var isType = {};
         // Get all the custom layers
         for (var i = metanodes.length; i--;) {
-            if (this.core.getAttribute(metanodes[i], 'name') === name) {
+            if (this.getAttribute(metanodes[i], 'name') === name) {
                 isType[this.core.getPath(metanodes[i])] = true;
             }
         }
@@ -637,7 +718,7 @@ define([
 
         // Get the code definitions for each
         code = 'require \'nn\'\n\n' + customLayers
-            .map(node => this.core.getAttribute(node, 'code')).join('\n');
+            .map(node => this.getAttribute(node, 'code')).join('\n');
 
         // Create the custom layers file
         files['custom-layers.lua'] = code;
@@ -658,7 +739,7 @@ define([
                 //  - put it in inputs/<name>/init.lua
                 //  - copy the data asset to /inputs/<name>/init.lua
                 inputs = allInputs
-                    .filter(pair => !!this.core.getAttribute(pair[2], 'data'));  // remove empty inputs
+                    .filter(pair => !!this.getAttribute(pair[2], 'data'));  // remove empty inputs
 
                 files.inputAssets = {};  // data assets
                 return Q.all(inputs.map(pair => {
@@ -678,13 +759,13 @@ define([
                                 base,
                                 className;
 
-                            deserFn = this.core.getAttribute(fromNode, 'deserialize');
+                            deserFn = this.getAttribute(fromNode, 'deserialize');
 
                             if (this.isMetaTypeOf(node, this.META.Complex)) {
                                 // Complex objects are expected to define their own
                                 // (static) deserialize factory method
                                 base = this.core.getMetaType(node);
-                                className = this.core.getAttribute(base, 'name');
+                                className = this.getAttribute(base, 'name');
                                 deserFn = `return ${className}.deserialize(path)`;
                             }
 
@@ -698,7 +779,7 @@ define([
             .then(_tplContents => {
                 tplContents = _tplContents;
                 var hashes = inputs.map(pair => {
-                    var hash = this.core.getAttribute(pair[2], 'data');
+                    var hash = this.getAttribute(pair[2], 'data');
                     files.inputAssets[pair[0]] = hash;
                     return {
                         hash: hash,
@@ -731,7 +812,7 @@ define([
                 // Get the serialize functions for each
                     .map(tuple => {
                         var node = tuple[2],
-                            serFn = this.core.getAttribute(node, 'serialize');
+                            serFn = this.getAttribute(node, 'serialize');
 
                         if (this.isMetaTypeOf(node, this.META.Complex)) {
                             // Complex objects are expected to define their own
@@ -750,8 +831,8 @@ define([
         this.logger.info('Creating main file...');
         return this.getInputs(node)
             .then(inputs => {
-                var name = this.core.getAttribute(node, 'name'),
-                    code = this.core.getAttribute(node, 'code'),
+                var name = this.getAttribute(node, 'name'),
+                    code = this.getAttribute(node, 'code'),
                     pointers = this.core.getPointerNames(node).filter(ptr => ptr !== 'base'),
                     content = {
                         name: name
@@ -759,7 +840,7 @@ define([
 
                 // Get input data arguments
                 content.inputs = inputs
-                    .map(pair => [pair[0], !this.core.getAttribute(pair[2], 'data')]);  // remove empty inputs
+                    .map(pair => [pair[0], !this.getAttribute(pair[2], 'data')]);  // remove empty inputs
 
                 // Defined variables for each pointers
                 content.pointers = pointers
@@ -772,7 +853,7 @@ define([
 
                 // Set the line offset
                 var lineOffset = this.getLineOffset(files['main.lua'], code);
-                this.core.setAttribute(node, CONSTANTS.LINE_OFFSET, lineOffset);
+                this.setAttribute(node, CONSTANTS.LINE_OFFSET, lineOffset);
             });
     };
 
@@ -792,7 +873,7 @@ define([
         table = '{\n\t' + this.core.getAttributeNames(node)
             .filter(attr => skip.indexOf(attr) === -1)
             .map(name => {
-                var value = this.core.getAttribute(node, name);
+                var value = this.getAttribute(node, name);
                 if (!numRegex.test(value)) {
                     value = `"${value}"`;
                 }
@@ -801,7 +882,7 @@ define([
             .map(pair => pair.join(' = '))
             .join(',\n\t') + '\n}';
 
-        files['attributes.lua'] = `-- attributes of ${this.core.getAttribute(node, 'name')}\nreturn ${table}`;
+        files['attributes.lua'] = `-- attributes of ${this.getAttribute(node, 'name')}\nreturn ${table}`;
     };
 
     ExecuteJob.prototype.createPointers = function (node, files, cb) {
@@ -819,7 +900,7 @@ define([
             nIds.map(nId => this.getPtrCodeHash(nId))
         )
         .then(resultHashes => {
-            var name = this.core.getAttribute(node, 'name');
+            var name = this.getAttribute(node, 'name');
             this.logger.info(`Pointer generation for ${name} FINISHED!`);
             resultHashes.forEach((hash, index) => {
                 files.ptrAssets[`pointers/${pointers[index]}/init.lua`] = hash;
@@ -827,7 +908,7 @@ define([
             return cb(null, files);
         })
         .fail(e => {
-            this.logger.error(`Could not generate pointer files for ${this.core.getAttribute(node, 'name')}: ${e.toString()}`);
+            this.logger.error(`Could not generate pointer files for ${this.getAttribute(node, 'name')}: ${e.toString()}`);
             return cb(e);
         });
     };
@@ -844,14 +925,14 @@ define([
             opId = this.core.getPath(op),
             info,
             secret,
-            name = this.core.getAttribute(job, 'name');
+            name = this.getAttribute(job, 'name');
 
         // If canceled, stop the operation
         if (this.canceled) {
-            secret = this.core.getAttribute(job, 'secret');
+            secret = this.getAttribute(job, 'secret');
             if (secret) {
                 executor.cancelJob(hash, secret);
-                this.core.delAttribute(job, 'secret');
+                this.delAttribute(job, 'secret');
                 this.canceled = true;
                 return this.onOperationCanceled(op);
             }
@@ -868,7 +949,7 @@ define([
                     this.outputLineCount[jobId] = actualLine + 1;
                     return executor.getOutput(hash, currentLine, actualLine+1)
                         .then(outputLines => {
-                            var stdout = this.core.getAttribute(job, 'stdout'),
+                            var stdout = this.getAttribute(job, 'stdout'),
                                 output = outputLines.map(o => o.output).join(''),
                                 last = stdout.lastIndexOf('\n'),
                                 result,
@@ -898,18 +979,28 @@ define([
             })
             .then(() => {
                 if (info.status === 'CREATED' || info.status === 'RUNNING') {
-                    if (info.status === 'RUNNING' &&
-                        this.core.getAttribute(job, 'status') !== 'running') {
+                    var time = Date.now(),
+                        next = Q();
 
-                        this.core.setAttribute(job, 'status', 'running');
-                        this.save(`Started "${name}" operation in ${this.pipelineName}`);
+                    if (info.status === 'RUNNING' &&
+                        this.getAttribute(job, 'status') !== 'running') {
+
+                        this.setAttribute(job, 'status', 'running');
+                        next = this.save(`Started "${name}" operation in ${this.pipelineName}`);
                     }
 
-                    setTimeout(
-                        this.watchOperation.bind(this, executor, hash, op, job),
-                        ExecuteJob.UPDATE_INTERVAL
-                    );
-                    return;
+                    return next.then(() => {
+                        var delta = Date.now() - time;
+                            
+                        if (delta > ExecuteJob.UPDATE_INTERVAL) {
+                            return this.watchOperation(executor, hash, op, job);
+                        }
+
+                        setTimeout(
+                            this.watchOperation.bind(this, executor, hash, op, job),
+                            ExecuteJob.UPDATE_INTERVAL - delta
+                        );
+                    });
                 }
 
                 if (info.status === 'CANCELED') {
@@ -918,13 +1009,13 @@ define([
                     this.canceled = true;
                     return this.logManager.getLog(jobId)
                         .then(stdout => {
-                            this.core.setAttribute(job, 'stdout', stdout);
+                            this.setAttribute(job, 'stdout', stdout);
                             return this.onOperationCanceled(op);
                         });
                 }
 
                 if (info.status === 'SUCCESS' || info.status === 'FAILED_TO_EXECUTE') {
-                    this.core.setAttribute(job, 'execFiles', info.resultHashes[name + '-all-files']);
+                    this.setAttribute(job, 'execFiles', info.resultHashes[name + '-all-files']);
                     return this.blobClient.getArtifact(info.resultHashes.stdout)
                         .then(artifact => {
                             var stdoutHash = artifact.descriptor.content[STDOUT_FILE].content;
@@ -933,7 +1024,7 @@ define([
                         .then(stdout => {
                             // Parse the remaining code
                             var result = this.processStdout(job, stdout);
-                            this.core.setAttribute(job, 'stdout', result.stdout);
+                            this.setAttribute(job, 'stdout', result.stdout);
                             this.logManager.deleteLog(jobId);
                             if (info.status !== 'SUCCESS') {
                                 // Download all files
@@ -947,7 +1038,7 @@ define([
                 } else {  // something bad happened...
                     var err = `Failed to execute operation "${opId}": ${info.status}`,
                         consoleErr = `[0;31mFailed to execute operation: ${info.status}[0m`;
-                    this.core.setAttribute(job, 'stdout', consoleErr);
+                    this.setAttribute(job, 'stdout', consoleErr);
                     this.logger.error(err);
                     this.onOperationFail(op, err);
                 }
@@ -983,7 +1074,7 @@ define([
                         hash = outputData && outputData.content;
 
                     if (hash) {
-                        this.core.setAttribute(outputMap[name], 'data', hash);
+                        this.setAttribute(outputMap[name], 'data', hash);
                         this.logger.info(`Setting ${nodeId} data to ${hash}`);
                     }
                 });
@@ -1012,8 +1103,8 @@ define([
                 var bases = outputs.map(node => this.core.getMetaType(node));
                 // return [[arg1, Type1, node1], [arg2, Type2, node2]]
                 return outputs.map((node, i) => [
-                    this.core.getAttribute(node, 'name'),
-                    this.core.getAttribute(bases[i], 'name'),
+                    this.getAttribute(node, 'name'),
+                    this.getAttribute(bases[i], 'name'),
                     node
                 ]);
             });
@@ -1101,7 +1192,7 @@ define([
             });
 
             if (name) {
-                this.core.setAttribute(graph, 'name', name);
+                this.setAttribute(graph, 'name', name);
             }
         }
 
@@ -1126,9 +1217,9 @@ define([
         // Clean the points by removing and special characters
         x = x.replace(nonNum, '');
         y = y.replace(nonNum, '');
-        points = this.core.getAttribute(graph, 'points');
+        points = this.getAttribute(graph, 'points');
         points += `${x},${y};`;
-        this.core.setAttribute(graph, 'points', points);
+        this.setAttribute(graph, 'points', points);
     };
 
     ExecuteJob.prototype[CONSTANTS.GRAPH_CREATE_LINE] = function (job, graphId, id) {
@@ -1143,7 +1234,7 @@ define([
             base: this.META.Line,
             parent: graph
         });
-        this.core.setAttribute(line, 'name', name);
+        this.setAttribute(line, 'name', name);
         this._metadata[jobId + '/' + id] = line;
     };
 
@@ -1165,12 +1256,12 @@ define([
                     base: this.META.Image,
                     parent: job
                 });
-                this.core.setAttribute(imageNode, 'name', name);
+                this.setAttribute(imageNode, 'name', name);
             }
             this._metadata[id] = imageNode;
         }
 
-        this.core.setAttribute(imageNode, 'data', hash);
+        this.setAttribute(imageNode, 'data', hash);
     };
 
     ExecuteJob.prototype._getExistingMetadata = function (jobId, type, name) {
