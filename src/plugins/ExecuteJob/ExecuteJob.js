@@ -725,20 +725,32 @@ define([
                 })
                 .then(mds => {
                     // Record the large files
-                    var inputData = {};
+                    var inputData = {},
+                        runsh = '# Bash script to download data files and run job\n' +
+                        'if [ -z "$DEEPFORGE_URL" ]; then\n  echo "Please set DEEPFORGE_URL and' +
+                        ' re-run:"\n  echo ""  \n  echo "  DEEPFORGE_URL=http://my.' +
+                        'deepforge.server.com:8080 bash run.sh"\n  echo ""\n exit 1\nfi\n';
+
                     mds.forEach((metadata, i) => {
                         // add the hashes for each input
                         var input = inputs[i], 
-                            hash = files.inputAssets[input];
+                            hash = files.inputAssets[input],
+                            dataPath = 'inputs/' + input + '/data',
+                            url = this.blobClient.getRelativeDownloadURL(hash);
 
-                        inputData['inputs/' + input + '/data'] = {
+                        inputData[dataPath] = {
                             req: hash,
                             cache: metadata.content
                         };
+
+                        // Add to the run.sh file
+                        runsh += `wget $DEEPFORGE_URL${url} -O ${dataPath}\n`;
                     });
 
                     delete files.inputAssets;
                     files['input-data.json'] = JSON.stringify(inputData, null, 2);
+                    runsh += 'th init.lua';
+                    files['run.sh'] = runsh;
 
                     // Add pointer assets
                     Object.keys(files.ptrAssets)
