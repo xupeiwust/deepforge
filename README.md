@@ -28,9 +28,9 @@ Or, if you already have NodeJS (v6) installed, simply run
 npm install -g deepforge
 ```
 
-Next, start deepforge with `deepforge start`!
+Finally, start deepforge with `deepforge start`and navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more, detailed instructions, check out the [wiki](https://github.com/dfst/deepforge/wiki/Installation-Guide).
 
-Finally, navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more, detailed instructions, check out the [wiki](https://github.com/dfst/deepforge/wiki/Installation-Guide).
+**Note**: running deepforge w/ `deepforge start` will also require [MongoDB](https://www.mongodb.com/download-center?jmp=nav#community) to be installed locally.
 
 Also, be sure to check out the other available features of the `deepforge` cli; it can be used to update, manage your torch installation, uninstall deepforge and run individual components!
 
