@@ -230,6 +230,13 @@
         "panel": "src/visualizers/panels/ExecutionIndex",
         "secondary": false,
         "widget": "src/visualizers/widgets/ExecutionIndex"
+      },
+      "WorkerHeader": {
+        "src": "panels/WorkerHeader/WorkerHeaderPanel",
+        "title": "WorkerHeader",
+        "panel": "src/visualizers/panels/WorkerHeader",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/WorkerHeader"
       }
     },
     "addons": {},
@@ -289,6 +296,10 @@
       "JobLogsAPI": {
         "src": "src/routers/JobLogsAPI",
         "mount": "execution/logs"
+      },
+      "JobOriginAPI": {
+        "src": "src/routers/JobOriginAPI",
+        "mount": "job/origins"
       }
     }
   },

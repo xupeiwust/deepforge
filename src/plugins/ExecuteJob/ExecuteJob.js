@@ -9,7 +9,8 @@ define([
     'plugin/PluginBase',
     'deepforge/plugin/LocalExecutor',
     'deepforge/plugin/PtrCodeGen',
-    'deepforge/JobLogsClient',
+    'deepforge/api/JobLogsClient',
+    'deepforge/api/JobOriginClient',
     'deepforge/Constants',
     'deepforge/utils',
     './templates/index',
@@ -24,6 +25,7 @@ define([
     LocalExecutor,  // DeepForge operation primitives
     PtrCodeGen,
     JobLogsClient,
+    JobOriginClient,
     CONSTANTS,
     utils,
     Templates,
@@ -79,14 +81,16 @@ define([
     ExecuteJob.prototype.constructor = ExecuteJob;
 
     ExecuteJob.prototype.configure = function () {
-        var result = PluginBase.prototype.configure.apply(this, arguments);
+        var result = PluginBase.prototype.configure.apply(this, arguments),
+            params = {
+                logger: this.logger,
+                port: this.gmeConfig.server.port,
+                branchName: this.branchName,
+                projectId: this.projectId
+            };
 
-        this.logManager = new JobLogsClient({
-            logger: this.logger,
-            port: this.gmeConfig.server.port,
-            branchName: this.branchName,
-            projectId: this.projectId
-        });
+        this.logManager = new JobLogsClient(params);
+        this.originManager = new JobOriginClient(params);
         return result;
     };
 
@@ -863,10 +867,24 @@ define([
                 if (info.secret) {  // o.w. it is a cached job!
                     this.setAttribute(job, 'secret', info.secret);
                 }
-                return this.watchOperation(executor, hash, opNode, job);
+                return this.recordJobOrigin(hash, job);
             })
+            .then(() => this.watchOperation(executor, hash, opNode, job))
             .catch(err => this.logger.error(`Could not execute "${name}": ${err}`));
 
+    };
+
+    ExecuteJob.prototype.recordJobOrigin = function (hash, job) {
+        var execNode = this.core.getParent(job),
+            info;
+
+        info = {
+            hash: hash,
+            nodeId: this.core.getPath(job),
+            job: this.getAttribute(job, 'name'),
+            execution: this.getAttribute(execNode, 'name')
+        };
+        return this.originManager.record(hash, info);
     };
 
     ExecuteJob.prototype.createOperationFiles = function (node) {

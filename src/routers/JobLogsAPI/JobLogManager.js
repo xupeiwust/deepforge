@@ -71,7 +71,7 @@ JobLogManager.prototype.migrate = function(migrationInfo, jobIds) {
     }
 
     // Copy the job files and evaluate each of the finish functions
-    this.logger.info('migrating from ' + migrationInfo.srcBranch + ' to '+ migrationInfo.dstBranch);
+    this.logger.debug('migrating from ' + migrationInfo.srcBranch + ' to '+ migrationInfo.dstBranch);
     return Q.all(jobIds.map(jobId => {
         src = this._getFilePath({
             project: migrationInfo.project,
@@ -112,7 +112,7 @@ JobLogManager.prototype.appendTo = function(jobInfo, logs) {
         branchDirname = path.dirname(filename),
         projDirname = path.dirname(branchDirname);
 
-    this.logger.info(`Appending content to ${filename}`);
+    this.logger.debug(`Appending content to ${filename}`);
     // Make directory if needed
     return this.mkdirIfNeeded(this.rootDir)
         .then(() => this.mkdirIfNeeded(projDirname))
@@ -142,7 +142,7 @@ JobLogManager.prototype.delete = function(jobInfo) {
                 this.logger.debug(`Removing file ${filename}`);
                 return Q.nfcall(fs.unlink, filename);
             }
-            this.logger.info(`${filename} doesn't exist. No need to delete...`);
+            this.logger.debug(`${filename} doesn't exist. No need to delete...`);
         });
 };
 
