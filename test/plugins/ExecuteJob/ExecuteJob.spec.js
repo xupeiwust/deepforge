@@ -6,15 +6,20 @@ var testFixture = require('../../globals');
 describe('ExecuteJob', function () {
     var gmeConfig = testFixture.getGmeConfig(),
         expect = testFixture.expect,
+        Q = testFixture.Q,
         logger = testFixture.logger.fork('ExecuteJob'),
         PluginCliManager = testFixture.WebGME.PluginCliManager,
         projectName = 'testProject',
         pluginName = 'ExecuteJob',
         manager = new PluginCliManager(null, logger, gmeConfig),
+        PULSE = require('../../../src/common/Constants').PULSE,
         project,
         gmeAuth,
         storage,
-        commitHash;
+        commitHash,
+        nopPromise = () => {
+            return Q();
+        };
 
     before(function (done) {
         this.timeout(10000);
@@ -76,6 +81,7 @@ describe('ExecuteJob', function () {
             var context = {
                 project: project,
                 commitHash: commitHash,
+                namespace: 'pipeline',
                 branchName: 'test',
                 activeNode: '/K/R/p'  // hello world job
             };
@@ -117,7 +123,7 @@ describe('ExecuteJob', function () {
 
         it('should get correct attribute (from new node) before updating nodes', function(done) {
             // Run setAttribute on some node
-            var graphTmp = plugin.createNode('pipeline.Graph', node),
+            var graphTmp = plugin.createNode('Graph', node),
                 newVal = 'testGraph',
                 id = 'testId';
 
@@ -171,7 +177,7 @@ describe('ExecuteJob', function () {
 
         it('should update _metadata after applying changes', function(done) {
             // Run setAttribute on some node
-            var graphTmp = plugin.createNode('pipeline.Graph', node),
+            var graphTmp = plugin.createNode('Graph', node),
                 id = 'testId';
 
             plugin._metadata[id] = graphTmp;
@@ -206,7 +212,7 @@ describe('ExecuteJob', function () {
         // it has been saved/created
         it('should get changed attribute', function(done) {
             // Run setAttribute on some node
-            var graphTmp = plugin.createNode('pipeline.Graph', node),
+            var graphTmp = plugin.createNode('Graph', node),
                 id = 'testId';
 
             plugin._metadata[id] = node;
@@ -226,7 +232,7 @@ describe('ExecuteJob', function () {
 
         it('should get inherited attribute', function(done) {
             // Run setAttribute on some node
-            var graphTmp = plugin.createNode('pipeline.Graph', node),
+            var graphTmp = plugin.createNode('Graph', node),
                 id = 'testId',
                 val;
 
@@ -255,28 +261,28 @@ describe('ExecuteJob', function () {
 
         it('should stop the job if the execution is canceled', function(done) {
             var job = node,
-                hash = 'abc123',
-                exec = {
-                    cancelJob: jobHash => expect(jobHash).equal(hash)
-                };
+                hash = 'abc123';
 
             plugin.setAttribute(node, 'secret', 'abc');
             plugin.isExecutionCanceled = () => true;
             plugin.onOperationCanceled = () => done();
-            plugin.watchOperation(exec, hash, job, job);
+            plugin.executor = {
+                cancelJob: jobHash => expect(jobHash).equal(hash)
+            };
+            plugin.watchOperation(hash, job, job);
         });
 
         it('should stop the job if a job is canceled', function(done) {
             var job = node,
-                hash = 'abc123',
-                exec = {
-                    cancelJob: jobHash => expect(jobHash).equal(hash)
-                };
+                hash = 'abc123';
 
             plugin.setAttribute(job, 'secret', 'abc');
             plugin.canceled = true;
             plugin.onOperationCanceled = () => done();
-            plugin.watchOperation(exec, hash, job, job);
+            plugin.executor = {
+                cancelJob: jobHash => expect(jobHash).equal(hash)
+            };
+            plugin.watchOperation(hash, job, job);
         });
 
         it('should set exec to running', function(done) {
@@ -346,6 +352,109 @@ describe('ExecuteJob', function () {
                 content = files['attributes.lua'];
                 matches = content.match(boolString);
                 expect(matches).to.equal(null);
+            });
+        });
+    });
+
+    describe('resume detection', function() {
+        var mockPluginForJobStatus = function(gmeStatus, pulse, originBranch, shouldResume, done) {
+            plugin.setAttribute(node, 'status', gmeStatus);
+            plugin.setAttribute(node, 'jobId', 'asdfaa');
+            // Mocks:
+            //  - prepare should basically nop
+            //  - Should call 'resumeJob' or 'executeJob'
+            //  - should return origin branch
+            plugin.prepare = nopPromise;
+            plugin.pulseClient.check = () => Q().then(() => pulse);
+            plugin.originManager.getOrigin = () => Q().then(() => {
+                return {branch: originBranch};
+            });
+
+            plugin.pulseClient.update = nopPromise;
+            plugin.resumeJob = () => done(shouldResume ? null : 'Should not resume job!');
+            plugin.executeJob = () => done(shouldResume ? 'Should resume job!' : null);
+                
+            plugin.main();
+        };
+
+        beforeEach(preparePlugin);
+
+        // test using a table of gme status|pulse status|job status|should resume?
+        var names = ['gme', 'pulse', 'origin branch', 'expected to resume'],
+            title;
+
+        // gme status, pulse status, job status, should resume
+        [
+            // Should restart if running and the pulse is not found
+            ['running', PULSE.DEAD, 'test', true],
+
+            // Should restart if the pulse is not found
+            ['running', PULSE.DOESNT_EXIST, 'test', true],
+
+            // Should not restart if the plugin is alive
+            ['running', PULSE.ALIVE, 'test', false],
+
+            // Should not restart if the ui is not 'running'
+            ['failed', PULSE.DOESNT_EXIST, 'test', false],
+
+            // Should not restart if on incorrect branch (wrt origin branch)
+            ['running', PULSE.DOESNT_EXIST, 'master', false]
+
+        ].forEach(row => {
+            title = names.map((v, i) => `${v}: ${row[i]}`).join(' | ');
+            it(title, function(done) {
+                row.push(done);
+                mockPluginForJobStatus.apply(null, row);
+            });
+        });
+    });
+
+    describe('preparing', function() {
+        beforeEach(preparePlugin);
+
+        // should not delete child nodes during 'prepare' if resuming
+        it('should delete child metadata nodes', function(done) {
+            // Create a metadata node w/ a child
+            var graphId = plugin.createNode('Graph', plugin.activeNode);
+            plugin.createNode('Line', graphId);
+
+            plugin.save()
+                .then(() => plugin.prepare(true))
+                .then(() => {
+                    expect(plugin.deletions.length).to.equal(1);
+                })
+                .nodeify(done);
+        });
+
+        // should not mark any nodes for deletion during `prepare` if resuming
+        it('should mark nodes for deletion', function(done) {
+            var jobId = plugin.core.getPath(plugin.activeNode),
+                deleteIds;
+
+            // Create a metadata node
+            plugin.createNode('Graph', plugin.activeNode);
+
+            plugin.save()
+                .then(() => plugin.prepare(true))
+                .then(() => {
+                    deleteIds = Object.keys(plugin._markForDeletion[jobId]);
+                    expect(deleteIds.length).to.equal(1);
+                })
+                .nodeify(done);
+        });
+    });
+
+    describe('resume errors', function() {
+        beforeEach(preparePlugin);
+
+        it('should handle error if missing jobId', function(done) {
+            // Remove jobId
+            plugin.delAttribute(plugin.activeNode, 'runId');
+            plugin.startExecHeartBeat = () => {};
+            plugin.isResuming = () => Q(true);
+            plugin.main(function(err) {
+                expect(err).to.not.equal(null);
+                done();
             });
         });
     });

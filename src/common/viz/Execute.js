@@ -3,21 +3,31 @@
 define([
     'q',
     'executor/ExecutorClient',
+    'deepforge/api/ExecPulseClient',
+    'deepforge/api/JobOriginClient',
+    'deepforge/Constants',
     'panel/FloatingActionButton/styles/Materialize'
 ], function(
     Q,
     ExecutorClient,
+    ExecPulseClient,
+    JobOriginClient,
+    CONSTANTS,
     Materialize
 ) {
 
     var Execute = function(client, logger) {
         this.client = this.client || client;
         this.logger = this.logger || logger;
+        this.pulseClient = new ExecPulseClient({
+            logger: this.logger
+        });
         this._executor = new ExecutorClient({
             logger: this.logger.fork('ExecutorClient'),
             serverPort: WebGMEGlobal.gmeConfig.server.port,
             httpsecure: window.location.protocol === 'https:'
         });
+        this.originManager = new JobOriginClient({logger: this.logger});
     };
 
     Execute.prototype.executeJob = function(node) {
@@ -194,6 +204,81 @@ define([
         runningJobIds.forEach(job => this.silentStopJob(job));  // stop them
 
         return runningJobIds;
+    };
+
+    // Resuming Executions
+    Execute.prototype.checkJobExecution= function (job) {
+        var pipelineId = job.getParentId(),
+            pipeline = this.client.getNode(pipelineId);
+
+        // First check the parent execution. If it doesn't exist, then check the job
+        return this.checkPipelineExecution(pipeline)
+            .then(tryToStartJob => {
+                if (tryToStartJob) {
+                    return this._checkJobExecution(job);
+                }
+            });
+    };
+
+    Execute.prototype._checkJobExecution = function (job) {
+        var jobId = job.getAttribute('jobId'),
+            status = job.getAttribute('status');
+
+        if (status === 'running' && jobId) {
+            return this.pulseClient.check(jobId)
+                .then(status => {
+                    if (status !== CONSTANTS.PULSE.DOESNT_EXIST) {
+                        return this._onOriginBranch(jobId).then(onBranch => {
+                            if (onBranch) {
+                                this.runExecutionPlugin('ExecuteJob', {
+                                    node: job
+                                });
+                            }
+                        });
+                    } else {
+                        this.logger.warn(`Could not restart job: ${job.getId()}`);
+                    }
+                });
+        }
+        return Q();
+    };
+
+    Execute.prototype._onOriginBranch = function (hash) {
+        return this.originManager.getOrigin(hash)
+            .then(origin => {
+                var currentBranch = this.client.getActiveBranchName();
+                if (origin && origin.branch) {
+                    return origin.branch === currentBranch;
+                }
+                return false;
+            });
+    };
+
+    Execute.prototype.checkPipelineExecution = function (pipeline) {
+        var runId = pipeline.getAttribute('runId'),
+            status = pipeline.getAttribute('status'),
+            tryToStartJob = true;
+
+        if (status === 'running' && runId) {
+            return this.pulseClient.check(runId)
+                .then(status => {
+                    if (status === CONSTANTS.PULSE.DEAD) {
+                        // Check the origin branch
+                        return this._onOriginBranch(runId).then(onBranch => {
+                            if (onBranch) {
+                                this.runExecutionPlugin('ExecutePipeline', {
+                                    node: pipeline
+                                });
+                            }
+                        });
+                    }
+                    // only try to start if the pulse info doesn't exist
+                    tryToStartJob = status === CONSTANTS.PULSE.DOESNT_EXIST;
+                    return tryToStartJob;
+                });
+        } else {
+            return Q().then(() => tryToStartJob);
+        }
     };
 
     return Execute;

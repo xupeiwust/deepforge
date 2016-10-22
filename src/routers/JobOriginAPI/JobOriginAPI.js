@@ -1,17 +1,13 @@
 /*jshint node:true*/
 
-/**
- * This is an API to record the executor job hash to originating project, execution and job
- */
-
 'use strict';
 
-// This contains
 var express = require('express'),
     MONGO_COLLECTION = 'JobOrigins',
-    Q = require('q'),
+    utils = require('../utils'),
+    mongo,
     router = express.Router(),
-    mongodb = require('mongodb');
+    storage;
 
 /**
  * Called when the server is created but before it starts to listening to incoming requests.
@@ -32,11 +28,11 @@ function initialize(middlewareOpts) {
     var logger = middlewareOpts.logger.fork('JobOriginAPI'),
         gmeConfig = middlewareOpts.gmeConfig,
         ensureAuthenticated = middlewareOpts.ensureAuthenticated,
-        REQUIRED_FIELDS = ['hash', 'project', 'execution', 'job', 'nodeId', 'branch'],
-        mongo;
+        REQUIRED_FIELDS = ['hash', 'project', 'execution', 'job', 'nodeId', 'branch'];
+
+    storage = require('../storage')(logger, gmeConfig);
 
     logger.debug('initializing ...');
-
     // Ensure authenticated can be used only after this rule.
     router.use('*', function (req, res, next) {
         // This header ensures that any failures with authentication won't redirect.
@@ -48,15 +44,18 @@ function initialize(middlewareOpts) {
     router.use('*', ensureAuthenticated);
 
     // Connect to mongo...
-    Q.nfcall(mongodb.MongoClient.connect, gmeConfig.mongo.uri, gmeConfig.mongo.options)
-        .then(db => {
-            mongo = db.collection(MONGO_COLLECTION);
-            logger.debug('Connected to mongo!');
-        })
-        .catch(err => {
-            logger.error(`Could not connect to mongo: ${err}`);
-            throw err;
+
+    router.get('/', function (req, res) {
+        mongo.find().toArray((err, all) => {
+            if (err) {
+                return res.status(500).send(err);
+            }
+            res.json(all.map(entry => {
+                delete entry._id;
+                return entry;
+            }));
         });
+    });
 
     router.get('/:jobHash', function (req, res/*, next*/) {
         var hash = req.params.jobHash,
@@ -91,14 +90,12 @@ function initialize(middlewareOpts) {
             };
 
         // Check that none of the fields are undefined
-        logger.debug(`Storing job info for ${hash}`);
-        var fields = REQUIRED_FIELDS;
-        for (var i = fields.length; i--;) {
-            if (!jobInfo[fields[i]]) {
-                return res.status(400).send(`Missing required field: ${fields[i]}`);
-            }
+        var missing = utils.getMissingField(jobInfo, REQUIRED_FIELDS);
+        if (missing) {
+            return res.status(400).send(`Missing required field: ${missing}`);
         }
 
+        logger.debug(`Storing job info for ${hash}`);
         return mongo.insertOne(jobInfo)
             .then(() => res.sendStatus(201))
             .catch(err => {
@@ -141,7 +138,11 @@ function initialize(middlewareOpts) {
  * @param {function} callback
  */
 function start(callback) {
-    callback();
+    storage.then(db => {
+        mongo = db.collection(MONGO_COLLECTION);
+        callback();
+    });
+
 }
 
 /**
