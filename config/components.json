@@ -2,10 +2,19 @@
     "AutoViz": {
         "preloadIds": [
             "ArchEditor",
+            "ArchIndex",
+            "PipelineIndex",
             "PipelineEditor",
             "OperationEditor",
             "ExecutionView"
-        ]
+        ],
+        "visualizerOverrides": {
+            "": "ForwardViz",
+            "MyArtifacts": "ArtifactIndex",
+            "MyArchitectures": "ArchIndex",
+            "MyExecutions": "ExecutionIndex",
+            "MyPipelines": "PipelineIndex"
+        }
     },
     "ArchEditor": {
         "hotkeys": "none",
@@ -43,7 +52,7 @@
         "rootMenuClass": "deepforge-logo",
         "rootDisplayName": "DeepForge"
     },
-    "CHFLayout": {
+    "SidebarLayout": {
         "panels": [
             {
                 "id": "WorkerHeader",
@@ -61,6 +70,12 @@
                 "id": "MainPanel",
                 "panel": "AutoViz/AutoVizPanel",
                 "container": "center",
+                "DEBUG_ONLY": false
+            },
+            {
+                "id": "Sidebar",
+                "panel": "Sidebar/SidebarPanel",
+                "container": "sidebar",
                 "DEBUG_ONLY": false
             },
             {
