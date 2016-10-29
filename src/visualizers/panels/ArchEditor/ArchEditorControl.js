@@ -56,7 +56,8 @@ define([
     };
 
     ArchEditorControl.prototype._getObjectDescriptor = function(id) {
-        var desc = ThumbnailControl.prototype._getObjectDescriptor.call(this, id);
+        var node = this._client.getNode(id),
+            desc = ThumbnailControl.prototype._getObjectDescriptor.call(this, id);
 
         // Filter attributes
         if (!desc.isConnection) {
@@ -78,7 +79,7 @@ define([
 
             for (i = names.length; i--;) {
                 // check if it is a setter
-                schema = this._client.getAttributeSchema(id, names[i]);
+                schema = node.getAttributeMeta(names[i]);
                 if (names[i] === 'name' || schema.setterType) {
                     desc.attributes[names[i]] = allAttrs[names[i]];
                 }
@@ -87,8 +88,7 @@ define([
             // Add layer type (base class's base class)
             desc.layerType = null;
             if (desc.baseName) {
-                var node = this._client.getNode(id),
-                    base = this._client.getNode(node.getMetaTypeId()),
+                var base = this._client.getNode(node.getMetaTypeId()),
                     layerType = this._client.getNode(base.getBaseId()),
                     color;
 
@@ -131,7 +131,7 @@ define([
         var metanodes = this._client.getAllMetaNodes(),
             layerId,
             criterionId,
-            allLayerIds = [],
+            allLayers = [],
             layers = [],
             i;
 
@@ -144,22 +144,21 @@ define([
 
         for (i = metanodes.length; i--;) {
             if (layerId) {
-                if (!metanodes[i].isAbstract() &&
-                    this._client.isTypeOf(metanodes[i].getId(), layerId)) {
+                if (!metanodes[i].isAbstract() && metanodes[i].isTypeOf(layerId)) {
 
                     if (metanodes[i].getAttribute('name') === 'Criterion') {
                         criterionId = metanodes[i].getId();
                     } else {
-                        allLayerIds.push(metanodes[i].getId());
+                        allLayers.push(metanodes[i].getId());
                     }
                 }
             }
         }
 
         // Remove all criterion layers and abstract layers
-        for (i = allLayerIds.length; i--;) {
-            if (!this._client.isTypeOf(allLayerIds[i], criterionId)) {
-                layers.push({node: this._getObjectDescriptor(allLayerIds[i])});
+        for (i = allLayers.length; i--;) {
+            if (!allLayers[i].isTypeOf(criterionId)) {
+                layers.push({node: this._getObjectDescriptor(allLayers[i].getId())});
             }
         }
 

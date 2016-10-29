@@ -57,7 +57,7 @@ define([
     };
 
     var createNamedNode = function(baseId, parentId, isMeta) {
-        var newId = client.createChild({parentId, baseId}),
+        var newId = client.createNode({parentId, baseId}),
             baseNode = client.getNode(baseId),
             basename = 'New' + baseNode.getAttribute('name'),
             newName = getUniqueName(parentId, basename);
@@ -72,7 +72,7 @@ define([
             client.setRegistry(newId, 'isAbstract', false);
         }
 
-        client.setAttributes(newId, 'name', newName);
+        client.setAttribute(newId, 'name', newName);
         return newId;
     };
 
@@ -265,7 +265,7 @@ define([
         }
 
         dataBaseId = dataBase.getId();
-        dataTypes = metanodes.filter(n => client.isTypeOf(n.getId(), dataBaseId))
+        dataTypes = metanodes.filter(n => n.isTypeOf(dataBaseId))
             .filter(n => !n.getRegistry('isAbstract'))
             .map(node => node.getAttribute('name'));
 
