@@ -65,6 +65,13 @@ define([
             PipelineEditorWidget.prototype.connectPort.bind(this);
         this.ItemClass.prototype.disconnectPort =
             PipelineEditorWidget.prototype.disconnectPort.bind(this);
+
+        this.ItemClass.prototype.canShowPorts = () => {
+            // when the widget is connecting ports, the items
+            // will ignore hover event behaviors wrt showing
+            // ports
+            return !this.isConnectingPorts();
+        };
     };
 
     //////////////////// Port Support ////////////////////
@@ -102,7 +109,7 @@ define([
         }
 
         // If in a "connecting-port" state, refresh the port
-        if (this.PORT_STATE === STATE.CONNECTING) {
+        if (this.isConnectingPorts()) {
             this.PORT_STATE = STATE.DEFAULT;
             this.connectPort.apply(this, this.srcPortToConnectArgs);
         }
@@ -154,11 +161,15 @@ define([
         this.removeConnection(connId);
     };
 
+    PipelineEditorWidget.prototype.isConnectingPorts = function() {
+        return this.PORT_STATE === STATE.CONNECTING;
+    };
+
     PipelineEditorWidget.prototype.connectPort = function(nodeId, id, isOutput) {
         this._logger.info('port ' + id + ' has been clicked! (', isOutput, ')');
         if (this.PORT_STATE === STATE.DEFAULT) {
             this.srcPortToConnectArgs = arguments;
-            this.startPortConnection(nodeId, id, isOutput);
+            return this.startPortConnection(nodeId, id, isOutput);
         } else if (this._selectedPort !== id) {
             this._logger.info('connecting ' + this._selectedPort + ' to ' + id);
             var src = !isOutput ? this._selectedPort : id,
@@ -167,13 +178,13 @@ define([
             this.createConnection(src, dst);
         } else if (!this._selectedPort) {
             this._logger.error(`Invalid connection state: ${this.PORT_STATE} w/ ${this._selectedPort}`);
-            this.resetPortState();
         }
+
+        this.resetPortState();
     };
 
     PipelineEditorWidget.prototype.startPortConnection = function(nodeId, id, isOutput) {
-        var existingMatches = this.getExistingPortMatches(id, isOutput),
-            item = this.items[nodeId];
+        var existingMatches = this.getExistingPortMatches(id, isOutput);
         
         // Hide all ports except 'id' on 'nodeId'
         this._selectedPort = id;
@@ -182,7 +193,7 @@ define([
         existingMatches.forEach(match =>
             this.showPorts(match.nodeId, match.portIds, isOutput)
         );
-        item.showPorts(id, !isOutput);
+        this.showPorts(nodeId, id, !isOutput);
 
         this.PORT_STATE = STATE.CONNECTING;
     };

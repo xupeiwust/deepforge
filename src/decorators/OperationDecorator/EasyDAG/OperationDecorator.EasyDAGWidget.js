@@ -118,7 +118,7 @@ define([
         tooltip = new Opentip(portIcon[0][0], PORT_TOOLTIP_OPTS);
         tooltip.setContent(port.name);
         portIcon.on('mouseenter', () => tooltip.show());
-        portIcon.on('mouseout', () => tooltip.hide());
+        portIcon.on('mouseleave', () => tooltip.hide());
         this.$portTooltips[port.id] = tooltip;
     };
 
