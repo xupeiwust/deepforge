@@ -19,6 +19,7 @@
     "exists-file": "^2.1.0",
     "express": "^4.14.0",
     "lodash.difference": "^4.1.2",
+    "graceful-fs": "^4.1.10",
     "lodash.merge": "^4.5.1",
     "mongodb": "^2.2.10",
     "nodemon": "^1.9.2",
