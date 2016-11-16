@@ -46,7 +46,7 @@ define([
             minValue;
 
         nodes = this.graph.nodes().map(id => this.graph.node(id));
-        minValue = Math.min.apply(null, nodes.map(node => node[dim]));
+        minValue = nodes.length ? Math.min.apply(null, nodes.map(node => node[dim] || 0)) : 0;
         return maxValue-minValue;
     };
 
@@ -55,7 +55,7 @@ define([
     };
 
     ThumbnailWidget.prototype.getSvgHeight = function() {
-        return this.getSvgDistanceDim('y');
+        return this.height - 25;
     };
 
     ThumbnailWidget.prototype.getViewBox = function() {

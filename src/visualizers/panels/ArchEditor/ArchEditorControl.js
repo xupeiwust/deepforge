@@ -21,10 +21,11 @@ define([
 
     var ArchEditorControl,
         DEFAULT_CONFIG = {
-            DefaultColor: '#ffb74d',
+            DefaultColor: '#80cbc4',
             LayerColors: {
-                Containers: '#ffb74d',
-                Convolution: '#2196f3',
+                Container: '#ffb74d',
+                NestedContainer: '#ffe0b2',
+                Convolution: '#42a5f5',
                 Simple: '#ff9100',
                 Transfer: '#80deea',
                 Misc: '#ce93d8'
@@ -46,6 +47,8 @@ define([
     };
 
     ArchEditorControl.prototype.selectedObjectChanged = function(id) {
+        this.nestedLevel = typeof id === 'string' ?
+            Math.floor(id.split('/').length/2) % 2 : 0;
         ThumbnailControl.prototype.selectedObjectChanged.call(this, id);
 
         DeepForge.last.Architecture = id;
@@ -97,11 +100,32 @@ define([
                     desc.layerType = layerType.getAttribute(nodePropertyNames.Attributes.name);
 
                     color = this._config.LayerColors[desc.layerType];
+                    if (desc.layerType === 'Container' && this.nestedLevel) {
+                        color = this._config.LayerColors.NestedContainer;
+                    }
                     if (!color) {
                         this._logger.warn(`No color found for ${desc.layerType}`);
                         color = this._config.DefaultColor;
                     }
                     desc.color = color;
+
+                    if (desc.layerType === 'Container') {
+                        desc.containedLayers = node.getMemberIds(Constants.CONTAINED_LAYER_SET)
+                            .map(layerId => {
+                                var index = node.getMemberRegistry(
+                                    Constants.CONTAINED_LAYER_SET,
+                                    layerId,
+                                    Constants.CONTAINED_LAYER_INDEX
+                                );
+                                return [layerId, index];
+                            })
+                            .sort((a, b) => a[1] < b[1] ? -1 : 1)
+                            .map(tuple => tuple[0]);
+
+                        // Set the decorator to ContainerLayerDecorator
+                        desc.Decorator = this._client.decoratorManager
+                            .getDecoratorForWidget('ContainerLayerDecorator', 'EasyDAG');
+                    }
                 }
             }
         }

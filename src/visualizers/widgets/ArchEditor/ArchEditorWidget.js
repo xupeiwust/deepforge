@@ -31,13 +31,14 @@ define([
             'Transfer',
             'Convolution',
             'RNN',
-            'Containers',
+            'Container',
             'Misc'
         ];
 
-    ArchEditorWidget = function (logger, container) {
-        ThumbnailWidget.call(this, logger, container);
-        this.$el.addClass(WIDGET_CLASS);
+    ArchEditorWidget = function () {
+        ThumbnailWidget.apply(this, arguments);
+        var clazz = this.$el.attr('class');
+        this.$el.attr('class', clazz + ' ' + WIDGET_CLASS);
         this._emptyMsg = 'Click to add a new layer';
     };
 
@@ -47,15 +48,24 @@ define([
     ArchEditorWidget.prototype.SelectionManager = SelectionManager;
 
     ArchEditorWidget.prototype.setupItemCallbacks = function() {
-        var widget = this;
         ThumbnailWidget.prototype.setupItemCallbacks.apply(this, arguments);
         // Add the hover button functions
         this.ItemClass.prototype.showHoverButtons = function() {
             var layer = this;
-            widget.showHoverButtons(layer);
+            this._widget.showHoverButtons(layer);
         };
-        this.ItemClass.prototype.hideHoverButtons = this.hideHoverButtons.bind(this);
-        this.ItemClass.prototype.isHoverAllowed = () => !this.isConnecting();
+        this.ItemClass.prototype.hideHoverButtons = function() {
+            this._widget.hideHoverButtons();
+        };
+        this.ItemClass.prototype.isHoverAllowed = function() {
+            return !this._widget.isConnecting();
+        };
+
+        this.ItemClass.prototype.promptInitialLayer = function() {
+            var nodes = this._widget.getValidInitialNodes();
+            return this._widget.promptLayer(nodes)
+                .then(selected => selected.node.id);
+        };
     };
 
     ArchEditorWidget.prototype.showHoverButtons = function(layer) {
@@ -184,6 +194,12 @@ define([
                 Decorator: Decorator
             }
         };
+    };
+
+    ArchEditorWidget.prototype.updateNode = function(desc) {
+        var item = this.items[desc.id];
+        item.update(desc);
+        this.refreshUI();
     };
 
     return ArchEditorWidget;
