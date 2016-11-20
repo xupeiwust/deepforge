@@ -36,9 +36,11 @@ define([
         ];
 
     ArchEditorWidget = function () {
+        var container = arguments[1];
+        if (container) {
+            container.addClass(WIDGET_CLASS);
+        }
         ThumbnailWidget.apply(this, arguments);
-        var clazz = this.$el.attr('class');
-        this.$el.attr('class', clazz + ' ' + WIDGET_CLASS);
         this._emptyMsg = 'Click to add a new layer';
     };
 
@@ -46,6 +48,10 @@ define([
 
     ArchEditorWidget.prototype.ItemClass = Layer;
     ArchEditorWidget.prototype.SelectionManager = SelectionManager;
+
+    ArchEditorWidget.prototype.getComponentId = function() {
+        return 'ArchEditor';
+    };
 
     ArchEditorWidget.prototype.setupItemCallbacks = function() {
         ThumbnailWidget.prototype.setupItemCallbacks.apply(this, arguments);
@@ -200,6 +206,15 @@ define([
         var item = this.items[desc.id];
         item.update(desc);
         this.refreshUI();
+    };
+
+    ArchEditorWidget.prototype.expandAllNodes = function(reverse) {
+        var itemIds = Object.keys(this.items),
+            method = reverse ? 'condenseAll' : 'expandAll';
+
+        for (var i = itemIds.length; i--;) {
+            this.items[itemIds[i]][method]();
+        }
     };
 
     return ArchEditorWidget;
