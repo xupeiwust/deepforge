@@ -40,6 +40,12 @@ Finally, start deepforge with `deepforge start`and navigate to [http://localhost
 
 Also, be sure to check out the other available features of the `deepforge` cli; it can be used to update, manage your torch installation, uninstall deepforge and run individual components!
 
+## Additional Resources
+- [Intro to DeepForge Slides](https://docs.google.com/presentation/d/10_y5O3gHXSATfjHVLJg7dOdrz-tAXNWjlxhJ5SlA0ic/edit?usp=sharing)
+- [wiki](https://github.com/deepforge-dev/deepforge/wiki) containing overview, installation, configuration and developer information
+- [Datamodel Developer Slides](https://docs.google.com/presentation/d/1hd3IyUlzW_TIPnzCnE-1pdz00Pw8WaIxYiOW_Hyog-M/edit#slide=id.p)
+- [Examples](https://github.com/deepforge-dev/examples)
+
 ## Interested in contributing?
 Contributions are welcome! Either fork the project and submit some PR's or shoot me an email about getting more involved!
 
