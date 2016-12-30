@@ -1,9 +1,10 @@
-/*globals $, window, define, _ */
+/*globals $, window, define, _, WebGMEGlobal */
 /*jshint browser: true*/
 
 define([
     'blob/BlobClient',
     'js/Utils/SaveToDisk',
+    'js/Dialogs/PluginConfig/PluginConfigDialog',
     'js/Constants',
     'panel/FloatingActionButton/FloatingActionButton',
     'deepforge/viz/PipelineControl',
@@ -14,11 +15,14 @@ define([
     'js/RegistryKeys',
     'js/Panels/MetaEditor/MetaEditorConstants',
     'q',
-    'deepforge/globals'
+    'deepforge/globals',
+    'deepforge/Constants',
+    'plugin/GenerateExecFile/GenerateExecFile/format'
 ], function (
     BlobClient,
     SaveToDisk,
-    CONSTANTS,
+    PluginConfigDialog,
+    GME_CONSTANTS,
     PluginButton,
     PipelineControl,
     NodePrompter,
@@ -28,7 +32,9 @@ define([
     REGISTRY_KEYS,
     META_CONSTANTS,
     Q,
-    DeepForge
+    DeepForge,
+    Constants,
+    ExportFormatDict
 ) {
     'use strict';
 
@@ -142,19 +148,19 @@ define([
 
     // Helper functions REMOVE! FIXME
     ForgeActionButton.prototype.addToMetaSheet = function(nodeId, metasheetName) {
-        var root = this.client.getNode(CONSTANTS.PROJECT_ROOT_ID),
+        var root = this.client.getNode(GME_CONSTANTS.PROJECT_ROOT_ID),
             metatabs = root.getRegistry(REGISTRY_KEYS.META_SHEETS),
             metatab = metatabs.find(tab => tab.title === metasheetName) || metatabs[0],
             metatabId = metatab.SetID;
 
         // Add to the general meta
         this.client.addMember(
-            CONSTANTS.PROJECT_ROOT_ID,
+            GME_CONSTANTS.PROJECT_ROOT_ID,
             nodeId,
             META_CONSTANTS.META_ASPECT_SET_NAME
         );
         this.client.setMemberRegistry(
-            CONSTANTS.PROJECT_ROOT_ID,
+            GME_CONSTANTS.PROJECT_ROOT_ID,
             nodeId,
             META_CONSTANTS.META_ASPECT_SET_NAME,
             REGISTRY_KEYS.POSITION,
@@ -165,9 +171,9 @@ define([
         );
 
         // Add to the specific sheet
-        this.client.addMember(CONSTANTS.PROJECT_ROOT_ID, nodeId, metatabId);
+        this.client.addMember(GME_CONSTANTS.PROJECT_ROOT_ID, nodeId, metatabId);
         this.client.setMemberRegistry(
-            CONSTANTS.PROJECT_ROOT_ID,
+            GME_CONSTANTS.PROJECT_ROOT_ID,
             nodeId,
             metatabId,
             REGISTRY_KEYS.POSITION,
@@ -363,18 +369,140 @@ define([
     };
 
     ForgeActionButton.prototype.downloadFromBlob = function(hash) {
-        var name;
-
         this._blobClient.getMetadata(hash)
             .then(metadata => {
-                name = metadata.name;
-                return this._blobClient.getObjectAsString(hash);
-            })
-            .then(text => {
-                SaveToDisk.downloadTextAsFile(name, text);
+                var url = this._blobClient.getDownloadURL(hash),
+                    name = metadata.name,
+                    save = document.createElement('a');
+
+                save.href = url;
+                save.target = '_self';
+                save.download = name;
+
+                save.click();
+                (window.URL || window.webkitURL).revokeObjectURL(save.href);
             })
             .fail(err => this.logger.error(`Blob download failed: ${err}`));
     };
 
+    /// Export Pipeline Support
+    ForgeActionButton.prototype.exportPipeline = function() {
+        var deferred = Q.defer(),
+            pluginId = 'GenerateExecFile',
+            metadata = WebGMEGlobal.allPluginsMetadata[pluginId],
+            id = this._currentNodeId,
+            node = this.client.getNode(id),
+            inputData,
+            inputNames;
+
+        inputData = node.getChildrenIds()
+            .map(id => this.client.getNode(id))
+            .filter(node => {
+                var typeId = node.getMetaTypeId(),
+                    type = this.client.getNode(typeId).getAttribute('name');
+
+                return type === Constants.OP.INPUT;
+            })
+            .map(input => {
+                var outputCntr,
+                    outputIds;
+
+                outputCntr = input.getChildrenIds()
+                    .map(id => this.client.getNode(id))
+                    .find(node => {
+                        var typeId = node.getMetaTypeId(),
+                            type = this.client.getNode(typeId).getAttribute('name');
+                        return type === 'Outputs';
+                    });
+
+                // input operations only have a single output
+                outputIds = outputCntr.getChildrenIds();
+
+                if (outputIds.length === 1) {
+                    return outputIds[0];
+                } else if (outputIds.length > 1) {
+                    this.logger.warn(`Found multiple ids for input op: ${outputIds.join(', ')}`);
+                    return;
+                }
+            })
+            .filter(outputId => !!outputId)
+            .map(id => this.client.getNode(id))
+            .filter(output => output.getAttribute('data'));
+
+        // get the output data node name
+        inputNames = inputData
+            .map(node => node.getAttribute('name'))
+            .sort();
+
+        // create config options from inputs
+        var inputOpts = inputNames.map((input, index) => {
+            return {
+                name: inputData[index].getId(),
+                displayName: input,
+                description: `Export ${input} as static (non-input) content`,
+                value: false,
+                valueType: 'boolean',
+                readOnly: false
+            };
+        });
+
+        var exportFormats = Object.keys(ExportFormatDict),
+            configDialog = new PluginConfigDialog({client: this.client}),
+            inputConfig = _.extend({}, metadata),
+            globalOpts = [];
+
+        // Hide the divider if missing inputOpts or globalOpts
+        configDialog._initDialog = function() {
+            PluginConfigDialog.prototype._initDialog.apply(this, arguments);
+            if (!globalOpts.length || !inputOpts.length) {
+                this._divContainer.find('.global-and-plugin-divider').remove();
+            }
+        };
+
+        if (exportFormats.length > 1) {
+            globalOpts.push({  // format options
+                name: 'exportFormat',
+                displayName: 'Export Format',
+                valueType: 'string',
+                value: exportFormats[0],
+                valueItems: exportFormats,
+                readOnly: false
+            });
+        }
+        inputConfig.configStructure = inputOpts;
+
+        if (inputOpts.length || exportFormats.length > 1) {
+            configDialog.show(globalOpts, inputConfig, {}, (formatOpts, inputOpts) => {
+                var context = this.client.getCurrentPluginContext(pluginId),
+                    exportFormat = globalOpts.length ? formatOpts.exportFormat : exportFormats[0],
+                    staticInputs = Object.keys(inputOpts).filter(input => inputOpts[input]);
+
+                this.logger.debug('Exporting pipeline to format', exportFormat);
+                this.logger.debug('static inputs:', staticInputs);
+
+                context.managerConfig.namespace = 'pipeline';
+                context.pluginConfig = {
+                    format: exportFormat,
+                    staticInputs: staticInputs
+                };
+                return Q.ninvoke(this.client, 'runBrowserPlugin', pluginId, context)
+                    .then(deferred.resolve)
+                    .fail(deferred.reject);
+            });
+        } else {  // no options - just run the plugin!
+            var context = this.client.getCurrentPluginContext(pluginId);
+
+            this.logger.debug('Exporting pipeline to format', exportFormats[0]);
+
+            context.managerConfig.namespace = 'pipeline';
+            context.pluginConfig = {
+                format: exportFormats[0],
+                staticInputs: []
+            };
+            return Q.ninvoke(this.client, 'runBrowserPlugin', pluginId, context);
+        }
+
+        return deferred.promise;
+    };
     return ForgeActionButton;
 });
