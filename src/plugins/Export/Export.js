@@ -3,7 +3,6 @@
 
 define([
     'text!./metadata.json',
-    'text!./toboolean.lua',
     './format',
     'plugin/PluginBase',
     'deepforge/plugin/PtrCodeGen',
@@ -13,7 +12,6 @@ define([
     'q'
 ], function (
     pluginMetadata,
-    TOBOOLEAN,
     FORMATS,
     PluginBase,
     PtrCodeGen,
@@ -33,13 +31,13 @@ define([
         RESERVED = /^(and|break|do|else|elseifend|false|for|function|if|in|local|nil|not|orrepeat|return|then|true|until|while|print)$/;
 
     /**
-     * Initializes a new instance of GenerateExecFile.
+     * Initializes a new instance of Export.
      * @class
      * @augments {PluginBase}
-     * @classdesc This class represents the plugin GenerateExecFile.
+     * @classdesc This class represents the plugin Export.
      * @constructor
      */
-    var GenerateExecFile = function () {
+    var Export = function () {
         // Call base class' constructor.
         PluginBase.call(this);
         this.initRecords();
@@ -50,13 +48,13 @@ define([
      * This is also available at the instance at this.pluginMetadata.
      * @type {object}
      */
-    GenerateExecFile.metadata = pluginMetadata;
+    Export.metadata = pluginMetadata;
 
     // Prototypical inheritance from PluginBase.
-    GenerateExecFile.prototype = Object.create(PluginBase.prototype);
-    GenerateExecFile.prototype.constructor = GenerateExecFile;
+    Export.prototype = Object.create(PluginBase.prototype);
+    Export.prototype.constructor = Export;
 
-    GenerateExecFile.prototype.initRecords = function() {
+    Export.prototype.initRecords = function() {
         this.pluginMetadata = pluginMetadata;
 
         this._srcIdFor = {};  // input path -> output data node path
@@ -94,7 +92,7 @@ define([
      *
      * @param {function(string, plugin.PluginResult)} callback - the result callback
      */
-    GenerateExecFile.prototype.main = function (callback) {
+    Export.prototype.main = function (callback) {
         this.initRecords();
 
         // Get all the children and call generate exec file
@@ -107,6 +105,7 @@ define([
 
         return this.core.loadChildren(this.activeNode)
             .then(nodes => this.generateOutputFiles(nodes))
+            .catch(err => callback(err))
             .then(hash => {
                 this.result.addArtifact(hash);
                 this.result.setSuccess(true);
@@ -115,20 +114,20 @@ define([
             .fail(err => callback(err));
     };
 
-    GenerateExecFile.prototype.getCurrentConfig = function () {
+    Export.prototype.getCurrentConfig = function () {
         var config = PluginBase.prototype.getCurrentConfig.call(this);
         config.staticInputs = config.staticInputs || [];
         return config;
     };
 
-    GenerateExecFile.prototype.generateOutputFiles = function (children) {
+    Export.prototype.generateOutputFiles = function (children) {
         var name = this.core.getAttribute(this.activeNode, 'name');
 
         return this.createCodeSections(children)
             .then(sections => {
                 // Get the selected format
                 var config = this.getCurrentConfig(),
-                    format = config.format || 'Torch CLI',
+                    format = config.format || 'Basic CLI',
                     generate = FORMATS[format],
                     staticInputs,
                     files;
@@ -167,7 +166,7 @@ define([
             });
     };
 
-    GenerateExecFile.prototype.createCodeSections = function (children) {
+    Export.prototype.createCodeSections = function (children) {
         // Convert opNodes' jobs to the nested operations
         var opNodes,
             nodes;
@@ -211,7 +210,7 @@ define([
             .fail(err => this.logger.error(err));
     };
 
-    GenerateExecFile.prototype.unpackJobs = function (nodes) {
+    Export.prototype.unpackJobs = function (nodes) {
         return Q.all(
             nodes.map(node => {
                 if (!this.isMetaTypeOf(node, this.META.Job)) {
@@ -225,7 +224,7 @@ define([
         );
     };
 
-    GenerateExecFile.prototype.sortOperations = function (operationDict, opIds) {
+    Export.prototype.sortOperations = function (operationDict, opIds) {
         var nextIds = [],
             sorted = opIds,
             dstIds,
@@ -253,7 +252,7 @@ define([
             .concat(this.sortOperations(operationDict, nextIds));
     };
 
-    GenerateExecFile.prototype.generateCodeSections = function(sortedOps) {
+    Export.prototype.generateCodeSections = function(sortedOps) {
         // Create the code sections:
         //  - operation definitions
         //  - pipeline definition
@@ -286,8 +285,8 @@ define([
         // Define the serializers/deserializers
         this.addCodeSerializers(code);
 
-        // Define the main body
-        this.addCodeMain(code);
+        // Define the main input names
+        code.mainInputNames = Object.keys(this.isInputOp).map(id => this._nameFor[id]);
 
         // Add custom class definitions
         this.addCustomClasses(code);
@@ -299,12 +298,12 @@ define([
     };
 
     // expose this utility function to format extensions
-    var indent = GenerateExecFile.prototype.indent = function(text, spaces) {
+    var indent = Export.prototype.indent = function(text, spaces) {
         spaces = spaces || 3;
         return text.replace(/^/mg, new Array(spaces+1).join(' '));
     };
 
-    GenerateExecFile.prototype.defineOperationFn = function(operation) {
+    Export.prototype.defineOperationFn = function(operation) {
         var lines = [],
             args = operation.inputNames || [];
 
@@ -322,7 +321,7 @@ define([
         return lines.join('\n');
     };
 
-    GenerateExecFile.prototype.definePipelineFn = function(sortedOps, outputOps) {
+    Export.prototype.definePipelineFn = function(sortedOps, outputOps) {
         var inputArgs = Object.keys(this.isInputOp).map(id => this._nameFor[id]),
             name = this.core.getAttribute(this.activeNode, 'name'),
             safename = getUniqueName(name, this._opBaseNames),
@@ -348,7 +347,7 @@ define([
         return result;
     };
 
-    GenerateExecFile.prototype.getOutputPair = function(operation) {
+    Export.prototype.getOutputPair = function(operation) {
         var input = operation.inputValues[0].slice(),
             value;
 
@@ -358,11 +357,9 @@ define([
         return [this._nameFor[operation.id], value];
     };
 
-    GenerateExecFile.prototype.addCodeSerializers = function(sections) {
+    Export.prototype.addCodeSerializers = function(sections) {
         var loadNodes = {},
-            saveNodes = {},
-            hasBool = false;
-
+            saveNodes = {};
 
         // Add the serializer fn names for each input
         sections.serializerFor = {};
@@ -376,21 +373,10 @@ define([
         // Add the serializer definitions
         Object.keys(this.isInputOp).forEach(id => {
             var node = this.inputNode[id],
-                base = this.core.getBase(node),
-                type = this.core.getAttribute(base, 'name'),
                 name = this._nameFor[id];
 
-            if (type === 'boolean') {
-                hasBool = true;
-                sections.deserializerFor[name] = 'toboolean';
-            } else if (type === 'number') {
-                sections.deserializerFor[name] = 'tonumber';
-            } else if (type === 'string') {
-                sections.deserializerFor[name] = 'tostring';
-            } else {
-                loadNodes[id] = node;
-                sections.deserializerFor[name] = `__load['${this._nameFor[id]}']`;
-            }
+            loadNodes[id] = node;
+            sections.deserializerFor[name] = `__load['${this._nameFor[id]}']`;
         });
 
         sections.deserializers = this.createTorchFnDict(
@@ -417,10 +403,6 @@ define([
             'path, data'
         );
 
-        if (hasBool) {  // add toboolean def
-            sections.deserializers += '\n' + TOBOOLEAN;
-        }
-
         // Add a saveOutputs method for convenience
         sections.serializeOutputsDef = [
             'local function __saveOutputs(data)',
@@ -438,18 +420,7 @@ define([
         sections.serializeOutputs = '__saveOutputs(outputs)';
     };
 
-    GenerateExecFile.prototype.addCodeMain = function(sections) {
-        var pipelineName = Object.keys(sections.pipelines)[0],
-            args;
-
-        // Create some names for the inputs
-        sections.mainInputNames = Object.keys(this.isInputOp).map(id => this._nameFor[id]);
-        args = sections.mainInputNames.map(name => `${sections.deserializerFor[name]}(${name})`);
-
-        sections.main = `local outputs = ${pipelineName}(${args.join(', ')})`;
-    };
-
-    GenerateExecFile.prototype.createTorchFnDict = function(name, nodeDict, attr, args) {
+    Export.prototype.createTorchFnDict = function(name, nodeDict, attr, args) {
         return [
             `local ${name} = {}`,
             Object.keys(nodeDict).map(id => {
@@ -463,7 +434,7 @@ define([
         ].join('\n');
     };
 
-    GenerateExecFile.prototype.addCustomClasses = function(sections) {
+    Export.prototype.addCustomClasses = function(sections) {
         var metaDict = this.core.getAllMetaNodes(this.rootNode),
             isClass,
             metanodes,
@@ -528,7 +499,7 @@ define([
             });
     };
 
-    GenerateExecFile.prototype.addCustomLayers = function(sections) {
+    Export.prototype.addCustomLayers = function(sections) {
         var metaDict = this.core.getAllMetaNodes(this.rootNode),
             isCustomLayer,
             metanodes,
@@ -552,7 +523,7 @@ define([
     };
 
 
-    GenerateExecFile.prototype.getTypeDictFor = function (name, metanodes) {
+    Export.prototype.getTypeDictFor = function (name, metanodes) {
         var isType = {};
         // Get all the custom layers
         for (var i = metanodes.length; i--;) {
@@ -570,7 +541,7 @@ define([
         return `"${attr}"`;
     };
 
-    GenerateExecFile.prototype.getOpInvocation = function(op) {
+    Export.prototype.getOpInvocation = function(op) {
         var lines = [],
             attrs,
             refInits = [],
@@ -603,13 +574,13 @@ define([
         return lines.join('\n');
     };
 
-    GenerateExecFile.prototype.getOutputName = function(node) {
+    Export.prototype.getOutputName = function(node) {
         var basename = this.core.getAttribute(node, 'saveName');
 
         return getUniqueName(basename, this._outputNames, true);
     };
 
-    GenerateExecFile.prototype.getVariableName = function (/*node*/) {
+    Export.prototype.getVariableName = function (/*node*/) {
         var c = Object.keys(this.isInputOp).length;
 
         if (c !== 1) {
@@ -619,7 +590,7 @@ define([
         return 'input';
     };
 
-    GenerateExecFile.prototype.registerNode = function (node) {
+    Export.prototype.registerNode = function (node) {
         if (this.isMetaTypeOf(node, this.META.Operation)) {
             return this.registerOperation(node);
         } else if (this.isMetaTypeOf(node, this.META.Transporter)) {
@@ -648,7 +619,7 @@ define([
         return name;
     };
 
-    GenerateExecFile.prototype.registerOperation = function (node) {
+    Export.prototype.registerOperation = function (node) {
         var name = this.core.getAttribute(node, 'name'),
             id = this.core.getPath(node),
             base = this.core.getBase(node),
@@ -710,7 +681,7 @@ define([
             });
     };
 
-    GenerateExecFile.prototype.registerTransporter = function (node) {
+    Export.prototype.registerTransporter = function (node) {
         var outputData = this.core.getPointerPath(node, 'src'),
             inputData = this.core.getPointerPath(node, 'dst'),
             srcOpId = this.getOpIdFor(outputData),
@@ -729,7 +700,7 @@ define([
         this._incomingCnts[dstOpId]++;
     };
 
-    GenerateExecFile.prototype.getOpIdFor = function (dataId) {
+    Export.prototype.getOpIdFor = function (dataId) {
         var ids = dataId.split('/'),
             depth = ids.length;
 
@@ -744,7 +715,7 @@ define([
     //   - add the references
     //     - generate the code
     //     - replace the `return <thing>` w/ `<ref-name> = <thing>`
-    GenerateExecFile.prototype.createOperation = function (node) {
+    Export.prototype.createOperation = function (node) {
         var id = this.core.getPath(node),
             baseId = this.core.getPath(this.core.getBase(node)),
             attrNames = this.core.getValidAttributeNames(node),
@@ -819,12 +790,12 @@ define([
             });
     };
 
-    GenerateExecFile.prototype.genPtrSnippet = function (ptrName, pId) {
+    Export.prototype.genPtrSnippet = function (ptrName, pId) {
         return this.getPtrCodeHash(pId)
             .then(hash => this.blobClient.getObjectAsString(hash));
     };
 
-    GenerateExecFile.prototype.createHeader = function (title, length) {
+    Export.prototype.createHeader = function (title, length) {
         var len;
         title = ` ${title} `;
         length = length || HEADER_LENGTH;
@@ -842,7 +813,7 @@ define([
 
     };
 
-    GenerateExecFile.prototype.genOperationCode = function (operation) {
+    Export.prototype.genOperationCode = function (operation) {
         var header = this.createHeader(`"${operation.name}" Operation`),
             codeParts = [],
             body = [];
@@ -869,15 +840,7 @@ define([
         return operation;
     };
 
-    GenerateExecFile.prototype.assignResultToVar = function (code, name) {
-        var i = code.lastIndexOf('return');
+    _.extend(Export.prototype, PtrCodeGen.prototype);
 
-        return code.substring(0, i) +
-            code.substring(i)
-                .replace('return', `${name} = `);
-    };
-
-    _.extend(GenerateExecFile.prototype, PtrCodeGen.prototype);
-
-    return GenerateExecFile;
+    return Export;
 });

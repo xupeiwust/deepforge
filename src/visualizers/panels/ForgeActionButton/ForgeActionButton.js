@@ -4,7 +4,7 @@
 define([
     'blob/BlobClient',
     'js/Utils/SaveToDisk',
-    'js/Dialogs/PluginConfig/PluginConfigDialog',
+    './ConfigDialog',
     'js/Constants',
     'panel/FloatingActionButton/FloatingActionButton',
     'deepforge/viz/PipelineControl',
@@ -17,11 +17,11 @@ define([
     'q',
     'deepforge/globals',
     'deepforge/Constants',
-    'plugin/GenerateExecFile/GenerateExecFile/format'
+    'plugin/Export/Export/format'
 ], function (
     BlobClient,
     SaveToDisk,
-    PluginConfigDialog,
+    ConfigDialog,
     GME_CONSTANTS,
     PluginButton,
     PipelineControl,
@@ -388,7 +388,7 @@ define([
     /// Export Pipeline Support
     ForgeActionButton.prototype.exportPipeline = function() {
         var deferred = Q.defer(),
-            pluginId = 'GenerateExecFile',
+            pluginId = 'Export',
             metadata = WebGMEGlobal.allPluginsMetadata[pluginId],
             id = this._currentNodeId,
             node = this.client.getNode(id),
@@ -429,9 +429,16 @@ define([
             .map(id => this.client.getNode(id))
             .filter(output => output.getAttribute('data'));
 
-        // get the output data node name
+        // get the name of node referenced from the input op
         inputNames = inputData
-            .map(node => node.getAttribute('name'))
+            .map(node => {
+                var cntrId = node.getParentId(),
+                    opId = this._client.getNode(cntrId).getParentId(),
+                    inputOp = this._client.getNode(opId),
+                    targetNodeId = inputOp.getPointer('artifact').to;
+
+                return this._client.getNode(targetNodeId).getAttribute('name');
+            })
             .sort();
 
         // create config options from inputs
@@ -447,17 +454,10 @@ define([
         });
 
         var exportFormats = Object.keys(ExportFormatDict),
-            configDialog = new PluginConfigDialog({client: this.client}),
+            configDialog = new ConfigDialog(this.client, this._currentNodeId),
             inputConfig = _.extend({}, metadata),
+            extOptions = [],
             globalOpts = [];
-
-        // Hide the divider if missing inputOpts or globalOpts
-        configDialog._initDialog = function() {
-            PluginConfigDialog.prototype._initDialog.apply(this, arguments);
-            if (!globalOpts.length || !inputOpts.length) {
-                this._divContainer.find('.global-and-plugin-divider').remove();
-            }
-        };
 
         if (exportFormats.length > 1) {
             globalOpts.push({  // format options
@@ -471,8 +471,9 @@ define([
         }
         inputConfig.configStructure = inputOpts;
 
-        if (inputOpts.length || exportFormats.length > 1) {
-            configDialog.show(globalOpts, inputConfig, {}, (formatOpts, inputOpts) => {
+        // Try to get the extension options
+        if (inputOpts.length || exportFormats.length > 1|| extOptions.length) {
+            configDialog.show(globalOpts, inputConfig, (formatOpts, inputOpts) => {
                 var context = this.client.getCurrentPluginContext(pluginId),
                     exportFormat = (globalOpts.length && formatOpts) ? formatOpts.exportFormat : exportFormats[0],
                     staticInputs = Object.keys(inputOpts || {}).filter(input => inputOpts[input]);
@@ -508,5 +509,6 @@ define([
 
         return deferred.promise;
     };
+
     return ForgeActionButton;
 });
