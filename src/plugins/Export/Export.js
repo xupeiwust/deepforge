@@ -151,6 +151,7 @@ define([
                     staticInputs,
                     files;
 
+                this.logger.info(`About to retrieve ${config.format} exporter`);
                 exporter = this.getExporterFor(format);
 
                 staticInputs = config.staticInputs.map(id => {
@@ -165,7 +166,13 @@ define([
                     };
                 });
 
-                files = exporter.main(sections, staticInputs, config.extensionConfig);
+                this.logger.info('Invoking exporter "main" function...');
+                try {
+                    files = exporter.main(sections, staticInputs, config.extensionConfig);
+                } catch (e) {
+                    this.logger.error(`Exporter failed: ${e.toString()}`);
+                    throw e;
+                }
                 // If it returns a string, just put a single file
                 if (typeof files === 'string') {
                     return this.blobClient.putFile(`${name}.lua`, files);
@@ -307,7 +314,8 @@ define([
         this.addCodeSerializers(code);
 
         // Define the main input names
-        code.mainInputNames = Object.keys(this.isInputOp).map(id => this._nameFor[id]);
+        code.pipelineName = Object.keys(code.pipelines)[0];
+        code.pipelineInputNames = Object.keys(this.isInputOp).map(id => this._nameFor[id]);
 
         // Add custom class definitions
         this.addCustomClasses(code);
