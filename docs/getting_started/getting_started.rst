@@ -3,14 +3,6 @@ Getting Started
 
 .. _Torch: http://torch.ch
 
-Installation instructions to come!
-
-- `What is DeepForge? <#id1>`_
-- `Design Goals <#design-goals>`_
-- `Features <#overview-and-features>`_
-- `Installation <installation_guide.rst>`_
-- `Configuration <configuration.rst>`_
-
 What is DeepForge?
 ------------------
 Deep learning is a very promising, yet complex, area of machine learning. This complexity can both create a barrier to entry for those wanting to get involved in deep learning as well as slow the development of those already comfortable in deep learning.
