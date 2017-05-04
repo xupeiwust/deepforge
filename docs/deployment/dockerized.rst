@@ -26,11 +26,11 @@ The DeepForge server can be started with
 
 .. code-block:: bash
 
-    docker run -d -v /home/irishninja/.deepforge/blob:/data/blob \
+    docker run -d -v $HOME/.deepforge/blob:/data/blob \
     -p 8888:8888 -e MONGO_URI=mongodb://172.17.0.2:27017/deepforge \
     deepforge/server
 
-where :code:`172.17.0.2` is the ip address of the mongo container and :code:`/home/irishninja/.deepforge/blob` is the path to use for binary DeepForge data on the host. Of course, if the mongo instance is locating at a different location, :code:`MONGO_URI` can be set to this address as well. Also, the first port (:code:`8888`) can be replaced with the desired port to expose on the host.
+where :code:`172.17.0.2` is the ip address of the mongo container and :code:`$HOME/.deepforge/blob` is the path to use for binary DeepForge data on the host. Of course, if the mongo instance is locating at a different location, :code:`MONGO_URI` can be set to this address as well. Also, the first port (:code:`8888`) can be replaced with the desired port to expose on the host.
 
 Worker
 ~~~~~~
