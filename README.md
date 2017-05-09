@@ -4,6 +4,8 @@
 [![Join the chat at https://gitter.im/deepforge-dev/deepforge](https://badges.gitter.im/deepforge-dev/deepforge.svg)](https://gitter.im/deepforge-dev/deepforge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Stories in Ready](https://badge.waffle.io/deepforge-dev/deepforge.png?label=ready&title=Ready)](https://waffle.io/deepforge-dev/deepforge)
 
+Using DeepForge? [Let us know what you think!](https://goo.gl/forms/2pDdCPXoUvkQhVzQ2)
+
 # DeepForge
 DeepForge is an open-source visual development environment for deep learning providing end-to-end support for creating deep learning models. This is achieved through providing the ability to design **architectures**, create training **pipelines**, and then execute these pipelines over a cluster. Using a notebook-esque api, users can get real-time feedback about the status of any of their **executions** including compare them side-by-side in real-time.
 
@@ -46,7 +48,13 @@ Also, be sure to check out the other available features of the `deepforge` cli; 
 - [Datamodel Developer Slides](https://docs.google.com/presentation/d/1hd3IyUlzW_TIPnzCnE-1pdz00Pw8WaIxYiOW_Hyog-M/edit#slide=id.p)
 
 ## Interested in contributing?
-Contributions are welcome! Either fork the project and submit some PR's or shoot me an email about getting more involved! If you have any questions, check out the [wiki](https://github.com/dfst/deepforge/wiki/) or drop me a line on the gitter!
+Contributions are welcome! There are a couple different ways to contribute to DeepForge:
+- Provide user feedback!
+    - on the [documentation](http://deepforge.readthedocs.io)
+    - on deepforge and its future development: https://goo.gl/forms/2pDdCPXoUvkQhVzQ2
+- Contribute to the project directly by submitting some PR's!
+
+If you have any questions, check out the [wiki](https://github.com/dfst/deepforge/wiki/) or drop me a line on the gitter!
 
 
 Sponsored by [Digital Reasoning](http://www.digitalreasoning.com/)
