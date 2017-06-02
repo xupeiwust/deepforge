@@ -38,3 +38,6 @@ src/seeds/pipeline/hash.txt
 
 # docs
 images/
+
+notes/
+src/worker

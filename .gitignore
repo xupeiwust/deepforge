@@ -35,3 +35,6 @@ test-tmp/
 blob-local-storage/
 src/seeds/nn/hash.txt
 src/seeds/pipeline/hash.txt
+
+notes/
+src/worker
