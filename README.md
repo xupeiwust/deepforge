@@ -21,13 +21,7 @@ Additional features include:
 - Facilitates defining custom layers 
 
 ## Quick Start
-Simply run the following command to install deepforge with its dependencies:
-
-```
-curl -o- https://raw.githubusercontent.com/dfst/deepforge/master/install.sh | bash
-```
-
-Or, if you already have NodeJS (v6) installed, simply run
+Deepforge requires NodeJS v6 (we recommend installing NodeJS using [nvm](https://github.com/creationix/nvm)). After installing NodeJS using nvm, simply run
 
 ```
 npm install -g deepforge
