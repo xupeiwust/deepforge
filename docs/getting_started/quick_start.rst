@@ -1,29 +1,19 @@
 Quick Start
 ===========
-Before we can start with the examples, we will first install DeepForge locally.
+The easiest way to get started quickly with DeepForge is using docker-compose. First, install `docker <https://docs.docker.com/engine/installation/>`_ and `docker-compose <https://docs.docker.com/compose/install/>`_.
 
-Dependencies
-------------
-First, install `NodeJS <https://nodejs.org/en/>`_ (v6) and `MongoDB <https://www.mongodb.org/>`_. You may also need to install git if you haven't already.
-
-Next, you can install DeepForge using npm:
+Next, download the docker-compose file for DeepForge:
 
 .. code-block:: bash
 
-    npm install -g deepforge
+    wget https://raw.githubusercontent.com/deepforge-dev/deepforge/master/docker-compose.yml
 
-Now, you can check that it installed correctly:
-
-.. code-block:: bash
-
-    deepforge --version
-
-DeepForge can now be started with:
+Then start DeepForge using docker-compose:
 
 .. code-block:: bash
 
-    deepforge start
+    docker-compose up
 
-However, the first time DeepForge is started, it will make sure that the deep learning framework is installed (if it isn't found on the host system). This may require you to start DeepForge a couple times; the first time it starts it will install Torch7 and require a terminal restart to update a couple environment variables (like `PATH`). The second time it starts it will install additional torch packages but will not require a terminal restart. Finally, DeepForge will start with all the required dependencies.
+and now DeepForge can be used by opening a browser to `http://localhost:8888 <http://localhost:8888>`_!
 
 For detailed instructions about deployment installations, check out our `deployment installation instructions <getting_started/configuration.rst>`_
