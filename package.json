@@ -17,7 +17,7 @@
     "watch-test": "nodemon --exec 'mocha --recursive test'",
     "build-nn": "node ./utils/nn-parser.js"
   },
-  "version": "1.4.0",
+  "version": "1.4.1",
   "dependencies": {
     "commander": "^2.9.0",
     "dotenv": "^2.0.0",
