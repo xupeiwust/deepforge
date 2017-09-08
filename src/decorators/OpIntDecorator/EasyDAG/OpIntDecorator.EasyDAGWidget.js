@@ -20,6 +20,7 @@ define([
         DECORATOR_ID = 'OpIntDecorator';
 
     OpIntDecorator = function (options) {
+        options.color = options.color || '#78909c';
         DecoratorBase.call(this, options);
     };
 
@@ -27,9 +28,7 @@ define([
 
     OpIntDecorator.prototype.DECORATOR_ID = DECORATOR_ID;
     OpIntDecorator.prototype.initialize = function() {
-        if (this.isOperation()) {
-            this.color = '#2196f3';
-        } else if (this._node.baseName) {
+        if (!this.isOperation() && this._node.baseName) {
             // On hover, show the type
             this.enableTooltip(this._node.baseName, 'dark');
         }
