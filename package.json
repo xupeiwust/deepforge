@@ -13,7 +13,7 @@
     "start-dev": "NODE_ENV=dev node app.js",
     "local": "node ./bin/start-local.js",
     "worker": "node ./bin/start-worker.js",
-    "test": "mkdir ./test-tmp; mocha --recursive test",
+    "test": "mkdir ./test-tmp; mocha --recursive test/unit",
     "watch-test": "nodemon --exec 'mocha --recursive test'",
     "build-nn": "node ./utils/nn-parser.js"
   },
@@ -43,6 +43,7 @@
     "webgme-simple-nodes": "^2.1.0"
   },
   "devDependencies": {
+    "brython": "^3.2.7",
     "chai": "^3.0.0",
     "jszip": "^2.5.0",
     "mocha": "^2.2.5",
