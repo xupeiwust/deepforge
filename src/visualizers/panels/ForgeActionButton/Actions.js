@@ -2,12 +2,14 @@
 // These are actions defined for specific meta types. They are evaluated from
 // the context of the ForgeActionButton
 define([
+    './LibraryDialog',
     'panel/FloatingActionButton/styles/Materialize',
     'q',
     'js/RegistryKeys',
     'deepforge/globals',
     'deepforge/Constants'
 ], function(
+    LibraryDialog,
     Materialize,
     Q,
     REGISTRY_KEYS,
@@ -103,7 +105,7 @@ define([
     var MyPipelinesButtons = [
         {
             name: 'Create new pipeline',
-            icon: 'queue',
+            icon: 'add',
             action: DeepForge.create.Pipeline
         }
     ];
@@ -128,22 +130,49 @@ define([
     return {
         HOME: MyPipelinesButtons,
         MyPipelines_META: MyPipelinesButtons,
-        MyDataTypes_META: [
-            {
-                name: 'Create new primitive data type',
-                icon: 'queue',
-                action: DeepForge.create.Primitive
-            },
-            {
-                name: 'Create new class',
-                icon: 'queue',
-                action: DeepForge.create.Complex
-            }
-        ],
+        MyResources_META: function(client, currentNode) {
+            let meta = this._client.getChildrenMeta(currentNode.getId());
+            let buttons = [
+                {
+                    name: 'Import library',
+                    icon: 'library_add',
+                    action: function() {
+                        let dialog = new LibraryDialog(this.logger);
+                        dialog.show();
+                    }
+                }
+            ];
+
+            // Add a button to create a node from a library
+
+            // Get the valid children of the given node
+            let childrenIds = !meta ? [] : meta.items.map(item => item.id);
+            let addButtons = childrenIds.map(id => {
+                let node = client.getNode(id);
+                let name = node.getAttribute('name');
+                return {
+                    name: `Create new ${name}`,
+                    icon: 'add',
+                    action: () => {
+                        client.startTransaction(`Created new ${name}`);
+                        let newId = client.createNode({
+                            parentId: currentNode.getId(),
+                            baseId: id
+                        });
+                        client.completeTransaction();
+                        WebGMEGlobal.State.registerActiveObject(newId);
+                    }
+                };
+            });
+            // TODO: Add support for adding (inherited) children
+
+            buttons = addButtons.concat(buttons);
+            return buttons;
+        },
         MyOperations_META: [
             {
                 name: 'Create new operation',
-                icon: 'queue',
+                icon: 'add',
                 action: DeepForge.create.Operation
             }
         ],
@@ -154,7 +183,6 @@ define([
                 action: DeepForge.create.Artifact
             }
         ],
-
         // Creating prototypes
         Operation_META: prototypeButtons('Operation', 'Pipeline'),
         Complex_META: prototypeButtons('Class', 'Operation'),
@@ -208,7 +236,7 @@ define([
         Pipeline: [
             {
                 name: 'Create new node',
-                icon: 'queue',
+                icon: 'add',
                 priority: 2,
                 action: function() {
                     this.addOperation();

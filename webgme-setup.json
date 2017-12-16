@@ -40,6 +40,14 @@
       "GenerateJob": {
         "src": "src/plugins/GenerateJob",
         "test": "test/plugins/GenerateJob"
+      },
+      "UploadSeedToBlob": {
+        "src": "src/plugins/UploadSeedToBlob",
+        "test": "test/plugins/UploadSeedToBlob"
+      },
+      "ImportLibrary": {
+        "src": "src/plugins/ImportLibrary",
+        "test": "test/plugins/ImportLibrary"
       }
     },
     "layouts": {
@@ -272,9 +280,6 @@
       },
       "ArtifactOpDecorator": {
         "src": "src/decorators/ArtifactOpDecorator"
-      },
-      "LayerDecorator": {
-        "src": "src/decorators/LayerDecorator"
       },
       "ContainerLayerDecorator": {
         "src": "src/decorators/ContainerLayerDecorator"
