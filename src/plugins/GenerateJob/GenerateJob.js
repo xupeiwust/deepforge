@@ -125,8 +125,8 @@ define([
                     // add the hashes for each input
                     var input = inputs[i], 
                         hash = files.inputAssets[input],
-                        dataDir = 'inputs/' + input + '/',
-                        dataPath = dataDir + 'data',
+                        dataDir = 'inputs/',
+                        dataPath = dataDir + input,
                         url = this.blobClient.getRelativeDownloadURL(hash);
 
                     inputData[dataPath] = {
@@ -173,6 +173,10 @@ define([
                     {
                         name: 'stdout',
                         resultPatterns: [STDOUT_FILE]
+                    },
+                    {
+                        name: 'result-types',
+                        resultPatterns: ['result-types.json']
                     },
                     {
                         name: name + '-all-files',
@@ -243,7 +247,9 @@ define([
 
     GenerateJob.prototype.createEntryFile = function (node, files) {
         this.logger.info('Creating deepforge.py file...');
-        files['deepforge.py'] = _.template(Templates.DEEPFORGE)(CONSTANTS);
+        const serializeTpl = _.template(Templates.DEEPFORGE_SERIALIZATION);
+        files['deepforge/serialization.py'] = serializeTpl(CONSTANTS);
+        files['deepforge/__init__.py'] = Templates.DEEPFORGE_INIT;
         return this.getOutputs(node)
             .then(outputs => {
                 var name = this.getAttribute(node, 'name'),
@@ -353,9 +359,7 @@ define([
                 //   [ name, type ] => [ name, type, node ]
                 //
                 // For each input,
-                //  - create the deserializer
-                //  - put it in inputs/<name>/init.py
-                //  - copy the data asset to /inputs/<name>/init.py
+                //  - store the data in /inputs/<name>
                 inputs = allInputs
                     .filter(pair => !!this.getAttribute(pair[2], 'data'));  // remove empty inputs
 
@@ -420,7 +424,11 @@ define([
 
                 // Get input data arguments
                 content.inputs = inputs
-                    .map(pair => [pair[0], !this.getAttribute(pair[2], 'data')]);  // remove empty inputs
+                    .map(pair => [  // [name, type, isNone?]
+                        pair[0],
+                        this.getAttribute(pair[2], 'type'),
+                        !this.getAttribute(pair[2], 'data')
+                    ]);  // remove empty inputs
 
                 // Defined variables for each pointer
                 content.pointers = pointers
@@ -433,6 +441,10 @@ define([
             .then(outputs => {
                 content.outputs = outputs.map(output => output[0]);
                 content.arguments = this.getOperationArguments(node);
+                return this.getAllInitialCode();
+            })
+            .then(code => {
+                content.initCode = code;
 
                 files['main.py'] = _.template(Templates.MAIN)(content);
                 files['operations.py'] = content.code;
@@ -440,6 +452,21 @@ define([
                 // Set the line offset
                 var lineOffset = 0;
                 this.setAttribute(node, CONSTANTS.LINE_OFFSET, lineOffset);
+            });
+    };
+
+    GenerateJob.prototype.getAllInitialCode = function () {
+        // TODO: Get the InitCode's 'code' attribute and then all library code
+        return this.core.loadChildren(this.rootNode)
+            .then(children => {
+                const codeNodes = children.filter(child => this.isMetaTypeOf(child, this.META.Code));
+                codeNodes.sort((n1, n2) => {  // move library code to be in the front
+                    const v1 = this.isMetaTypeOf(n1, this.META.LibraryCode) ? 1 : 0;
+                    const v2 = this.isMetaTypeOf(n2, this.META.LibraryCode) ? 1 : 0;
+                    return v2 - v1;
+                });
+
+                return codeNodes.map(node => this.core.getAttribute(node, 'code')).join('\n');
             });
     };
 

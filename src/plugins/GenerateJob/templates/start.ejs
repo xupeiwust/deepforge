@@ -44,10 +44,7 @@ requirejs([
     };
 
     var prepareInputsOutputs = function() {
-        var dirs = ['inputs', <% inputs.forEach(function(input) { %>
-            'inputs/<%= input %>',
-            <% }) %>
-            'outputs'];
+        var dirs = ['inputs', 'outputs'];
         return Q.all(dirs.map(dir => makeIfNeeded(dir)));
     };
 
@@ -161,7 +158,7 @@ requirejs([
         target = path.resolve(target);
         fs.stat(src, err => {
             if (err.code === 'ENOENT') {
-            logger.debug(`creating symlink "ln -s ${target} ${src}"`);
+                logger.debug(`creating symlink "ln -s ${target} ${src}"`);
                 job = spawn('ln', ['-s', target, src || '.']);
                 job.on('exit', code => {
                     if (code) {

@@ -1,7 +1,9 @@
-import pickle
+import json
+import deepforge
 
-# input data<% inputs.forEach(function(pair) { var input = pair[0], isNil = pair[1];%>
-<%= input %> = <% if (isNil) { %>None<% } else { %>pickle.load(open('./inputs/<%= input %>/data', 'rb')) <%}}); %>
+<%= initCode %>
+# input data<% inputs.forEach(function(pair) { var input = pair[0], type = pair[1], isNil = pair[2];%>
+<%= input %> = <% if (isNil) { %>None<% } else { %>deepforge.serialization.load('<%= type %>', open('./inputs/<%= input %>', 'rb')) <%}}); %>
 
 # load references<% pointers.forEach(function(pair) { var pointer = pair[0], isNil = pair[1];%>
 from pointers import <%= pointer %>
@@ -14,11 +16,18 @@ operation = <%= name %>(<%= arguments %>)
 print('\n############### Running "<%= name.replace(/'/g, '\\\'') %>" Operation ############### ')
 <%= outputs.length ? outputs.join(', ') : 'result' %> = operation.execute(<%= inputs.map(function(pair) {
     var name = pair[0],
-        isNone = pair[1];
+        isNone = pair[2];
     return isNone ? 'None' : name;
 })%>)
 print('############### "<%= name.replace(/'/g, '\\\'') %>" Operation Complete! ###############')
 
+result_types = {}
 <% outputs.forEach(name => { %>
-pickle.dump(<%= name %>, open('outputs/<%= name %>', 'wb'))
+with open('outputs/<%= name %>', 'wb') as outfile:
+    deepforge.serialization.dump(<%= name %>, outfile)
+    result_types['<%= name %>'] = deepforge.serialization.get_full_class_name(<%= name %>)
 <% }); %>
+
+# Save the result types
+with open('result-types.json', 'w') as f:
+    json.dump(result_types, f)
