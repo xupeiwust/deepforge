@@ -118,6 +118,7 @@ describe('ExecutePipeline', function () {
         return manager.initializePlugin(pluginName)
             .then(plugin_ => {
                 plugin = plugin_;
+                plugin.checkExecutionEnv = () => Q();
                 plugin.startExecHeartBeat = () => {};
                 return manager.configurePlugin(plugin, {}, context);
             })
