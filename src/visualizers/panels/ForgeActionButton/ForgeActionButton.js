@@ -446,8 +446,7 @@ define([
                     targetNodeId = inputOp.getPointer('artifact').to;
 
                 return this._client.getNode(targetNodeId).getAttribute('name');
-            })
-            .sort();
+            });
 
         // create config options from inputs
         var inputOpts = inputNames.map((input, index) => {
@@ -459,7 +458,7 @@ define([
                 valueType: 'boolean',
                 readOnly: false
             };
-        });
+        }).sort((a, b) => a.displayName < b.displayName ? -1 : 1);
 
         var exportFormats = Object.keys(ExportFormatDict),
             configDialog = new ConfigDialog(this.client, this._currentNodeId),
