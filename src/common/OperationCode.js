@@ -126,7 +126,7 @@ var isNodeJs = typeof module === 'object' && module.exports;
     };
 
     OperationCode.prototype.addArgument = function(method, name, value) {
-        this._addIOCode(method, name, true, value);
+        return this._addIOCode(method, name, true, value);
     };
 
     OperationCode.prototype.removeArgument = function(method, name) {
@@ -233,8 +233,8 @@ var isNodeJs = typeof module === 'object' && module.exports;
     };
 
     OperationCode.prototype.hasMethod = function(method) {
-        if (!this._schema) this.updateSchema();
-        return this._schema.methods[method];
+        this.updateSchema();
+        return !!this._schema.methods[method];
     };
 
     OperationCode.prototype._addIOCode = function(method, name, isInput, value) {
@@ -518,6 +518,22 @@ var isNodeJs = typeof module === 'object' && module.exports;
     OperationCode.prototype.addReference = OperationCode.prototype.addAttribute;
     OperationCode.prototype.removeReference = OperationCode.prototype.removeAttribute;
     OperationCode.prototype.getReferences = OperationCode.prototype.getAttributes;
+
+    // Factory method for finding an operation
+    OperationCode.findOperation = function (code) {
+        const classes = code.split(/^class\b/mg);
+
+        classes.shift();
+        const operations = classes.map(code => new OperationCode(`class${code}`));
+
+        return operations.find(operation => {
+            try {
+                return operation.hasMethod(OperationCode.MAIN_FN);
+            } catch(e) {
+                return false;
+            }
+        });
+    };
 
     return OperationCode;
 }));
