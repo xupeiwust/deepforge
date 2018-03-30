@@ -87,10 +87,13 @@ define([
         }
 
         // Check the most recent changes, then the currentChanges, then the model
-        var value = this._getValueFrom(nodeId, attr, node, this.changes) ||
-            this._getValueFrom(nodeId, attr, node, this.currentChanges);
+        let value = this._getValueFrom(nodeId, attr, node, this.changes);
 
-        if (value) {
+        if (value === undefined) {
+            value = this._getValueFrom(nodeId, attr, node, this.currentChanges);
+        }
+
+        if (value !== undefined) {
             return value;
         }
 
@@ -103,7 +106,8 @@ define([
             // If deleted the attribute, get the default (inherited) value
             if (changes[nodeId][attr] === null) {
                 base = this.isCreateId(nodeId) ? node : this.core.getBase(node);
-                return this.getAttribute(base, attr);
+                let inherited = this.getAttribute(base, attr);
+                return inherited || null;
             }
             return changes[nodeId][attr];
         }
@@ -287,6 +291,12 @@ define([
                     this.changes[nodeId] = this.changes[tmpId];
                     delete this.changes[tmpId];
                 }
+
+                // Update any deletions
+                let index = this.deletions.indexOf(tmpId);
+                if (index !== -1) {
+                    this.deletions.splice(index, 1, nodeId);
+                }
                 return node;
             });
     };
@@ -294,7 +304,15 @@ define([
     ExecuteJob.prototype.applyDeletions = function () {
         var deletions = this.deletions;
 
+        // Remove any creation ids
         this.deletions = [];
+        for (let i = deletions.length; i--;) {
+            if (this.isCreateId(deletions[i])) {
+                this.deletions.push(deletions[i]);
+                deletions.splice(i, 1);
+            }
+        }
+
         return Q.all(deletions.map(id => this.core.loadByPath(this.rootNode, id)))
             .then(nodes => {
                 for (var i = nodes.length; i--;) {

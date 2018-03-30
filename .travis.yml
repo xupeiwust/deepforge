@@ -1,6 +1,9 @@
 language: node_js
 services: mongodb
+addons:
+    chrome: beta
 sudo: false
+script: npm run test-unit
 before_install: if [[ `npm -v` != 5* ]]; then npm i -g npm@5; fi
 node_js:
   - "6.2.1"
