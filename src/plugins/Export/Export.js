@@ -92,7 +92,7 @@ define([
                 this.result.setSuccess(true);
                 callback(null, this.result);
             })
-            .catch(err => callback(err));
+            .catch(err => callback(err, this.result));
     };
 
     Export.prototype.resetVariableNames = function () {
