@@ -1,4 +1,4 @@
-/*globals define, $, WebGMEGlobal*/
+/*globals define, WebGMEGlobal*/
 // These are actions defined for specific meta types. They are evaluated from
 // the context of the ForgeActionButton
 define([
@@ -15,8 +15,6 @@ define([
     REGISTRY_KEYS,
     DeepForge
 ) {
-    var FILE_UPLOAD_INPUT = $('<input type="file" />');
-
     ////////////// Downloading files //////////////
     var downloadAttrs = [
             'data',
@@ -40,30 +38,6 @@ define([
             return '/rest/blob/download/' + hash;
         }
         return null;
-    };
-
-    var importTorch = function() {
-        var pluginId = 'ImportTorch',
-            context = this.client.getCurrentPluginContext(pluginId),
-            fileInput = FILE_UPLOAD_INPUT.clone();
-
-        // Prompt for the file
-        fileInput.on('change', event => this.uploadFile(event)
-            .then(hash => {
-                // Run the plugin in the browser (set namespace)
-                context.managerConfig.namespace = 'nn';
-                context.pluginConfig = {
-                    srcHash: hash
-                };
-                return Q.ninvoke(this.client, 'runBrowserPlugin', pluginId, context);
-            })
-            .then(res => {
-                Materialize.toast(res.messages[0].message, 2000);
-            })
-            .fail(err => Materialize.toast(`Import failed: ${err}`, 2000))
-                
-        );
-        fileInput.click();
     };
 
     var returnToLast = (place) => {
