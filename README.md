@@ -21,11 +21,17 @@ Additional features include:
 - Facilitates defining custom layers 
 
 ## Quick Start
-The easiest way to start deepforge is using [docker-compose](https://docs.docker.com/compose/). Using docker-compose, deepforge can be started with
+Installing deepforge natively requires NodeJS (version 8 recommended), MongoDB, and python installed (at least on the worker machines).
 ```
-wget https://raw.githubusercontent.com/deepforge-dev/deepforge/master/docker-compose.yml
-docker-compose up
+npm install -g deepforge-dev/deepforge
 ```
+
+After installing deepforge, you need to install a neural network library of your choosing (a deepforge extension). The recommended is deepforge-keras.
+```
+deepforge extensions add deepforge-dev/deepforge-keras
+```
+
+Next, simply start deepforge with `deepforge start`.
 
 Finally, navigate to [http://localhost:8888](http://localhost:8888) to start using DeepForge! For more detailed instructions and other installation options, check out the [docs](http://deepforge.readthedocs.io/en/latest/deployment/overview.html).
 
