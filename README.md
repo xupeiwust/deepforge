@@ -53,4 +53,4 @@ Contributions are welcome! There are a couple different ways to contribute to De
 If you have any questions, check out the [wiki](https://github.com/dfst/deepforge/wiki/) or drop me a line on the gitter!
 
 
-Sponsored by [Digital Reasoning](http://www.digitalreasoning.com/)
+Sponsored by the [National Science Foundation](https://www.nsf.gov/) and [Digital Reasoning](http://www.digitalreasoning.com/)
