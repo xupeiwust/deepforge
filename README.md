@@ -21,7 +21,7 @@ Additional features include:
 - Facilitates defining custom layers 
 
 ## Quick Start
-Installing deepforge natively requires NodeJS (version 8 recommended), MongoDB, and python3 installed (at least on the worker machines).
+Installing deepforge natively requires NodeJS (version 8 recommended), MongoDB, and python3 installed (at least on the worker machines). It is recommended to first update npm with `npm install -g npm@5`.
 ```
 npm install -g deepforge-dev/deepforge
 ```
@@ -42,6 +42,10 @@ Finally, navigate to [http://localhost:8888](http://localhost:8888) to start usi
 - [Examples](https://github.com/deepforge-dev/examples)
 
 - [Datamodel Developer Slides](https://docs.google.com/presentation/d/1hd3IyUlzW_TIPnzCnE-1pdz00Pw8WaIxYiOW_Hyog-M/edit#slide=id.p)
+
+## FAQ
+- Failed extension installation with an error like `Could not find project (webgme-easydag)`
+    - Update your local version of `npm` to at least 5.8.0
 
 ## Interested in contributing?
 Contributions are welcome! There are a couple different ways to contribute to DeepForge:
