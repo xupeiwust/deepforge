@@ -21,7 +21,7 @@ Additional features include:
 - Facilitates defining custom layers 
 
 ## Quick Start
-Installing deepforge natively requires NodeJS (version 8 recommended), MongoDB, and python installed (at least on the worker machines).
+Installing deepforge natively requires NodeJS (version 8 recommended), MongoDB, and python3 installed (at least on the worker machines).
 ```
 npm install -g deepforge-dev/deepforge
 ```
