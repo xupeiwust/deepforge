@@ -17,9 +17,10 @@
     "watch-test": "nodemon --exec 'mocha --recursive test'",
     "build-nn": "node ./utils/nn-parser.js"
   },
-  "version": "1.4.2",
+  "version": "1.4.3",
   "dependencies": {
     "commander": "^2.9.0",
+    "deepforge-keras": "github:deepforge-dev/deepforge-keras",
     "dotenv": "^2.0.0",
     "exists-file": "^2.1.0",
     "express": "^4.14.0",
