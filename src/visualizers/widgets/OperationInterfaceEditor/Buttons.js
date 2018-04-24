@@ -3,7 +3,7 @@ define([
     'deepforge/viz/Buttons',
     'deepforge/Constants',
     'widgets/EasyDAG/Buttons',
-    'widgets/EasyDAG/Icons',
+    'webgme-easydag/Icons',
     'underscore',
     './lib/spectrum.min'
 ], function(
