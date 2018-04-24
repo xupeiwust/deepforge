@@ -1,5 +1,5 @@
 # Dockerfile for running the server itself
-FROM node:6.10.1
+FROM node:8.9.0
 MAINTAINER Brian Broll <brian.broll@gmail.com>
 
 RUN echo '{"allow_root": true}' > /root/.bowerrc && mkdir -p /root/.config/configstore/ && \
