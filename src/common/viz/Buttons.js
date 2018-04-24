@@ -2,7 +2,7 @@
 define([
     'deepforge/globals',
     'widgets/EasyDAG/Buttons',
-    'widgets/EasyDAG/Icons'
+    'webgme-easydag/Icons'
 ], function(
     DeepForge,
     EasyDAGButtons,
