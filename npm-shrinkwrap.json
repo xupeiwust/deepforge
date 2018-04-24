@@ -753,6 +753,19 @@
       "resolved": "https://registry.npmjs.org/deep-is/-/deep-is-0.1.2.tgz",
       "integrity": "sha1-nO1l6gvAsJ9CptecGxkD+dkTzBg="
     },
+    "deepforge-keras": {
+      "version": "github:deepforge-dev/deepforge-keras#908ac75336afda3ef84ff4d6d916c4acfb5e8dd4",
+      "requires": {
+        "webgme-autoviz": "2.2.1",
+        "webgme-easydag": "github:dfst/webgme-easydag#cb461f2687c8a2aa00adc827ea3688b7f0e24ada",
+        "webgme-simple-nodes": "github:brollb/webgme-simple-nodes#2a9fc79c93efd55067ef7c2e1559f9b31b0f97e5"
+      },
+      "dependencies": {
+        "webgme-simple-nodes": {
+          "version": "github:brollb/webgme-simple-nodes#2a9fc79c93efd55067ef7c2e1559f9b31b0f97e5"
+        }
+      }
+    },
     "default-user-agent": {
       "version": "1.0.0",
       "resolved": "https://registry.npmjs.org/default-user-agent/-/default-user-agent-1.0.0.tgz",
@@ -6885,7 +6898,7 @@
       "integrity": "sha1-ZPpr2RL0EBoIDSwARRp5ARc6pZ4="
     },
     "webgme-easydag": {
-      "version": "git://github.com/dfst/webgme-easydag.git#067b20e7a61a4ea6eab123282a1ee5868688eb25"
+      "version": "github:dfst/webgme-easydag#cb461f2687c8a2aa00adc827ea3688b7f0e24ada"
     },
     "webgme-executor-worker": {
       "version": "1.0.1",
@@ -6912,7 +6925,7 @@
       }
     },
     "webgme-fab": {
-      "version": "git://github.com/dfst/webgme-fab.git#b9de4484b73e592c1a2567f2d16ee132e5e3c380"
+      "version": "github:dfst/webgme-fab#db5fc0697eb4b66ba29d9c116b9f07e2791a8716"
     },
     "webgme-simple-nodes": {
       "version": "2.1.1",
