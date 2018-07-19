@@ -355,9 +355,23 @@ define([
             });
     };
 
+    GenerateJob.validateVariableName = function (word) {
+        return word.replace(/[^a-zA-Z\d]+/g, '_');
+    };
+
     GenerateJob.toSnakeCase = function (word) {
+        word = GenerateJob.validateVariableName(word);
         word = word[0].toLowerCase() + word.slice(1);
-        return word.replace(/[A-Z]/g, match => `_${match.toLowerCase()}`);
+        return word
+            .replace(/[A-Z]/g, match => `_${match.toLowerCase()}`)
+            .replace(/_+/g, '_');
+    };
+
+    GenerateJob.toUpperCamelCase = function (word) {
+        word = GenerateJob.validateVariableName(word);
+        word = word[0].toUpperCase() + word.slice(1);
+        return word
+            .replace(/_+./g, match => match[1].toUpperCase());
     };
 
     GenerateJob.prototype.getAllInitialCode = function () {
