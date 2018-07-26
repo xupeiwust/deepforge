@@ -37,9 +37,7 @@ Finally, navigate to [http://localhost:8888](http://localhost:8888) to start usi
 ## Additional Resources
 - [Intro to DeepForge Slides](https://docs.google.com/presentation/d/10_y5O3gHXSATfjHVLJg7dOdrz-tAXNWjlxhJ5SlA0ic/edit?usp=sharing)
 - [wiki](https://github.com/deepforge-dev/deepforge/wiki) containing overview, installation, configuration and developer information
-- [Starter Kit](https://github.com/deepforge-dev/examples/tree/master/starterkit) containing example pipelines demonstrating various deepforge features
 - [Examples](https://github.com/deepforge-dev/examples)
-
 - [Datamodel Developer Slides](https://docs.google.com/presentation/d/1hd3IyUlzW_TIPnzCnE-1pdz00Pw8WaIxYiOW_Hyog-M/edit#slide=id.p)
 
 ## FAQ
