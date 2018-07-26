@@ -2,7 +2,6 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 [![Build Status](https://travis-ci.org/deepforge-dev/deepforge.svg?branch=master)](https://travis-ci.org/deepforge-dev/deepforge)
 [![Join us on slack!](http://slack.deepforge.org/badge.svg)](http://slack.deepforge.org/)
-[![Stories in Ready](https://badge.waffle.io/deepforge-dev/deepforge.png?label=ready&title=Ready)](https://waffle.io/deepforge-dev/deepforge)
 
 Using DeepForge? [Let us know what you think!](https://goo.gl/forms/2pDdCPXoUvkQhVzQ2)
 
