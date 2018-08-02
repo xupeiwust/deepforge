@@ -3,7 +3,7 @@ Native Installation
 
 Dependencies
 ------------
-First, install `NodeJS <https://nodejs.org/en/>`_ (v6) and `MongoDB <https://www.mongodb.org/>`_. You may also need to install git if you haven't already.
+First, install `NodeJS <https://nodejs.org/en/>`_ (LTS) and `MongoDB <https://www.mongodb.org/>`_. You may also need to install git if you haven't already.
 
 Next, you can install DeepForge using npm:
 
