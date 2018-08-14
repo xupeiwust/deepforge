@@ -2,11 +2,13 @@
 /*jshint browser: true*/
 
 define([
+    'js/DragDrop/DropTarget',
     'text!./cards/Pipeline.ejs',
     'text!./cards/Architecture.ejs',
     'underscore',
     'css!./styles/PipelineIndexWidget.css'
 ], function (
+    DropTarget,
     PipelineHtml,
     ArchitectureHtml,
     _
@@ -34,11 +36,11 @@ define([
         this.$backgroundText = null;
         this.updateBackgroundText();
 
-        this._initializeEventHandlers();
+        this._initializeEventHandlers(container);
         this.logger.debug('ctor finished');
     };
 
-    PipelineIndexWidget.prototype._initializeEventHandlers = function () {
+    PipelineIndexWidget.prototype._initializeEventHandlers = function (container) {
         this.$el.on('click', '.open-pipeline', this.openPipeline);
         this.$el.on('click', '.preview.card-image', this.openPipeline);
 
@@ -59,6 +61,12 @@ define([
                     this.setName(id, newVal);
                 }
             });
+        });
+
+        DropTarget.makeDroppable(container, {
+            drop: (event, dragInfo) => {
+                this.onBackgroundDrop(event, dragInfo);
+            }
         });
     };
 
