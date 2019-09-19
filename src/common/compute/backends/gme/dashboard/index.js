@@ -1,6 +1,7 @@
 /* globals define, $ */
 define([
-    'deepforge/ExecutionEnv',
+    '../../ComputeDashboard',
+    '../ExecutorHelper',
     'q',
     'deepforge/viz/Utils',
     'deepforge/api/JobOriginClient',
@@ -9,7 +10,8 @@ define([
     'text!./WorkerJobItem.html',
     'css!./WorkerModal.css'
 ], function(
-    ExecutionEnv,
+    ComputeDashboard,
+    ExecutorHelper,
     Q,
     utils,
     JobOriginClient,
@@ -19,48 +21,50 @@ define([
 ) {
     'use strict';
 
-    var WorkerDialog = function(logger) {
+    var WorkerDialog = function(logger, $container) {
+        this.logger = logger.fork('GME');
         this.workerDict = {};
         this.workers = {};
         this.runningWorkers = [];
         this.jobsDict = {};
         this.jobs = {};
         this.active = false;
-        this.logger = logger.fork('WorkerDialog');
         this.originManager = new JobOriginClient({
             logger: this.logger
         });
-    };
 
-    WorkerDialog.prototype.initialize = function() {
-        this._dialog = $(WorkerHtml);
-        this._table = this._dialog.find('.worker-list');
-        this.$noJobs = this._dialog.find('.no-jobs-msg');
-        this.$noWorkers = this._dialog.find('.no-workers-msg');
+        this.$el = $(WorkerHtml);
+        this.$table = this.$el.find('.worker-list');
+        this.$noJobs = this.$el.find('.no-jobs-msg');
+        this.$noWorkers = this.$el.find('.no-workers-msg');
         this._isShowingJobs = false;
         this._isShowingWorkers = true;
-        this._queue = this._dialog.find('.job-queue-list');
-        this._dialog.modal('show');
-        this._dialog.on('hidden.bs.modal', () => this.active = false);
+        this.$queue = this.$el.find('.job-queue-list');
+        $container.append(this.$el);
     };
 
-    WorkerDialog.prototype.show = function() {
+    WorkerDialog.prototype.initialize = Object.create(ComputeDashboard.prototype);
+
+    WorkerDialog.prototype.onActivate = function() {};
+    WorkerDialog.prototype.onShow = function() {
         this.active = true;
         this.update();
-        this.initialize();
     };
 
-    WorkerDialog.prototype.update = function() {
-        // Poll the workers
-        return Q.all([
-            ExecutionEnv.getWorkers().then(workers => this.updateWorkers(workers)),
-            ExecutionEnv.getJobs().then(jobs => this.updateJobs(jobs))
-        ]).then(() => {
-            if (this.active) {
-                setTimeout(this.update.bind(this), 1000);
-            }
-        })
-        .catch(err => this.logger.error('Update failed:', err));
+    WorkerDialog.prototype.onDeactivate =
+    WorkerDialog.prototype.onHide = function() {
+        this.active = false;
+    };
+
+    WorkerDialog.prototype.update = async function() {
+        const workers = await ExecutorHelper.getWorkers();
+        const jobs = await ExecutorHelper.getJobs();
+
+        await Q.all([this.updateWorkers(workers), this.updateJobs(jobs)]);
+
+        if (this.active) {
+            setTimeout(this.update.bind(this), 1000);
+        }
     };
 
     WorkerDialog.prototype.updateWorkers = function(workerDict) {
@@ -100,7 +104,7 @@ define([
         row.find('.clientId').text(worker.clientId);
         row.find('.status').text(worker.status);
         if (!this.workers[worker.clientId]) {
-            this._table.append(row);
+            this.$table.append(row);
             this.workers[worker.clientId] = row;
         }
 
@@ -206,7 +210,7 @@ define([
             job.find('.job-id').text('Loading');
             job.find('.createdAt').text(utils.getDisplayTime(createdTime));
             this.updateJobItemName(jobId);
-            this._queue.append(job);
+            this.$queue.append(job);
             this.jobs[jobId] = job;
         }
 

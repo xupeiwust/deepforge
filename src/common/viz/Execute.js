@@ -80,6 +80,7 @@ define([
 
     Execute.prototype.isRunning = function(node) {
         node = node || this.client.getNode(this._currentNodeId);
+        // TODO: Check the parent, too
         return node.getAttribute('executionId');
     };
 
