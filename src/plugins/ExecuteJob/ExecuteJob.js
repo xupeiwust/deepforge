@@ -73,7 +73,6 @@ define([
         this.logManager = null;
     };
 
-    // TODO: Update plugin metadata for the compute options
     ExecuteJob.metadata = pluginMetadata;
     ExecuteJob.HEARTBEAT_INTERVAL = 2500;
 
@@ -95,35 +94,7 @@ define([
         this.pulseClient = new ExecPulseClient(params);
         this._execHashToJobNode = {};
 
-        const name = Compute.getAvailableBackends()[0];  // FIXME: enable the user to select one
-        const backend = Compute.getBackend(name);
-        this.compute = backend.getClient(this.logger);
-        this.compute.on(
-            'data',
-            (id, data) => {
-                const job = this.getNodeForJobId(id);
-                this.onConsoleOutput(job, data.toString());
-            }
-        );
-
-        this.compute.on('update', (jobId, status) => {
-            try {
-                this.onUpdate(jobId, status);
-            } catch (err) {
-                this.logger.error(`Error when processing operation update: ${err}`);
-            }
-        });
-
-        this.compute.on('end',
-            (id, info) => {
-                try {
-                    this.onOperationEnd(id);
-                } catch (err) {
-                    this.logger.error(`Error when processing operation end: ${err}`);
-                }
-            }
-        );
-
+        this.compute = null;
         return result;
     };
 
@@ -158,6 +129,7 @@ define([
         this.currentForkName = null;
         this.forkNameBase = this.getAttribute(this.activeNode, 'name');
         const isResuming = await this.isResuming(this.activeNode);
+        this.configureCompute();
         await this.prepare(isResuming);
 
         if (isResuming) {
@@ -178,6 +150,38 @@ define([
             return this.executeJob(this.activeNode);
         }
     };
+
+    ExecuteJob.prototype.configureCompute = async function () {
+        const config = this.getCurrentConfig();
+        const backend = Compute.getBackend(config.compute.id);
+        this.compute = backend.getClient(this.logger, config.compute.config);
+        this.compute.on(
+            'data',
+            (id, data) => {
+                const job = this.getNodeForJobId(id);
+                this.onConsoleOutput(job, data.toString());
+            }
+        );
+
+        this.compute.on('update', (jobId, status) => {
+            try {
+                this.onUpdate(jobId, status);
+            } catch (err) {
+                this.logger.error(`Error when processing operation update: ${err}`);
+            }
+        });
+
+        this.compute.on('end',
+            (id, info) => {
+                try {
+                    this.onOperationEnd(id);
+                } catch (err) {
+                    this.logger.error(`Error when processing operation end: ${err}`);
+                }
+            }
+        );
+    };
+
 
     ExecuteJob.prototype.getJobId = function (node) {
         return JSON.parse(this.getAttribute(node, 'jobInfo')).hash;
