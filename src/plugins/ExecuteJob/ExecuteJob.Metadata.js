@@ -10,11 +10,10 @@ define([
         this._markForDeletion = {};  // id -> node
         this._oldMetadataByName = {};  // name -> id
         this.createdMetadataIds = {};
-
-        this.plotLines = {};
+        this.createIdToMetadataId = {};
     };
 
-    // I think I should convert these to just a single 'update graph' command
+    // TODO: Add tests
     ExecuteJob.prototype[CONSTANTS.PLOT_UPDATE] = async function (job, state) {
         const jobId = this.core.getPath(job);
 
@@ -23,70 +22,37 @@ define([
         let id = jobId + '/' + state.id;
         let graph = this.getExistingMetadataById(job, 'Graph', id);
         if (!graph) {
-            graph = this.createNode('Graph', job);
-            this.setAttribute(graph, 'id', id);
-
-            this.createIdToMetadataId[graph] = id;
+            graph = this.core.createNode({
+                base: this.META.Graph,
+                parent: job
+            });
+            this.core.setAttribute(graph, 'id', id);
+            this._metadata[id] = graph;
         }
 
         // Apply whatever updates are needed
         // Set the plot title
         // Only support a single axes for now
         const axes = state.axes[0];
-        this.setAttribute(graph, 'name', axes.title);
-        this.setAttribute(graph, 'xlabel', axes.xlabel);
-        this.setAttribute(graph, 'ylabel', axes.ylabel);
+        this.core.setAttribute(graph, 'name', axes.title);
+        this.core.setAttribute(graph, 'xlabel', axes.xlabel);
+        this.core.setAttribute(graph, 'ylabel', axes.ylabel);
         this.logger.info(`Updating graph named ${axes.title}`);
 
-        // Delete current line nodes
-        if (!this.isCreateId(graph)) {
-            //const children = await this.core.loadChildren(graph);
-            const childIds = this.core.getChildrenPaths(graph);
-            childIds.forEach(id => this.deleteNode(id));
-        }
-
-        if (this.plotLines[id]) {
-            this.plotLines[id].forEach(lineId => {
-                if (this._metadata[lineId]) {
-                    const nodeId = this.core.getPath(this._metadata[lineId]);
-                    this.deleteNode(nodeId);
-                } else {
-                    const createId = Object.keys(this.createIdToMetadataId)
-                        .find(createId => this.createIdToMetadataId[createId] === lineId);
-
-                    if (createId) {
-                        this.deleteNode(createId);
-                    }
-                }
-            });
-        }
-        this.plotLines[id] = [];
+        const children = await this.core.loadChildren(graph);
+        children.forEach(node => this.core.deleteNode(node));
 
         // Update the points for each of the lines 
         axes.lines.forEach((line, index) => {
-            let lineId = id + '/' + index;
-            let node = this.createNode('Line', graph);
-            this.plotLines[id].push(lineId);
-            this.createIdToMetadataId[node] = lineId;
+            let node = this.core.createNode({
+                base: this.META.Line,
+                parent: graph,
+            });
 
-            this.setAttribute(node, 'name', line.label || `line ${index+1}`);
+            this.core.setAttribute(node, 'name', line.label || `line ${index+1}`);
             let points = line.points.map(pts => pts.join(',')).join(';');
-            this.setAttribute(node, 'points', points);
+            this.core.setAttribute(node, 'points', points);
         });
-    };
-
-    ExecuteJob.prototype[CONSTANTS.GRAPH_CREATE_LINE] = function (job, graphId, id) {
-        var jobId = this.core.getPath(job),
-            graph = this._metadata[jobId + '/' + graphId],
-            name = Array.prototype.slice.call(arguments, 3).join(' '),
-            line;
-
-        // Create a 'line' node in the given Graph metadata node
-        name = name.replace(/\s+$/, '');
-        line = this.createNode('Line', graph);
-        this.setAttribute(line, 'name', name);
-        this._metadata[jobId + '/' + id] = line;
-        this.createIdToMetadataId[line] = jobId + '/' + id;
     };
 
     ExecuteJob.prototype[CONSTANTS.IMAGE.BASIC] =
@@ -95,14 +61,14 @@ define([
         var name = Array.prototype.slice.call(arguments, 3).join(' '),
             imageNode = this._getImageNode(job, imgId, name);
 
-        this.setAttribute(imageNode, 'data', hash);
+        this.core.setAttribute(imageNode, 'data', hash);
     };
 
     ExecuteJob.prototype[CONSTANTS.IMAGE.NAME] = function (job, imgId) {
         var name = Array.prototype.slice.call(arguments, 2).join(' '),
             imageNode = this._getImageNode(job, imgId, name);
 
-        this.setAttribute(imageNode, 'name', name);
+        this.core.setAttribute(imageNode, 'name', name);
     };
 
     ExecuteJob.prototype._getImageNode = function (job, imgId, name) {
@@ -116,9 +82,11 @@ define([
             imageNode = this._getExistingMetadata(jobId, 'Image', name);
             if (!imageNode) {
                 this.logger.info(`Creating image ${id} named ${name}`);
-                imageNode = this.createNode('Image', job);
-                this.setAttribute(imageNode, 'name', name);
-                this.createIdToMetadataId[imageNode] = id;
+                imageNode = this.core.createNode({
+                    base: this.META.Image,
+                    parent: job,
+                });
+                this.core.setAttribute(imageNode, 'name', name);
             }
             this._metadata[id] = imageNode;
         }
@@ -147,7 +115,7 @@ define([
                     if (this.isMetaTypeOf(child, this.META.Metadata)) {
                         id = this.core.getPath(child);
                         base = this.core.getBase(child);
-                        type = this.getAttribute(base, 'name');
+                        type = this.core.getAttribute(base, 'name');
 
                         this._markForDeletion[nodeId][id] = child;
                         // namespace by metadata type
@@ -166,7 +134,7 @@ define([
                 // make the deletion ids relative to the job node
                 this.logger.debug(`About to delete ${idsToDelete.length}: ${idsToDelete.join(', ')}`);
                 for (i = idsToDelete.length; i--;) {
-                    this.deleteNode(idsToDelete[i]);
+                    this.core.deleteNode(idsToDelete[i]);
                 }
             });
     };
@@ -182,14 +150,14 @@ define([
             this.logger.debug(`About to delete ${nodeIds.length}: ${nodeIds.join(', ')}`);
             for (var i = nodeIds.length; i--;) {
                 const node = this._markForDeletion[nodeId][nodeIds[i]];
-                this.deleteNode(this.core.getPath(node));
+                this.core.deleteNode(this.core.getPath(node));
             }
             delete this.lastAppliedCmd[nodeId];
             delete this.createdMetadataIds[nodeId];
             delete this._markForDeletion[nodeId];
         }
 
-        this.delAttribute(job, 'jobInfo');
+        this.core.delAttribute(job, 'jobInfo');
     };
 
     ExecuteJob.prototype.resultMsg = function(msg) {
@@ -198,21 +166,14 @@ define([
     };
 
     ExecuteJob.prototype.getExistingMetadataById = function (job, type, id) {
-        const createId = Object.keys(this.createIdToMetadataId)
-            .find(createId => this.createIdToMetadataId[createId] === id);
-
-        if (createId) {  // on the queue to be created
-            return createId;
-        }
-
-        if (this._metadata[id]) {  // already created
+        if (this._metadata[id]) {
             return this._metadata[id];
         }
 
-        return this._getExistingMetadata( // exists from prev run
+        return this._getExistingMetadata(  // exists from prev run
             this.core.getPath(job),
             type,
-            node => this.getAttribute(node, 'id') === id
+            node => this.core.getAttribute(node, 'id') === id
         );
     };
 
@@ -269,6 +230,12 @@ define([
             stdout: result.join('\n'),
             hasMetadata: hasMetadata
         };
+    };
+
+    ExecuteJob.prototype.onNodeCreated = async function (tmpId, node) {
+        const id = this.createIdToMetadataId[tmpId];
+        delete this.createIdToMetadataId[tmpId];
+        this._metadata[id] = node;
     };
 
     return ExecuteJob;
