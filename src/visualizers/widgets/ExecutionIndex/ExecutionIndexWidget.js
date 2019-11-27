@@ -4,12 +4,14 @@
 define([
     'deepforge/viz/Utils',
     'widgets/LineGraph/LineGraphWidget',
+    'widgets/PlotlyGraph/PlotlyGraphWidget',
     './lib/moment.min',
     'text!./ExecTable.html',
     'css!./styles/ExecutionIndexWidget.css'
 ], function (
     Utils,
     LineGraphWidget,
+    PlotlyGraphWidget,
     moment,
     TableHtml
 ) {
@@ -48,7 +50,7 @@ define([
         this.$execList = this.$table.find('.execs-content');
 
         // Create the graph in the right half
-        this.lineGraph = new LineGraphWidget(this.logger, this.$right);
+        this.plotlyGraph = new PlotlyGraphWidget(this.logger, this.$right);
         this.defaultSelection = null;
         this.hasRunning = false;
     };
@@ -75,26 +77,26 @@ define([
             target = target.parentNode;
         }
         id = target.getAttribute('data-id');
-
         checked = this.nodes[id].$checkbox.checked;
+
         if (event.target.tagName.toLowerCase() !== 'input') {
             this.setSelect(id, !checked);
         } else {
-            this.setExecutionDisplayed(id, checked);
+            this.setSelect(id, checked);
         }
     };
 
     ExecutionIndexWidget.prototype.onWidgetContainerResize = function (width, height) {
         this.$left.css({
-            width: width/2,
+            width: width / 2,
             height: height
         });
         this.$right.css({
-            left: width/2,
-            width: width/2,
+            left: width / 2,
+            width: width / 2,
             height: height
         });
-        this.lineGraph.onWidgetContainerResize(width/2, height);
+        this.plotlyGraph.onWidgetContainerResize(width / 2, height);
         this.logger.debug('Widget is resizing...');
     };
 
@@ -108,7 +110,9 @@ define([
             this.updateSelected(desc);
         } else if (desc.type === 'line') {
             desc.type = 'line';
-            this.lineGraph.addNode(desc);
+            this.plotlyGraph.addNode(desc);
+        } else if (desc.type === 'graph') {
+            this.plotlyGraph.addNode(desc);
         }
 
         if (isFirstNode) {
@@ -205,7 +209,7 @@ define([
         for (var i = nodeIds.length; i--;) {
             updated = this.updateTime(nodeIds[i]) || updated;
         }
-        
+
         if (updated) {  // if there are still nodes, call again!
             setTimeout(this.updateTimes.bind(this), 1000);
         }
@@ -219,7 +223,7 @@ define([
         }
         delete this.nodes[id];
 
-        this.lineGraph.removeNode(id);  // 'nop' if node is not line
+        this.plotlyGraph.removeNode(id);  // 'nop' if node is not line
     };
 
     ExecutionIndexWidget.prototype.updateSelected = function (desc) {
@@ -234,7 +238,6 @@ define([
             this.defaultSelection = desc.id;
             this.setSelect(desc.id, true);
         }
-        
     };
 
     ExecutionIndexWidget.prototype.toggleAbbreviations = function (show, ids) {
@@ -266,6 +269,7 @@ define([
                 this.checkedIds.splice(k, 1);
             }
         }
+        let checkedExecutions = this.checkedIds.slice(0);
 
         isChecked = this.checkedIds.length > 1;
         if (isChecked !== wasChecked) {
@@ -277,7 +281,7 @@ define([
             this.toggleAbbreviations(checked, [id]);
         }
 
-        this.setExecutionDisplayed(id, checked);
+        this.setDisplayedExecutions(checkedExecutions);
     };
 
     ExecutionIndexWidget.prototype.updateNode = function (desc) {
@@ -296,8 +300,8 @@ define([
 
             node.statusClass = Utils.ClassForJobStatus[desc.status];
             node.desc = desc;
-        } else if (desc.type === 'line') {
-            this.lineGraph.updateNode(desc);
+        } else if (desc.type === 'graph') {
+            this.plotlyGraph.updateNode(desc);
         }
     };
 
