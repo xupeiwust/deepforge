@@ -1,23 +1,48 @@
-/* globals define, WebGMEGlobal */
+/* globals define*/
 define([
-    'client/logger'
+    'client/logger',
+    'deepforge/gmeConfig'
 ], function(
-    Logger
+    Logger,
+    gmeConfig
 ) {
+    const fetch = require.isBrowser ? window.fetch :
+        require.nodeRequire('node-fetch');
+    const Headers = require.isBrowser ? window.Headers : fetch.Headers;
     const StorageClient = function(id, name, logger) {
         this.id = id;
         this.name = name;
         if (!logger) {
-            let gmeConfig;
-            if (require.isBrowser) {
-                gmeConfig = WebGMEGlobal.gmeConfig;
-            } else {
-                gmeConfig = require.nodeRequire('../../../config');
-            }
             logger = Logger.create(`gme:storage:${id}`, gmeConfig.client.log);
         }
         this.logger = logger.fork(`storage:${id}`);
     };
+
+    const StorageHelpers = {};
+
+    StorageHelpers.getServerURL = function () {
+        const {port} = gmeConfig.server;
+        let url = require.isBrowser ? window.origin : process.env.DEEPFORGE_HOST;
+        url = url || `127.0.0.1:${port}`;
+        return [url.replace(/^https?:\/\//, ''), url.startsWith('https')];
+    };
+
+    StorageHelpers.getURL = function (url) {
+        return url;
+    };
+
+    StorageHelpers.fetch = async function (url, opts = {}) {
+        url = this.getURL(url);
+        opts.headers = new Headers(opts.headers || {});
+        const response = await fetch(url, opts);
+        const {status} = response;
+        if (status > 399) {
+            return Promise.reject(response);
+        }
+        return response;
+    };
+
+    Object.assign(StorageClient.prototype, StorageHelpers);
 
     StorageClient.prototype.getFile = async function(/*dataInfo*/) {
         throw new Error(`File download not implemented for ${this.name}`);
