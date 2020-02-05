@@ -48,7 +48,12 @@ define([
                 event.stopPropagation();
                 event.preventDefault();
             });
-            node.$download.on('click', event => event.stopPropagation());
+            node.$download.on('click', async event => {
+                const url = await this.getDownloadURL(desc.id);
+                this.download(desc.name, url);
+                event.stopPropagation();
+                event.preventDefault();
+            });
             node.$el.on('click', event => {
                 this.onNodeClick(desc.id);
                 event.stopPropagation();
@@ -95,6 +100,17 @@ define([
     };
 
     ArtifactIndexWidget.prototype.onDeactivate = function () {
+    };
+
+    ArtifactIndexWidget.prototype.download = function (filename, url) {
+        const element = document.createElement('a');
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.href = url;
+        element.target = '_self';
+        element.setAttribute('download', filename);
+        element.click();
+        document.body.removeChild(element);
     };
 
     return ArtifactIndexWidget;
