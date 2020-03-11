@@ -1,6 +1,11 @@
 #!/usr/bin/env node
+const yaml = require('js-yaml'),
+    os = require('os'),
+    IS_WINDOWS = os.type() === 'WINDOWS_NT',
+    SHELL = IS_WINDOWS ? true : '/bin/bash',
+    HOME_DIR = os.homedir(),
+    gmeConfig = require('../config');
 
-const HOME_DIR = require('os').homedir();
 var Command = require('commander').Command,
     tcpPortUsed = require('tcp-port-used'),
     program = new Command(),
@@ -29,6 +34,17 @@ var Command = require('commander').Command,
         }
         return dir;
     };
+
+const ENV_FILE = path.join(__dirname, '..', 'environment.yml'),
+DEEPFORGE_CONDA_ENV =
+    yaml.safeLoad(fs.readFileSync(ENV_FILE)).name || process.env.DEEPFORGE_CONDA_ENV;
+
+const getDeepForgeServerCommand = function(useConda){
+    if(useConda){
+        return `${IS_WINDOWS ? 'conda': 'source'} activate ${DEEPFORGE_CONDA_ENV} && node`;
+    }
+    return 'node';
+};
 
 // Check for any commands
 if (process.argv.length === 2) {
@@ -115,7 +131,6 @@ var isLocalUri = function (protocol, uri) {
 
 var checkMongo = function (args, notSilent, mongoUri) {
     // check the webgme config
-    var gmeConfig = require('../config');
 
     mongoUri = mongoUri || gmeConfig.mongo.uri;
 
@@ -178,6 +193,40 @@ var startMongo = function (args, port, silent) {
     });
 };
 
+const startLocal = function(serverCommand) {
+    let stdout, workerJob=null;
+    const env = {cwd: path.join(__dirname, '..'), NODE_ENV: process.env.NODE_ENV, PATH: process.env.PATH};
+    // Set the cache to the blob
+    if (gmeConfig.blob.type === 'FS') {
+        process.env.DEEPFORGE_WORKER_CACHE = path.resolve(gmeConfig.blob.fsDir + '/wg-content');
+    }
+
+    // process.env.NODE_ENV = 'local';
+    const execJob = rawSpawn(serverCommand, [
+        path.join(__dirname, '..', 'app.js')
+    ], {
+        env: env,
+        shell: SHELL
+    });
+
+    execJob.stdout.pipe(process.stdout);
+    execJob.stderr.pipe(process.stderr);
+
+    execJob.stdout.on('data', function(chunk) {
+        if (!workerJob) {
+            stdout += chunk;
+            if (stdout.indexOf('DeepForge') > -1) {
+                workerJob = rawSpawn('npm', ['run', 'worker'], env);
+                workerJob.stdout.pipe(process.stdout);
+                workerJob.stderr.pipe(process.stderr);
+                workerJob.on('close', code => code && process.exit(code));
+            }
+        }
+    });
+
+    execJob.on('close', code => code && process.exit(code));
+};
+
 var spawn = function (cmd, args, opts) {
     var deferred = Q.defer(),
         job,
@@ -226,9 +275,11 @@ program.command('start')
     .description('start deepforge locally (default) or specific components')
     .option('-p, --port <port>', 'specify the port to use')
     .option('-s, --server', 'start the server')
+    .option('-N, --no-conda', 'do not start deepforge server in a conda environment.')
     .option('-w, --worker [url]', 'start a worker and connect to given url. Defaults to local deepforge')
     .option('-m, --mongo', 'start MongoDB')
     .action(async args => {
+        const serverCommand = getDeepForgeServerCommand(args.conda);
 
         if (args.port) {
             process.env.PORT = args.port;
@@ -241,7 +292,9 @@ program.command('start')
         if (args.server) {
             await checkMongo(args);
             const main = path.join(__dirname, '..', 'app.js');
-            await spawn('node', [main]);
+            await spawn(serverCommand, [main], {
+                shell: SHELL
+            });
         }
 
         if (args.worker) {
@@ -255,9 +308,8 @@ program.command('start')
 
         if (!args.server && !args.worker && !args.mongo) {
             // Starting everything
-            const main = path.join(__dirname, 'start-local.js');
             await checkMongo(args);
-            await spawn('node', [main]);
+            startLocal(serverCommand);
         }
 
     });
@@ -360,6 +412,8 @@ module.exports = function (cmd) {
 
 
 module.exports.checkMongo = checkMongo;
+module.exports.getDeepForgeServerCommand = getDeepForgeServerCommand;
+module.exports.SHELL = SHELL;
 
 if (require.main === module) {
     program.parse(process.argv);
