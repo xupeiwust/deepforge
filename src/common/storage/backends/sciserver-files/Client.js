@@ -1,13 +1,17 @@
 /* globals define */
 define([
     '../StorageClient',
+    'deepforge/sciserver-auth',
 ], function (
     StorageClient,
+    login,
 ) {
+    login = login.memoize();
     const BASE_URL = 'https://apps.sciserver.org/fileservice/api/';
     const SciServerFiles = function (id, name, logger, config = {}) {
         StorageClient.apply(this, arguments);
-        this.token = config.token;
+        this.username = config.username;
+        this.password = config.password;
         this.volume = (config.volume || '').replace(/^Storage\//, '');
     };
 
@@ -73,12 +77,16 @@ define([
     };
 
     SciServerFiles.prototype.fetch = async function (url, opts = {}) {
+        const token = await login(this.username, this.password);
         opts.headers = opts.headers || {};
-        opts.headers['X-Auth-Token'] = this.token;
+        opts.headers['X-Auth-Token'] = token;
         return StorageClient.prototype.fetch.call(this, url, opts);
     };
 
     SciServerFiles.prototype.getURL = function (url) {
+        if (url.startsWith('http')) {
+            return url;
+        }
         return BASE_URL + url;
     };
 
