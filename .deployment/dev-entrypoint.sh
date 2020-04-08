@@ -11,3 +11,4 @@ wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O jq &&
 > config/components2.json && mv config/components2.json config/components.json
 
 deepforge start --server
+
