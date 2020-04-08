@@ -1,26 +1,22 @@
 /* globals define */
 define([
     '../StorageClient',
-    'blob/BlobClient',
-    'module',
+    'blob/BlobClient'
 ], function(
     StorageClient,
-    BlobClient,
-    module,
+    BlobClient
 ) {
+
     const GMEStorage = function(/*name, logger*/) {
         StorageClient.apply(this, arguments);
         const params = {
             logger: this.logger.fork('BlobClient')
         };
         if (!require.isBrowser) {
-            const path = require.nodeRequire('path');
-            const PROJECT_ROOT = path.join(path.dirname(module.uri), '..', '..', '..', '..', '..');
-            const configPath = path.join(PROJECT_ROOT, 'config');
-            const gmeConfig = require.nodeRequire(configPath);
-            params.server = '127.0.0.1';
-            params.serverPort = gmeConfig.server.port;
-            params.httpsecure = false;
+            const [url, isHttps] = this.getServerURL();
+            params.server = url.split(':')[0];
+            params.serverPort = +(url.split(':').pop());
+            params.httpsecure = isHttps;
         }
         this.blobClient = new BlobClient(params);
     };

@@ -4,9 +4,11 @@
 
 describe('ExecuteJob', function () {
     const testFixture = require('../../../globals');
+    const {Q, expect, waitUntil, requirejs} = testFixture;
+    const {promisify} = require('util');
+    const assert = require('assert');
+    const ComputeClient = requirejs('deepforge/compute/backends/ComputeClient');
     var gmeConfig = testFixture.getGmeConfig(),
-        expect = testFixture.expect,
-        Q = testFixture.Q,
         logger = testFixture.logger.fork('ExecuteJob'),
         PluginCliManager = testFixture.WebGME.PluginCliManager,
         projectName = 'testProject',
@@ -65,8 +67,8 @@ describe('ExecuteJob', function () {
     ////////// Helper Functions //////////
     var plugin,
         node,
-        preparePlugin = function(done) {
-            const config = {compute: {id: 'gme'}};
+        preparePlugin = async function() {
+            const config = {compute: {id: 'gme', config: {}}};
             const context = {
                 project: project,
                 commitHash: commitHash,
@@ -75,14 +77,11 @@ describe('ExecuteJob', function () {
                 activeNode: '/K/2/U'  // hello world job
             };
 
-            return manager.initializePlugin(pluginName)
-                .then(plugin_ => {
-                    plugin = plugin_;
-                    plugin.executionId = Promise.resolve('some_execution_id');
-                    return manager.configurePlugin(plugin, config, context);
-                })
-                .then(() => node = plugin.activeNode)
-                .nodeify(done);
+            plugin = await manager.initializePlugin(pluginName);
+            plugin.main = promisify(plugin.main);
+            plugin.executionId = Promise.resolve('some_execution_id');
+            await manager.configurePlugin(plugin, config, context);
+            node = plugin.activeNode;
         };
 
     ////////// END Helper Functions //////////
@@ -111,28 +110,6 @@ describe('ExecuteJob', function () {
             await plugin.save();
         });
 
-        it('should get correct attribute (from new node) before updating nodes', async function() {
-            // Run setAttribute on some node
-            const Graph = plugin.META.Graph;
-            const graphTmp = plugin.core.createNode({base: Graph, parent: node});
-            const newVal = 'testGraph';
-            const id = 'testId';
-
-            plugin.core.setAttribute(graphTmp, 'name', newVal);
-            plugin._metadata[id] = graphTmp;
-            plugin.createIdToMetadataId[graphTmp.id] = id;
-
-            // Check that the value is correct before applying node changes
-            const updateNodes = plugin.updateNodes;
-            plugin.updateNodes = async function() {
-                const graph = plugin._metadata[id];
-                const attrValue = plugin.core.getAttribute(graph, 'name');
-                expect(attrValue).to.equal(newVal);
-                await updateNodes.apply(this, arguments);
-            };
-            await plugin.save();
-        });
-
         it('should get correct attribute after save', async function() {
             // Run setAttribute on some node
             plugin.core.setAttribute(node, 'status', 'queued');
@@ -142,62 +119,6 @@ describe('ExecuteJob', function () {
             const attrValue = plugin.core.getAttribute(node, 'status');
             expect(attrValue).to.equal('queued');
         });
-    });
-
-    describe('createNode', function() {
-        beforeEach(preparePlugin);
-
-        it('should update _metadata after applying changes', async function() {
-            // Run setAttribute on some node
-            const graphTmp = plugin.core.createNode({
-                base: plugin.META.Graph,
-                parent: node,
-            });
-            const id = 'testId';
-
-            plugin._metadata[id] = graphTmp;
-            plugin.createIdToMetadataId[graphTmp] = id;
-
-            // Check that the value is correct before applying node changes
-            const applyModelChanges = plugin.applyModelChanges;
-            plugin.applyModelChanges = async function() {
-                const result = applyModelChanges.apply(this, arguments);
-                const graph = plugin._metadata[id];
-                expect(graph).to.not.equal(graphTmp);
-                return result;
-            };
-            await plugin.save();
-        });
-
-        it('should update _metadata in updateNodes', async function() {
-            const id = 'testId';
-
-            plugin._metadata[id] = node;
-            node.old = true;
-            await plugin.updateNodes();
-            const graph = plugin._metadata[id];
-            expect(graph.old).to.not.equal(true);
-        });
-
-        // Check that it gets the correct value from a newly created node after
-        // it has been saved/created
-        it('should get changed attribute', async function() {
-            // Run setAttribute on some node
-            const graphTmp = plugin.core.createNode({
-                base: plugin.META.Graph,
-                parent: node,
-            });
-            const id = 'testId';
-
-            plugin._metadata[id] = graphTmp;
-            plugin.core.setAttribute(graphTmp, 'name', 'firstName');
-
-            await plugin.save();
-            const graph = plugin._metadata[id];
-            const val = plugin.core.getAttribute(graph, 'name');
-            expect(val).to.equal('firstName');
-        });
-
     });
 
     // Canceling
@@ -230,7 +151,7 @@ describe('ExecuteJob', function () {
             plugin.prepare = () => {
                 var status = plugin.core.getAttribute(execNode, 'status');
                 expect(status).to.not.equal('canceled');
-                return {then: () => done()};
+                return Promise.resolve().then(done);
             };
             plugin.main();
         });
@@ -307,36 +228,53 @@ describe('ExecuteJob', function () {
             const children = await plugin.core.loadChildren(graph);
             expect(children.length).to.equal(0);
         });
-
-        // should not mark any nodes for deletion during `prepare` if resuming
-        it('should mark nodes for deletion', async function() {
-            const jobId = plugin.core.getPath(plugin.activeNode);
-
-            // Create a metadata node
-            plugin.core.createNode({
-                base: plugin.META.Graph,
-                parent: plugin.activeNode,
-            });
-
-            await plugin.save();
-            await plugin.prepare(true);
-            const deleteIds = Object.keys(plugin._markForDeletion[jobId]);
-            expect(deleteIds.length).to.equal(1);
-        });
     });
 
     describe('resume errors', function() {
         beforeEach(preparePlugin);
 
-        it('should handle error if missing jobId', function(done) {
+        it('should handle error if missing jobId', async function() {
             // Remove jobId
             plugin.core.delAttribute(plugin.activeNode, 'jobInfo');
             plugin.startExecHeartBeat = () => {};
             plugin.isResuming = () => Q(true);
-            plugin.main(function(err) {
-                expect(err).to.not.equal(null);
-                done();
-            });
+            try {
+                await plugin.main();
+                throw new Error('No error thrown');
+            } catch (err) {
+                assert.notEqual(err.message, 'No error thrown');
+            }
         });
     });
+
+    describe('job deletion', function() {
+        beforeEach(async () => {
+            await preparePlugin();
+            plugin.startExecHeartBeat = () => {};
+        });
+
+        it('should be able to abort plugin and delete node w/o error', async () => {
+            plugin.createComputeClient = function() {
+                return new MockCompute(plugin.logger, plugin.blobClient);
+            };
+
+            plugin.main();
+            await waitUntil(() => plugin.runningJobHashes.length);
+
+            plugin.onAbort();
+            plugin.core.deleteNode(plugin.activeNode);
+            await plugin.save();
+            await plugin.compute.emit('end', plugin.compute.jobId);
+        });
+    });
+
+    class MockCompute extends ComputeClient {
+        createJob(hash) {
+            this.jobId = hash;
+            return {hash};
+        }
+
+        cancelJob(/*jobInfo*/) {
+        }
+    }
 });

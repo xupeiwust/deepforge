@@ -31,6 +31,7 @@ WebGME.addToRequireJsPaths(gmeConfig);
 
 testFixture.getGmeConfig = getGmeConfig;
 
+testFixture.PROJECT_ROOT = testFixture.path.join(__dirname, '..');
 testFixture.DF_SEED_DIR = testFixture.path.join(__dirname, '..', 'src', 'seeds');
 
 testFixture.mkdir = function(dir) {
@@ -43,6 +44,19 @@ testFixture.mkdir = function(dir) {
         if (!exists.sync(shortDir)) {
             fs.mkdirSync(shortDir);
         }
+    }
+};
+
+testFixture.getStorageConfigs = require('./assets/configs/storage');
+testFixture.getComputeConfigs = require('./assets/configs/compute');
+
+testFixture.sleep = function(duration) {
+    return new Promise(resolve => setTimeout(resolve, duration));
+};
+
+testFixture.waitUntil = async function(condFn) {
+    while (!condFn()) {
+        await testFixture.sleep(10);
     }
 };
 

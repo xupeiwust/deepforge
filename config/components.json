@@ -131,9 +131,9 @@
         ]
     },
     "Compute": {
-        "backends": ["gme", "local"]
+        "backends": ["local", "gme", "sciserver-compute"]
     },
     "Storage": {
-        "backends": ["gme", "sciserver-files"]
+        "backends": ["gme", "sciserver-files", "s3"]
     }
 }

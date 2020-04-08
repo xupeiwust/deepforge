@@ -4,6 +4,7 @@ define([
     '../JobResults',
     './ExecutorHelper',
     'executor/ExecutorClient',
+    'common/util/assert',
     'path',
     'module',
 ], function(
@@ -11,35 +12,63 @@ define([
     JobResults,
     ExecutorHelper,
     ExecutorClient,
+    assert,
     path,
     module,
 ) {
     const PROJECT_ROOT = path.join(path.dirname(module.uri), '..', '..', '..', '..', '..');
-    const GMEExecutor = function(/*logger*/) {
+    const GMEExecutor = function(logger, blobClient, config={}) {
         ComputeClient.apply(this, arguments);
         const configPath = path.join(PROJECT_ROOT, 'config');
         const gmeConfig = require.nodeRequire(configPath);
         this.pollInterval = 1500;
         this.previousGMEInfo = {};
+        this.webgmeToken = config.webgmeToken;
         this.executor = new ExecutorClient({
             logger: this.logger,
             serverPort: gmeConfig.server.port,
-            httpsecure: false
+            httpsecure: false,
+            webgmeToken: this.webgmeToken,
         });
     };
     GMEExecutor.prototype = Object.create(ComputeClient.prototype);
 
-    GMEExecutor.prototype.getConsoleOutput = async function(hash) {
-        return (await this.executor.getOutput(hash))
-            .map(o => o.output).join('');
+    GMEExecutor.prototype.getConsoleOutput = async function(job) {
+        const info = await this.executor.getInfo(job.hash);
+        const isComplete = this.isFinishedStatus(this._getComputeStatus(info.status));
+
+        if (isComplete) {
+            const mdHash = await this._getResultHash(job, 'stdout');
+            const hash = await this._getContentHash(mdHash, 'job_stdout.txt');
+            assert(hash, 'Console output data not found.');
+            return await this.blobClient.getObjectAsString(hash);
+        } else {
+            return (await this.executor.getOutput(job.hash))
+                .map(o => o.output).join('');
+        }
     };
 
     GMEExecutor.prototype.cancelJob = function(job) {
         return this.executor.cancelJob(job.hash, job.secret);
     };
 
-    GMEExecutor.prototype.getOutputHashes = async function(job) {
-        return (await this.executor.getInfo(job.hash)).resultHashes;
+    GMEExecutor.prototype._getResultHash = async function(job, name) {
+        const {resultHashes} = await this.executor.getInfo(job.hash);
+        return resultHashes[name];
+    };
+
+    GMEExecutor.prototype.getResultsInfo = async function(job) {
+        const mdHash = await this._getResultHash(job, 'results');
+        const hash = await this._getContentHash(mdHash, 'results.json');
+        assert(hash, 'Metadata about result types not found.');
+        return await this.blobClient.getObjectAsJSON(hash);
+    };
+
+    GMEExecutor.prototype._getContentHash = async function (artifactHash, fileName) {
+        const artifact = await this.blobClient.getArtifact(artifactHash);
+        const contents = artifact.descriptor.content;
+
+        return contents[fileName] && contents[fileName].content;
     };
 
     GMEExecutor.prototype.getStatus = async function(job) {
@@ -47,8 +76,7 @@ define([
         return this.getJobResultsFrom(info).status;
     };
 
-    GMEExecutor.prototype.getJobResultsFrom = function(gmeInfo) {
-        const gmeStatus = gmeInfo.status;
+    GMEExecutor.prototype._getComputeStatus = function(gmeStatus) {
         const gmeStatusToStatus = {
             'CREATED': this.QUEUED,
             'SUCCESS': this.SUCCESS,
@@ -56,7 +84,12 @@ define([
             'FAILED_TO_EXECUTE': this.FAILED,
             'RUNNING': this.RUNNING,
         };
-        return new JobResults(gmeStatusToStatus[gmeStatus] || gmeStatus);
+        return gmeStatusToStatus[gmeStatus] || gmeStatus;
+    };
+
+    GMEExecutor.prototype.getJobResultsFrom = function(gmeInfo) {
+        const gmeStatus = gmeInfo.status;
+        return new JobResults(this._getComputeStatus(gmeStatus));
     };
 
     GMEExecutor.prototype.getInfo = function(job) {
@@ -74,10 +107,10 @@ define([
     };
 
     GMEExecutor.prototype.checkExecutionEnv = async function () {
-        this.logger.info(`Checking execution environment`);
-        const workers = await ExecutorHelper.getWorkers();
+        this.logger.info('Checking execution environment');
+        const workers = await ExecutorHelper.getWorkers(this.webgmeToken);
         if (workers.length === 0) {
-            this.logger.info(`Cannot execute job(s): No connected workers`);
+            this.logger.info('Cannot execute job(s): No connected workers');
             throw new Error('No connected workers');
         }
     };

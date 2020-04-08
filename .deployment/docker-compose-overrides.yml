@@ -1,0 +1,8 @@
+services:
+  server:
+    entrypoint: /.deployment/dev-entrypoint.sh
+    volumes:
+      - "$HOME/.deepforge/blob:/data/blob"
+      - "${TOKEN_KEYS_DIR}:/token_keys"
+      - "${DEEPFORGE_DEPLOYMENT_DIR}:/.deployment"
+

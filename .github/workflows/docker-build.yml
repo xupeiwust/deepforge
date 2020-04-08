@@ -1,0 +1,42 @@
+name: Push Deepforge Server(Latest) to Docker Hub and Deploy dev.deepforge.org
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish to docker hub (server)
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: deepforge/server
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: "latest"
+          dockerfile: docker/Dockerfile
+
+      - name: Publish to docker hub (kitchen-sink)
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: deepforge/kitchen-sink
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: "latest"
+          dockerfile: docker/Dockerfile.kitchensink
+
+      - name: Deploy (dev.deepforge.org)
+        uses: appleboy/ssh-action@master
+        with:
+          username: ${{ secrets.USERNAME }}
+          host: ${{ secrets.HOST }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            rm -rf deepforge && git clone git@github.com:deepforge-dev/deepforge && cd deepforge
+            chmod +x ./.deployment/deploy-deepforge && ./.deployment/deploy-deepforge

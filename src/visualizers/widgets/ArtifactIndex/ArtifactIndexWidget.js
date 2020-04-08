@@ -3,10 +3,16 @@
 
 define([
     './ModelItem',
+    './ArtifactModal',
+    'panel/FloatingActionButton/styles/Materialize',
+    'deepforge/storage/index',
     'text!./Table.html',
     'css!./styles/ArtifactIndexWidget.css'
 ], function (
     ModelItem,
+    ArtifactModal,
+    Materialize,
+    Storage,
     TABLE_HTML
 ) {
     'use strict';
@@ -34,6 +40,7 @@ define([
         this.$content = $(TABLE_HTML);
         this.$el.append(this.$content);
         this.$list = this.$content.find('.list-content');
+        this.artifactModal = new ArtifactModal();
     };
 
     ArtifactIndexWidget.prototype.onWidgetContainerResize = nop;
@@ -43,12 +50,25 @@ define([
         if (desc && desc.parentId === this.currentNode) {
             var node = new ModelItem(this.$list, desc);
             this.nodes[desc.id] = node;
-            node.$delete.on('click', event => {
-                this.onNodeDeleteClicked(desc.id);
+            node.$delete.on('click', async event => {
+                const config = await this.getAuthenticationConfig(desc.dataInfo);
+                this.onNodeDeleteClicked(desc.id, config);
                 event.stopPropagation();
                 event.preventDefault();
             });
-            node.$download.on('click', event => event.stopPropagation());
+            node.$download.on('click', async event => {
+                const config = await this.getAuthenticationConfig(desc.dataInfo);
+                try {
+                    const url = await this.getDownloadURL(desc.id, config);
+                    const filename = desc.name.includes('.') ? desc.name : desc.name + '.dat';
+                    this.download(filename, url);
+                } catch (err) {
+                    const msg = `Unable to fetch data: ${err.message}`;
+                    Materialize.toast(msg, 4000);
+                }
+                event.stopPropagation();
+                event.preventDefault();
+            });
             node.$el.on('click', event => {
                 this.onNodeClick(desc.id);
                 event.stopPropagation();
@@ -67,6 +87,27 @@ define([
                     }
                 });
             });
+
+            node.$info.on('click', event => {
+                event.stopPropagation();
+                this.artifactModal.showModal(desc);
+            });
+        }
+    };
+
+    ArtifactIndexWidget.prototype.getAuthenticationConfig = async function (dataInfo) {
+        const {backend} = dataInfo;
+        const metadata = Storage.getStorageMetadata(backend);
+        metadata.configStructure = metadata.configStructure
+            .filter(option => option.isAuth);
+
+        if (metadata.configStructure.length) {
+            const configDialog = this.getConfigDialog();
+            const title = `Authenticate with ${metadata.name}`;
+            const iconClass = `glyphicon glyphicon-download-alt`;
+            const config = await configDialog.show(metadata, {title, iconClass});
+
+            return config[backend];
         }
     };
 
@@ -95,6 +136,17 @@ define([
     };
 
     ArtifactIndexWidget.prototype.onDeactivate = function () {
+    };
+
+    ArtifactIndexWidget.prototype.download = function (filename, url) {
+        const element = document.createElement('a');
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.href = url;
+        element.target = '_self';
+        element.setAttribute('download', filename);
+        element.click();
+        document.body.removeChild(element);
     };
 
     return ArtifactIndexWidget;

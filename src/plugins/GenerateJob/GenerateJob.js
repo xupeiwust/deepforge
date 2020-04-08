@@ -11,6 +11,7 @@ define([
     'deepforge/plugin/PtrCodeGen',
     'deepforge/plugin/GeneratedFiles',
     'deepforge/storage/index',
+    'common/util/assert',
     'text!./metadata.json',
     'plugin/PluginBase',
     'module'
@@ -24,6 +25,7 @@ define([
     PtrCodeGen,
     GeneratedFiles,
     Storage,
+    assert,
     pluginMetadata,
     PluginBase,
     module
@@ -91,7 +93,7 @@ define([
         const name = this.getAttribute(this.activeNode, 'name');
         const opId = this.core.getPath(this.activeNode);
 
-        const files = await this.createExecutableOperationFiles(this.activeNode);
+        const files = await this.createOperationFiles(this.activeNode);
         this.logger.info('Created operation files!');
         const artifactName = `${name}_${opId.replace(/\//g, '_')}-execution-files`;
 
@@ -104,36 +106,24 @@ define([
     }; 
 
     GenerateJob.prototype.createRunScript = async function (files) {
-        let runsh = [
-            '# Bash script to download data files and run job',
-            !this.settings.enableJobCaching ? `# Created at ${Date.now()}` : '',
-            'if [ -z "$DEEPFORGE_URL" ]; then',
-            '  echo "Please set DEEPFORGE_URL and re-run:"',
-            '  echo ""',
-            '  echo "  DEEPFORGE_URL=http://my.deepforge.server.com:8080 bash run.sh"',
-            '  echo ""',
-            '  exit 1',
-            'fi',
-            'mkdir outputs',
-            `mkdir -p ${DATA_DIR}\n`
-        ].join('\n');
-
-        const assetPaths = files.getUserAssetPaths();
-        const configs = this.getAllStorageConfigs();
-        for (let i = assetPaths.length; i--;) {
-            const dataPath = assetPaths[i];
-            const dataInfo = files.getUserAsset(dataPath);
-            const url = await Storage.getDownloadURL(dataInfo, this.logger, configs);
-            runsh += `wget $DEEPFORGE_URL${url} -O ${dataPath}\n`;
+        let runDebug = Templates.RUN_DEBUG;
+        if (!this.settings.enableJobCaching) {
+            runDebug = `// Created at ${Date.now()}\n` + runDebug;
         }
-
-        runsh += 'python main.py';
-        files.addFile('run.sh', runsh);
-        return runsh;
+        files.addFile('run-debug.js', runDebug);
     };
 
     GenerateJob.prototype.createDataMetadataFile = async function (files) {
-        const inputData = _.object(files.getUserAssets());
+        const configs = await this.getInputStorageConfigs();
+        const defaultConfig = this.getStorageConfig();
+        const inputData = files.getUserAssets().map(pair => {
+            const [, dataInfo] = pair;
+            let config = configs[JSON.stringify(dataInfo)];
+            if (!config && dataInfo.backend === defaultConfig.id) {
+                config = defaultConfig.config;
+            }
+            return pair.concat(config || {});
+        });
         const content = JSON.stringify(inputData, null, 2);
         files.addFile('input-data.json', content);
         return content;
@@ -149,7 +139,6 @@ define([
                 };
             });
 
-        const name = this.getAttribute(node, 'name');
         outputs.push(
             {
                 name: 'stdout',
@@ -160,7 +149,7 @@ define([
                 resultPatterns: ['results.json']
             },
             {
-                name: name + '-all-files',
+                name: 'debug-files',
                 resultPatterns: fileList
             }
         );
@@ -174,41 +163,6 @@ define([
 
         files.addFile('executor_config.json', config);
         return config;
-    };
-
-    GenerateJob.prototype.createExecutableOperationFiles = async function (node) {
-        const files = await this.createOperationFiles(node);
-        const metaDict = this.core.getAllMetaNodes(node);
-        const metanodes = Object.keys(metaDict).map(id => metaDict[id]);
-        const operations = metanodes
-            .filter(node => this.core.isTypeOf(node, this.META.Operation))
-            .filter(node => this.core.getAttribute(node, 'code'))  // remove local ops
-            .map(node => {
-                const name = this.core.getAttribute(node, 'name');
-                const filename = GenerateJob.toSnakeCase(name);
-                const code = this.core.getAttribute(node, 'code');
-
-                return [filename, name, code];
-            });
-
-        operations.forEach(tuple => {
-            const [filename, name, code] = tuple;
-
-            // Add file to `operations/`
-            files.addFile(`operations/${filename}.py`, code);
-
-            files.appendToFile(
-                'operations/__init__.py',
-                `from operations.${filename} import ${name}\n`
-            );
-        });
-
-        await this.createRunScript(files);
-        await this.createDataMetadataFile(files);
-        const outputs = await this.getOutputs(this.activeNode);
-        await this.createExecConfig(node, outputs, files);
-
-        return files;
     };
 
     GenerateJob.prototype.isUtilsNode = function (node) {
@@ -244,6 +198,11 @@ define([
         await this.createCustomUtils(files);
         await this.createInputs(node, files);
         await this.createMainFile(node, files);
+        await this.createRunScript(files);
+        await this.createDataMetadataFile(files);
+        const outputs = await this.getOutputs(this.activeNode);
+        await this.createExecConfig(node, outputs, files);
+
         return files;
     };
 
@@ -290,6 +249,15 @@ define([
         return storage;
     };
 
+    GenerateJob.prototype.getInputStorageConfigs = async function () {
+        const inputs = Object.entries(this.getCurrentConfig().inputs || {});
+        const [nodeIds=[], configs=[]] = _.unzip(inputs);
+        const nodes = await Promise.all(nodeIds.map(id => this.core.loadByPath(this.rootNode, id)));
+        const dataInfos = nodes.map(node => this.core.getAttribute(node, 'data'));
+        const config = _.object(_.zip(dataInfos, configs));
+        return config;
+    };
+
     GenerateJob.prototype.getAllStorageConfigs = function () {
         const storage = this.getStorageConfig();
         const configs = {};
@@ -320,15 +288,17 @@ define([
         const storage = this.getStorageConfig();
         const storageDir = this.getStorageDir();
 
-        const startJS = _.template(Templates.START)({
-            storageDir,
-            CONSTANTS,
-            storageId: storage.id,
-            inputs: inputs.map(pair => pair[0]),
-        });
-        const configs = this.getAllStorageConfigs();
-        files.addFile('storage-config.json', JSON.stringify(configs));
-        files.addFile('start.js', startJS);
+        const configs = {
+            storage: {
+                id: storage.id,
+                dir: storageDir,
+                config: storage.config
+            },
+            HOST: process.env.DEEPFORGE_HOST || '',
+        };
+        files.addFile('config.json', JSON.stringify(configs));
+        files.addFile('start.js', Templates.START);
+        files.addFile('utils.build.js', Templates.UTILS);
         files.addFile('backend_deepforge.py', Templates.MATPLOTLIB_BACKEND);
 
         inputs.forEach(pair => {
@@ -345,6 +315,7 @@ define([
         const inputs = await this.getInputs(node);
         const name = this.getAttribute(node, 'name');
         const code = this.getAttribute(node, 'code');
+        const filename = GenerateJob.toSnakeCase(name);
 
         // Add remaining code
         const outputs = await this.getOutputs(node);
@@ -367,8 +338,12 @@ define([
         content.references = references;
 
         files.addFile('main.py', _.template(Templates.MAIN)(content));
+        const condaEnv = this.core.getAttribute(node, CONSTANTS.OPERATION.ENV);
+        if (condaEnv) {
+            files.addFile('environment.yml', condaEnv);
+        }
+        files.addFile('environment.worker.yml', Templates.WORKER_ENV);
 
-        const filename = GenerateJob.toSnakeCase(content.name);
         files.addFile(`operations/${filename}.py`, content.code);
         files.appendToFile(
             'operations/__init__.py',

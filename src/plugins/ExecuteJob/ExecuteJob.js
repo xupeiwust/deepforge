@@ -44,8 +44,6 @@ define([
 
     pluginMetadata = JSON.parse(pluginMetadata);
 
-    const STDOUT_FILE = 'job_stdout.txt';
-
     /**
      * Initializes a new instance of ExecuteJob.
      * @class
@@ -64,7 +62,6 @@ define([
         this.lastAppliedCmd = {};
         this.canceled = false;
 
-        this.createIdToMetadataId = {};
         this.logManager = null;
 
         const deferred = Q.defer();
@@ -131,7 +128,7 @@ define([
         this.currentForkName = null;
         this.forkNameBase = this.core.getAttribute(this.activeNode, 'name');
         const isResuming = await this.isResuming(this.activeNode);
-        this.configureCompute();
+        this.initializeComputeClient();
         await this.prepare(isResuming);
 
         if (isResuming) {
@@ -153,11 +150,22 @@ define([
         }
     };
 
-    ExecuteJob.prototype.configureCompute = async function () {
+    ExecuteJob.prototype.initializeComputeClient = function () {
+        this.compute = this.createComputeClient();
+        this.configureCompute(this.compute);
+    };
+
+    ExecuteJob.prototype.createComputeClient = function () {
         const config = this.getCurrentConfig();
         const backend = Compute.getBackend(config.compute.id);
-        this.compute = backend.getClient(this.logger, config.compute.config);
-        this.compute.on(
+        if (config.compute.id === 'gme') {
+            config.compute.config.webgmeToken = this.blobClient.webgmeToken;  // HACK
+        }
+        return backend.getClient(this.logger, this.blobClient, config.compute.config);
+    };
+
+    ExecuteJob.prototype.configureCompute = function (compute) {
+        compute.on(
             'data',
             (id, data) => {
                 const job = this.getNodeForJobId(id);
@@ -165,20 +173,31 @@ define([
             }
         );
 
-        this.compute.on('update', (jobId, status) => {
+        compute.on('update', async (jobId, status) => {
             try {
-                this.onUpdate(jobId, status);
+                await this.onUpdate(jobId, status);
             } catch (err) {
                 this.logger.error(`Error when processing operation update: ${err}`);
+                throw err;
             }
         });
 
-        this.compute.on('end',
-            (id/*, info*/) => {
+        compute.on('end',
+            async (id/*, info*/) => {
                 try {
-                    this.onOperationEnd(id);
+                    const job = this.getNodeForJobId(id);
+                    if (job === null) {
+                        assert(
+                            this.canceled,
+                            `Cannot find node for job ID in running pipeline: ${id}`
+                        );
+                        return;
+                    }
+                    this.cleanJobHashInfo(id);
+                    await this.onOperationEnd(null, job);
                 } catch (err) {
                     this.logger.error(`Error when processing operation end: ${err}`);
+                    throw err;
                 }
             }
         );
@@ -191,7 +210,11 @@ define([
     };
 
     ExecuteJob.prototype.getJobId = function (node) {
-        return JSON.parse(this.core.getAttribute(node, 'jobInfo')).hash;
+        return this.getJobInfo(node).hash;
+    };
+
+    ExecuteJob.prototype.getJobInfo = function (node) {
+        return JSON.parse(this.core.getAttribute(node, 'jobInfo'));
     };
 
     ExecuteJob.prototype.getExecutionId = utils.withTimeout(async function() {
@@ -207,6 +230,7 @@ define([
     ExecuteJob.prototype.onAbort =
     ExecuteJob.prototype.onUserCancelDetected = function () {
         this.logger.info('Received Abort. Canceling jobs.');
+        this.canceled = true;
         this.runningJobHashes
             .map(hash => this.getNodeForJobId(hash))
             .map(node => JSON.parse(this.core.getAttribute(node, 'jobInfo')))
@@ -239,7 +263,7 @@ define([
     };
 
     ExecuteJob.prototype.resumeJob = async function (job) {
-        var hash = this.getJobId(job),
+        var jobInfo = this.getJobInfo(job),
             name = this.core.getAttribute(job, 'name'),
             id = this.core.getPath(job);
 
@@ -256,8 +280,8 @@ define([
 
         this.outputLineCount[id] = count;
 
-        const stdout = await this.compute.getConsoleOutput(hash);
-        const result = this.processStdout(job, stdout);
+        const stdout = await this.compute.getConsoleOutput(jobInfo);
+        const result = await this.processStdout(job, stdout);
 
         if (result.hasMetadata) {
             const name = this.core.getAttribute(job, 'name');
@@ -302,7 +326,7 @@ define([
             }
         }
 
-        return await this.recordOldMetadata(this.activeNode, isResuming);
+        return await this.initializeMetadata(this.activeNode, isResuming);
     };
 
     ExecuteJob.prototype.onOperationCanceled = function(op) {
@@ -313,6 +337,11 @@ define([
         this.core.setAttribute(job, 'status', 'canceled');
         this.resultMsg(msg);
         return this.onComplete(op, null);
+    };
+
+    ExecuteJob.prototype.resultMsg = function (msg) {
+        this.sendNotification(msg);
+        this.createMessage(null, msg);
     };
 
     ExecuteJob.prototype.onOperationFail =
@@ -415,7 +444,7 @@ define([
         const job = this.core.getParent(node);
         const name = this.core.getAttribute(job, 'name');
         const e = `Failed to retrieve "${input}" (BLOB_FETCH_FAILED)`;
-        let consoleErr = `[0;31mFailed to execute operation: ${e}[0m`;
+        let consoleErr = red(`Failed to execute operation: ${e}`);
 
         consoleErr += [
             '\n\nA couple things to check out:\n',
@@ -458,6 +487,8 @@ define([
         this._execHashToJobNode[hash] = job;
         const jobInfo = await this.compute.createJob(hash);
         this.core.setAttribute(job, 'jobInfo', JSON.stringify(jobInfo));
+        this.core.setAttribute(job, 'execFiles', hash);
+
         if (!this.currentRunId) {
             this.currentRunId = jobInfo.hash;
         }
@@ -558,7 +589,7 @@ define([
             output = lastLine + output;
         }
 
-        const result = this.processStdout(job, output, true);
+        const result = await this.processStdout(job, output, true);
         output = result.stdout;
 
         await this.logManager.appendTo(jobId, output);
@@ -572,9 +603,15 @@ define([
         }
     };
 
-    ExecuteJob.prototype.onOperationEnd = async function (hash) {
-        // Record that the job hash is no longer running
-        const job = this.getNodeForJobId(hash);
+    ExecuteJob.prototype.onOperationEnd = async function (err, job) {
+        if (this.isLocalOperation(job)) {
+            if (err) {
+                return this.onOperationFail(job, err);
+            } else {
+                return this.onOperationComplete(job);
+            }
+        }
+
         const op = await this.getOperation(job);
         const name = this.core.getAttribute(job, 'name');
         const jobId = this.core.getPath(job);
@@ -582,35 +619,27 @@ define([
 
         const status = await this.compute.getStatus(jobInfo);
         this.logger.info(`Job "${name}" has finished (${status})`);
-        this.cleanJobHashInfo(hash);
 
         if (status === this.compute.CANCELED) {
             // If it was canceled, the pipeline has been stopped
             this.logger.debug(`"${name}" has been CANCELED!`);
-            this.canceled = true;
             const stdout = await this.logManager.getLog(jobId);
             this.core.setAttribute(job, 'stdout', stdout);
             return this.onOperationCanceled(op);
         }
 
         if (status === this.compute.SUCCESS || status === this.compute.FAILED) {
-            const fileHashes = await this.compute.getOutputHashes(jobInfo);
-            const execFilesHash = fileHashes[name + '-all-files'];
-            this.core.setAttribute(job, 'execFiles', execFilesHash);
-
             const opName = this.core.getAttribute(op, 'name');
-            const stdoutHash = await this.getContentHashSafe(fileHashes.stdout, STDOUT_FILE, ERROR.NO_STDOUT_FILE);
-            const stdout = await this.blobClient.getObjectAsString(stdoutHash);
-            const result = this.processStdout(job, stdout);
+            const stdout = await this.compute.getConsoleOutput(jobInfo);
+            const result = await this.processStdout(job, stdout);
 
             // Parse the remaining code
             this.core.setAttribute(job, 'stdout', result.stdout);
             this.logManager.deleteLog(jobId);
             if (status === this.compute.SUCCESS) {
-                this.onDistOperationComplete(op, fileHashes);
+                const results = await this.compute.getResultsInfo(jobInfo);
+                this.onDistOperationComplete(op, results);
             } else {
-                // Download all files
-                this.result.addArtifact(execFilesHash);
                 // Parse the most precise error and present it in the toast...
                 const lastline = result.stdout.split('\n').filter(l => !!l).pop() || '';
                 if (lastline.includes('Error')) {
@@ -621,7 +650,7 @@ define([
             }
         } else {  // something bad happened...
             const err = `Failed to execute operation "${jobId}": ${status}`;
-            const consoleErr = `[0;31mFailed to execute operation: ${status}[0m`;
+            const consoleErr = red(`Failed to execute operation: ${status}`);
 
             this.core.setAttribute(job, 'stdout', consoleErr);
             this.logger.error(err);
@@ -629,8 +658,7 @@ define([
         }
     };
 
-    ExecuteJob.prototype.onDistOperationComplete = async function (node, fileHashes) {
-        const results = await this.getResults(fileHashes);
+    ExecuteJob.prototype.onDistOperationComplete = async function (node, results) {
         const nodeId = this.core.getPath(node);
         const outputPorts = await this.getOutputs(node);
         const outputs = outputPorts.map(tuple => [tuple[0], tuple[2]]);
@@ -655,27 +683,6 @@ define([
         return this.onOperationComplete(node);
     };
 
-    ExecuteJob.prototype.getResults = async function (fileHashes) {
-        const mdHash = fileHashes['results'];
-        const hash = await this.getContentHashSafe(mdHash, 'results.json', ERROR.NO_TYPES_FILE);
-        return await this.blobClient.getObjectAsJSON(hash);
-    };
-
-    ExecuteJob.prototype.getContentHashSafe = async function (artifactHash, fileName, msg) {
-        const hash = await this.getContentHash(artifactHash, fileName);
-        if (!hash) {
-            throw new Error(msg);
-        }
-        return hash;
-    };
-
-    ExecuteJob.prototype.getContentHash = async function (artifactHash, fileName) {
-        const artifact = await this.blobClient.getArtifact(artifactHash);
-        const contents = artifact.descriptor.content;
-
-        return contents[fileName] && contents[fileName].content;
-    };
-
     //////////////////////////// Special Operations ////////////////////////////
     ExecuteJob.prototype.executeLocalOperation = async function (node) {
         const type = this.getLocalOperationType(node);
@@ -689,9 +696,14 @@ define([
 
         try {
             await this[type](node);
-            this.onOperationComplete(node);
+            this.onOperationEnd(null, node);
         } catch (err) {
-            this.onOperationFail(node, err);
+            const job = this.core.getParent(node);
+            const stdout = this.core.getAttribute(job, 'stdout') +
+                '\n' + red(err.toString());
+
+            this.core.setAttribute(job, 'stdout', stdout);
+            this.onOperationEnd(err, node);
         }
     };
 
@@ -703,9 +715,10 @@ define([
         LocalExecutor.prototype
     );
 
-    ExecuteJob.prototype.processStdout = function (job, text, continued) {
-        var lines = text.replace(/\u0000/g, '').split('\n'),
-            result = this.parseForMetadataCmds(job, lines, !continued);
+    ExecuteJob.prototype.processStdout = async function(job, text, continued) {
+        const lines = text.replace(/\u0000/g, '').split('\n');
+        removeLastPartialLine(lines);
+        const result = await this.parseForMetadataCmds(job, lines, !continued);
 
         result.stdout = utils.resolveCarriageReturns(result.stdout).join('\n');
         return result;
@@ -713,7 +726,7 @@ define([
 
     ExecuteJob.prototype.getNodeCaches = function () {
         const caches = PluginBase.prototype.getNodeCaches.call(this);
-        return caches.concat([this._execHashToJobNode, this._metadata]);
+        return caches.concat([this._execHashToJobNode]);
     };
 
     ExecuteJob.prototype.onSaveForked = function (forkName) {
@@ -725,6 +738,14 @@ define([
     const ERROR = {};
     ERROR.NO_STDOUT_FILE = 'Could not find logs in job results.';
     ERROR.NO_TYPES_FILE = 'Metadata about result types not found.';
+
+    function red(text) {
+        return `[0;31m${text}[0m`;
+    }
+
+    function removeLastPartialLine(lines) {
+        lines.pop();
+    }
 
     return ExecuteJob;
 });

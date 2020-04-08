@@ -1,44 +1,34 @@
 /* globals define */
 define([], function() {
-    const ComputeClient = function(logger) {
+    const ComputeClient = function(logger, blobClient) {
         this.logger = logger.fork('compute');
+        this.blobClient = blobClient;
         this._events = {};
     };
 
     ComputeClient.prototype.cancelJob = function(/*job*/) {
-        const msg = `cancelJob is not implemented for current compute backend!`;
-        this.logger.warn(msg);
-        throw new Error(msg);
-    };
-
-    ComputeClient.prototype.getInfo = function(/*job*/) {
-        const msg = `getInfo is not implemented for current compute backend!`;
-        this.logger.warn(msg);
-        throw new Error(msg);
+        unimplemented(this.logger, 'cancelJob');
     };
 
     ComputeClient.prototype.createJob = async function(/*hash*/) {
-        const msg = `createJob is not implemented for current compute backend!`;
-        this.logger.warn(msg);
-        throw new Error(msg);
+        unimplemented(this.logger, 'createJob');
     };
 
     ComputeClient.prototype.getStatus = async function(/*jobInfo*/) {
-        const msg = `getStatus is not implemented for current compute backend!`;
-        this.logger.warn(msg);
-        throw new Error(msg);
+        unimplemented(this.logger, 'getStatus');
     };
 
-    ComputeClient.prototype.getOutputHashes = async function(/*jobInfo*/) {
-        const msg = `getOutputHashes is not implemented for current compute backend!`;
-        this.logger.warn(msg);
-        throw new Error(msg);
+    ComputeClient.prototype.getResultsInfo = async function(/*jobInfo*/) {
+        unimplemented(this.logger, 'getResultsInfo');
     };
 
     ComputeClient.prototype.getConsoleOutput = async function(/*hash*/) {
-        const msg = `getConsoleOutput is not implemented for current compute backend!`;
-        this.logger.warn(msg);
-        throw new Error(msg);
+        unimplemented(this.logger, 'getConsoleOutput');
+    };
+
+    ComputeClient.prototype.isFinishedStatus = function(status) {
+        const notFinishedStatuses = [this.QUEUED, this.PENDING, this.RUNNING];
+        return !notFinishedStatuses.includes(status);
     };
 
     // Some functions for event support
@@ -50,7 +40,7 @@ define([], function() {
     ComputeClient.prototype.emit = function(ev) {
         const args = Array.prototype.slice.call(arguments, 1);
         const handlers = this._events[ev] || [];
-        handlers.forEach(fn => fn.apply(this, args));
+        return Promise.all(handlers.map(fn => fn.apply(this, args)));
     };
 
     ComputeClient.prototype.QUEUED = 'queued';
@@ -60,6 +50,12 @@ define([], function() {
     ComputeClient.prototype.FAILED = 'failed';
     ComputeClient.prototype.CANCELED = 'canceled';
     ComputeClient.prototype.NOT_FOUND = 'NOT_FOUND';
+
+    function unimplemented(logger, name) {
+        const msg = `${name} is not implemented for current compute backend!`;
+        logger.error(msg);
+        throw new Error(msg);
+    }
 
     return ComputeClient;
 });

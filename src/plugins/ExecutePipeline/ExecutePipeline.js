@@ -38,11 +38,6 @@ define([
         ExecuteJob.call(this);
         this.pluginMetadata = pluginMetadata;
 
-        this.changes = {};
-        this.currentChanges = {};  // read-only changes being applied
-        this.creations = {};
-        this.deletions = [];
-        this.createIdToMetadataId = {};
         this.initRun();
     };
 
@@ -85,11 +80,6 @@ define([
         this.pipelineError = null;
         this.canceled = false;
         this.runningJobs = 0;
-
-        // metadata records
-        this._metadata = {};
-        this._markForDeletion = {};  // id -> node
-        this._oldMetadataByName = {};  // name -> id
         this.lastAppliedCmd = {};
     };
 
@@ -108,7 +98,7 @@ define([
             return callback(new Error('Incorrect namespace. Expected to be executed in the "pipeline" namespace'));
         }
 
-        this.configureCompute();
+        this.initializeComputeClient();
         this.initRun();
 
         if (this.core.isTypeOf(this.activeNode, this.META.Pipeline)) {
@@ -214,7 +204,7 @@ define([
             .map(job => this.core.getPath(job))
             .forEach(id => delete this.incomingCounts[id]);
 
-        return Q.all(allJobs.map(job => this.recordOldMetadata(job, true)))
+        return Q.all(allJobs.map(job => this.initializeMetadata(job, true)))
             .then(() => Q.all(jobs.success.map(job => this.getOperation(job))))
             .then(ops => ops.forEach(op => this.updateJobCompletionRecords(op)))
             .then(() => this.save(`Resuming pipeline execution: ${name}`))
@@ -296,7 +286,7 @@ define([
         // Set the status for each job to 'pending'
         nodes.filter(node => this.core.isTypeOf(node, this.META.Job))
             .forEach(node => {
-                this.recordOldMetadata(node);
+                this.initializeMetadata(node);
                 this.core.setAttribute(node, 'status', 'pending');
             });
 
@@ -408,18 +398,12 @@ define([
     ExecutePipeline.prototype.onOperationCanceled = function(op) {
         var job = this.core.getParent(op);
         this.core.setAttribute(job, 'status', 'canceled');
-        this.runningJobs--;
         this.logger.debug(`${this.core.getAttribute(job, 'name')} has been canceled`);
         this.onPipelineComplete();
     };
 
     ExecutePipeline.prototype.onPipelineComplete = async function(err) {
         const name = this.core.getAttribute(this.activeNode, 'name');
-
-        if (err) {
-            this.runningJobs--;
-        }
-
         this.pipelineError = this.pipelineError || err;
 
         this.logger.debug(`${this.runningJobs} remaining jobs`);
@@ -546,6 +530,11 @@ define([
         return readyOps.length;
     };
 
+    ExecutePipeline.prototype.onOperationEnd = function() {
+        this.runningJobs--;
+        return ExecuteJob.prototype.onOperationEnd.apply(this, arguments);
+    };
+
     ExecutePipeline.prototype.onOperationComplete = async function (opNode) {
         const name = this.core.getAttribute(opNode, 'name');
         const jobNode = this.core.getParent(opNode);
@@ -553,7 +542,6 @@ define([
 
         // Set the operation to 'success'!
         this.clearOldMetadata(jobNode);
-        this.runningJobs--;
         this.core.setAttribute(jobNode, 'status', 'success');
         this.logger.info(`Setting ${jobId} status to "success"`);
         this.logger.info(`There are now ${this.runningJobs} running jobs`);
@@ -566,7 +554,11 @@ define([
 
         this.logger.debug(`Operation "${name}" completed. ` +
             `${this.totalCount - this.completedCount} remaining.`);
-        if (hasReadyOps) {
+
+        const isStopping = this.pipelineError || this.canceled;
+        if (isStopping && this.runningJobs === 0) {
+            this.onPipelineComplete();
+        } else if (hasReadyOps) {
             this.executeReadyOperations();
         } else if (this.completedCount === this.totalCount) {
             this.onPipelineComplete();

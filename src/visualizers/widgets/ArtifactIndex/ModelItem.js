@@ -23,6 +23,7 @@ define([
         this.$createdAt = this.$el.find('.createdAt');
         this.$download = this.$el.find('.data-download');
         this.$delete = this.$el.find('.data-remove');
+        this.$info = this.$el.find('.data-info');
     };
 
     ModelItem.prototype.update = function(node) {
@@ -31,7 +32,6 @@ define([
         this.$name.text(node.name);
         this.$type.text(node.type || 'unknown');
         this.$size.text(node.size || 'unknown');
-        this.$download.attr('href', node.dataURL);
         this.$createdAt.text(date);
     };
 

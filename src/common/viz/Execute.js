@@ -60,6 +60,49 @@ define([
             displayName: 'Basic Options',
             valueType: 'section'
         });
+
+        const inputConfigs = (await this.getArtifactInputs(node))
+            .map(input => {
+                const config = this.getAuthConfig(input);
+                if (config) {
+                    return [input, config];
+                }
+            })
+            .filter(info => !!info);
+
+        if (inputConfigs.length) {
+            metadata.configStructure.push({
+                name: 'PipelineInputsHeader',
+                displayName: 'Credentials for Pipeline Inputs',
+                valueType: 'section'
+            });
+            const inputOpts = inputConfigs.map(pair => {
+                const [node, config] = pair;
+                const name = node.getAttribute('name');
+                const backend = JSON.parse(node.getAttribute('data')).backend;
+                const storageName = Storage.getStorageMetadata(backend).name;
+                const title = `${name} (${storageName}):`;
+
+                config.unshift({
+                    name: `${title} Header`,
+                    displayName: title,
+                    valueType: 'section'
+                });
+
+                return {
+                    name: node.getId(),
+                    valueType: 'group',
+                    valueItems: config
+                };
+            });
+
+            metadata.configStructure.push({
+                name: 'inputs',
+                valueType: 'group',
+                valueItems: inputOpts
+            });
+        }
+
         metadata.configStructure.push({
             name: 'computeHeader',
             displayName: 'Compute Options',
@@ -126,34 +169,154 @@ define([
         return deferred.promise;
     };
 
+    Execute.prototype.getAuthConfig = function(node) {
+        const dataInfo = JSON.parse(node.getAttribute('data'));
+        const {backend} = dataInfo;
+        const metadata = Storage.getStorageMetadata(backend);
+        metadata.configStructure = metadata.configStructure.filter(config => config.isAuth);
+        if (metadata.configStructure.length) {
+            return metadata.configStructure;
+        } else {
+            return null;
+        }
+    };
+
+    Execute.prototype.getMetaNode = function(name) {
+        return this.client.getAllMetaNodes()
+            .find(node => node.getAttribute('name') === name);
+    };
+
+    Execute.prototype.getArtifactInputs = async function(node) {
+        const baseName = this.getBaseName(node);
+        if (baseName === 'Pipeline') {
+            await this.loadChildren(node.getId());
+            const operations = node.getChildrenIds()
+                .map(id => this.client.getNode(id));
+
+            return this.getArtifactsFromInputs(operations);
+
+        } else if (baseName === 'Execution') {
+            const children = await Promise.all(
+                node.getChildrenIds()
+                    .map(id => this.getNode(id))
+            );
+            const JobBaseId = this.getMetaNode('Job').getId();
+            const jobs = children.filter(node => node.isInstanceOf(JobBaseId));
+
+            const artifacts = await Promise.all(
+                jobs.map(job => this.getArtifactsFromInputJob(job))
+            );
+            return artifacts.flat();
+        } else {
+            return this.getArtifactsFromJob(node);
+        }
+    };
+
+    Execute.prototype.getOperation = async function(job) {
+        const OperationBase = this.getMetaNode('Operation').getId();
+        const children = job.getChildrenIds()
+            .map(id => this.getNode(id));
+        const operations = (await Promise.all(children))
+            .filter(node => node.isInstanceOf(OperationBase));
+        return operations.shift();
+    };
+
+    Execute.prototype.getArtifactsFromJob = async function(node) {
+        const operation = await this.getOperation(node);
+        return await this.getInputs(operation);
+    };
+
+    Execute.prototype.getArtifactsFromInputJob = async function(node) {
+        const operation = await this.getOperation(node);
+        return this.getArtifactsFromInputs([operation]);
+    };
+
+    Execute.prototype.getArtifactsFromInputs = async function(operations) {
+        const inputOps = operations.filter(node => {
+            const baseName = this.getBaseName(node);
+            return baseName === 'Input';
+        });
+
+        const dataNodes = await Promise.all(inputOps.map(node => {
+            const id = node.getPointer('artifact').to;
+            if (id) {
+                return this.getNode(id);
+            }
+        }));
+
+        return dataNodes.filter(node => !!node);
+    };
+
+    Execute.prototype.getArtifactFromInputOp = async function(node) {
+        const id = node.getPointer('artifact').to;
+        if (id) {
+            return this.getNode(id);
+        }
+    };
+
+    Execute.prototype.getBaseName = function(node) {
+        const base = this.client.getNode(node.getBaseId());
+        return base.getAttribute('name');
+    };
+
+    Execute.prototype.getInputs = async function(operation) {
+        return this.getGrandchildrenInType(operation, 'Inputs');
+    };
+
+    Execute.prototype.getOutputs = async function(operation) {
+        return this.getGrandchildrenInType(operation, 'Outputs');
+    };
+
+    Execute.prototype.getGrandchildrenInType = async function(node, typeName) {
+        await this.loadChildren(node.getId());
+        const outputsCntr = node.getChildrenIds().map(id => this.client.getNode(id))
+            .find(node => node.getAttribute('name') === typeName);
+
+        await this.loadChildren(outputsCntr.getId());
+        return outputsCntr.getChildrenIds().map(id => this.client.getNode(id));
+    };
+
     Execute.prototype.isRunning = function(node) {
         node = node || this.client.getNode(this._currentNodeId);
         // TODO: Check the parent, too
         return node.getAttribute('executionId');
     };
 
-    Execute.prototype.loadChildren = function(id) {
-        var deferred = Q.defer(),
-            execNode = this.client.getNode(id || this._currentNodeId),
+    Execute.prototype.loadChildren = async function(id) {
+        var execNode = this.client.getNode(id || this._currentNodeId),
             jobIds = execNode.getChildrenIds(),
             jobsLoaded = !jobIds.length || this.client.getNode(jobIds[0]);
 
         // May need to load the jobs...
         if (!jobsLoaded) {
-            // Create a territory and load the nodes
-            var territory = {},
-                ui;
-
+            const territory = {};
             territory[id] = {children: 1};
-            ui = this.client.addUI(this, () => {
-                this.client.removeUI(ui);
-                deferred.resolve();
-            });
-            this.client.updateTerritory(ui, territory);
-        } else {
-            deferred.resolve();
+            await this.loadTerritory(territory);
         }
+    };
 
+    Execute.prototype.getNode = async function(id) {
+        let node = this.client.getNode(id);
+        if (!node) {
+            await this.loadNode(id);
+            node = this.client.getNode(id);
+        }
+        return node;
+    };
+
+    Execute.prototype.loadNode = async function(id) {
+        const territory = {};
+        territory[id] = {children: 0};
+        await this.loadTerritory(territory);
+    };
+
+    Execute.prototype.loadTerritory = function(territory) {
+        const deferred = Q.defer();
+        const ui = this.client.addUI(this, () => {
+            this.client.removeUI(ui);
+            deferred.resolve();
+        });
+        this.client.updateTerritory(ui, territory);
         return deferred.promise;
     };
 
