@@ -18,14 +18,16 @@ Welcome to DeepForge's documentation!
    :caption: Fundamentals
 
    fundamentals/custom_operations.rst
+   fundamentals/integration.rst
+
 
 .. toctree::
    :maxdepth: 1
    :caption: Deployment
 
+   deployment/quick_start.rst
    deployment/overview.rst
    deployment/native.rst
-   deployment/dockerized.rst
 
 .. toctree::
    :maxdepth: 1
