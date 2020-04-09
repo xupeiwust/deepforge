@@ -21,7 +21,7 @@
     "test-ci": "npm test && node utils/additional-ci-checks.js",
     "watch-test": "nodemon --exec 'mocha --recursive test'"
   },
-  "version": "2.1.1",
+  "version": "2.2.0",
   "dependencies": {
     "@babel/core": "^7.7.2",
     "@babel/plugin-transform-runtime": "^7.6.2",
@@ -30,6 +30,7 @@
     "@babel/runtime": "^7.7.2",
     "aws-sdk": "^2.616.0",
     "commander": "^2.20.3",
+    "deepforge-keras": "github:deepforge-dev/deepforge-keras",
     "deepforge-user-management-page": "github:deepforge-dev/user-management-page",
     "dotenv": "^2.0.0",
     "exists-file": "^2.1.0",
