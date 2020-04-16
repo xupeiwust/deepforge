@@ -158,6 +158,11 @@ define([
                 name: 'Upload artifact',
                 icon: 'swap_vert',
                 action: DeepForge.create.Artifact
+            },
+            {
+                name: 'Import existing data',
+                icon: 'swap_horiz',
+                action: DeepForge.import.Artifact
             }
         ],
         // Creating prototypes

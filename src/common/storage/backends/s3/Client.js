@@ -104,21 +104,10 @@ define([
         } catch (err) {
             throw new Error(`Unable to upload ${filename}: ${err.message}`);
         }
-        const metadata = await this._stat(filename, this.bucketName);
-        metadata.filename = filename;
-        metadata.size = metadata.ContentLength;
-        metadata.bucketName = this.bucketName;
-        metadata.endpoint = this.config.endpoint;
-        this.logger.debug(`Successfully uploaded file ${filename} to the S3 server.`);
-        return this.createDataInfo(metadata);
-    };
+        const dataInfo = await this.stat(filename);
 
-    S3Storage.prototype._stat = async function (path, bucketName) {
-        const params = {
-            Bucket: bucketName,
-            Key: path
-        };
-        return (await this.getS3Client()).headObject(params);
+        this.logger.debug(`Successfully uploaded file ${filename} to the S3 server.`);
+        return dataInfo;
     };
 
     S3Storage.prototype.deleteDir = async function (dirname) {
@@ -176,6 +165,19 @@ define([
             });
         };
     }
+
+    S3Storage.prototype.stat = async function (path) {
+        const params = {
+            Bucket: this.bucketName,
+            Key: path
+        };
+        const metadata = (await this.getS3Client()).headObject(params);
+        metadata.filename = path;
+        metadata.size = metadata.ContentLength;
+        metadata.bucketName = this.bucketName;
+        metadata.endpoint = this.config.endpoint;
+        return this.createDataInfo(metadata);
+    };
 
     return S3Storage;
 });
