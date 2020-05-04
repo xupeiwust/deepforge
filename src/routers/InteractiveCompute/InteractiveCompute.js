@@ -48,13 +48,13 @@ class ComputeBroker {
                     session.setWorkerWebSocket(ws);
                 } else {
                     console.error(`Session not found for ${id}`);
+                    ws.close();
                 }
             });
         });
     }
 }
 
-// TODO: Create the interactive compute broker
 function initialize(middlewareOpts) {
     const logger = middlewareOpts.logger.fork('InteractiveCompute');
 
@@ -71,8 +71,6 @@ function initialize(middlewareOpts) {
     logger.debug('initializing ...');
 
     // TODO: additional auth required?
-    // TODO: connect with websockets...
-
     logger.debug('ready');
 }
 
