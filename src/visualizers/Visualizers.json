@@ -148,5 +148,11 @@
     "title": "OperationDepEditor",
     "panel": "panels/OperationDepEditor/OperationDepEditorPanel",
     "DEBUG_ONLY": false
+  },
+  {
+    "id": "Terminal",
+    "title": "Terminal",
+    "panel": "panels/Terminal/TerminalPanel",
+    "DEBUG_ONLY": false
   }
 ]
