@@ -13,7 +13,7 @@ ws.on('message', function(data) {
     // TODO: Queue the commands here?
     const [cmd, ...opts] = data.split(' ');
     const subprocess = spawn(cmd, opts);
+    subprocess.on('close', code => ws.send(Message.encode(Message.CLOSE, code)));
     subprocess.stdout.on('data', data => ws.send(Message.encode(Message.STDOUT, data)));
     subprocess.stderr.on('data', data => ws.send(Message.encode(Message.STDERR, data)));
-    subprocess.on('close', code => ws.send(Message.encode(Message.CLOSE, code)));
 });

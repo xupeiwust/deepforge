@@ -24,7 +24,6 @@ class ComputeBroker {
 
         this.clientServer.on('connection', ws => {
             ws.once('message', data => {
-                // TODO: Create the worker job
                 try {
                     const [id, config] = JSON.parse(data);
                     const backend = Compute.getBackend(id);
@@ -38,9 +37,7 @@ class ComputeBroker {
         });
 
         this.workerServer.on('connection', ws => {
-            // TODO: Could I connect to a different path?
             ws.once('message', data => {
-                console.log('connecting worker with client...');
                 const id = data.toString();
                 const index = this.initSessions.findIndex(session => session.id === id);
                 if (index > -1) {
