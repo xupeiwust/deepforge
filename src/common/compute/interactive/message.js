@@ -8,7 +8,8 @@
         module.exports = (root.utils = factory());
     }
 }(this, function() {
-    const Constants = makeEnum('STDOUT', 'STDERR', 'CLOSE');
+    const Constants = makeEnum('STDOUT', 'STDERR', 'RUN', 'ADD_ARTIFACT',
+        'ADD_FILE', 'ADD_USER_DATA', 'COMPLETE');
 
     function makeEnum() {
         const names = Array.prototype.slice.call(arguments);

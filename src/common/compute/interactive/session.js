@@ -78,9 +78,16 @@ define([
             };
             task.on(Message.STDOUT, data => result.stdout += data.toString());
             task.on(Message.STDERR, data => result.stderr += data.toString());
-            task.on(Message.CLOSE, code => result.exitCode = code);
+            task.on(Message.COMPLETE, code => result.exitCode = code);
             await this.runTask(task);
             return result;
+        }
+
+        async addArtifact(name, dataInfo, type) {
+            this.ensureIdle('add artifact');
+            const msg = new Message(Message.ADD_ARTIFACT, [name, dataInfo, type]);
+            const task = new Task(this.ws, msg);
+            await this.runTask(task);
         }
 
         static async new(computeID, config={}) {
