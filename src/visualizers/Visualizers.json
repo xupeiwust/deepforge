@@ -154,5 +154,11 @@
     "title": "Terminal",
     "panel": "panels/Terminal/TerminalPanel",
     "DEBUG_ONLY": false
+  },
+  {
+    "id": "DatasetExplorer",
+    "title": "DatasetExplorer",
+    "panel": "panels/DatasetExplorer/DatasetExplorerPanel",
+    "DEBUG_ONLY": false
   }
 ]

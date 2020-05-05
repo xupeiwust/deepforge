@@ -288,6 +288,13 @@
         "panel": "src/visualizers/panels/Terminal",
         "secondary": false,
         "widget": "src/visualizers/widgets/Terminal"
+      },
+      "DatasetExplorer": {
+        "src": "panels/DatasetExplorer/DatasetExplorerPanel",
+        "title": "DatasetExplorer",
+        "panel": "src/visualizers/panels/DatasetExplorer",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/DatasetExplorer"
       }
     },
     "addons": {},
