@@ -92,6 +92,10 @@ define([
             await this.runTask(task);
         }
 
+        close() {
+            this.ws.close();
+        }
+
         static async new(computeID, config={}) {
             const session = new InteractiveSession(computeID, config);
             await session.whenConnected();
