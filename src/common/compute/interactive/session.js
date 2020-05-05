@@ -45,7 +45,8 @@ define([
         spawn(cmd) {
             this.ensureIdle('spawn a task');
 
-            const task = new Task(this.ws, cmd);
+            const msg = new Message(Message.RUN, cmd);
+            const task = new Task(this.ws, msg);
             this.runTask(task);
             return task;
         }
@@ -70,7 +71,8 @@ define([
 
         async exec(cmd) {
             this.ensureIdle('exec a task');
-            const task = new Task(this.ws, cmd);
+            const msg = new Message(Message.RUN, cmd);
+            const task = new Task(this.ws, msg);
             const result = {
                 stdout: '',
                 stderr: '',
@@ -83,9 +85,9 @@ define([
             return result;
         }
 
-        async addArtifact(name, dataInfo, type) {
+        async addArtifact(name, dataInfo, type, auth) {
             this.ensureIdle('add artifact');
-            const msg = new Message(Message.ADD_ARTIFACT, [name, dataInfo, type]);
+            const msg = new Message(Message.ADD_ARTIFACT, [name, dataInfo, type, auth]);
             const task = new Task(this.ws, msg);
             await this.runTask(task);
         }
