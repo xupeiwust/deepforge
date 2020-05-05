@@ -50,10 +50,12 @@ define([
             // TODO: Ask if we should load the data?
             const dataInfo = JSON.parse(desc.data);
             const config = await this.getAuthenticationConfig(dataInfo);
+
             // TODO: Show loading message...
-            await this.session.addArtifact('data', dataInfo, desc.type, config);
+            const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
+            await this.session.addArtifact(name, dataInfo, desc.type, config);
             const command = [
-                'from artifacts.data import data',
+                `from artifacts.${name} import data`,
                 'import json',
                 'print(json.dumps([l[0] for l in data["y"]]))'
             ].join(';');
