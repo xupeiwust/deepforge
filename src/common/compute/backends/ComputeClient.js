@@ -1,47 +1,50 @@
 /* globals define */
 define([], function() {
-    const ComputeClient = function(logger, blobClient) {
-        this.logger = logger.fork('compute');
-        this.blobClient = blobClient;
-        this._events = {};
-    };
 
-    ComputeClient.prototype.cancelJob = function(/*job*/) {
-        unimplemented(this.logger, 'cancelJob');
-    };
+    class ComputeClient {
+        constructor (logger, blobClient) {
+            this.logger = logger.fork('compute');
+            this.blobClient = blobClient;
+            this._events = {};
+        }
 
-    ComputeClient.prototype.createJob = async function(/*hash*/) {
-        unimplemented(this.logger, 'createJob');
-    };
+        cancelJob (/*job*/) {
+            unimplemented(this.logger, 'cancelJob');
+        }
 
-    ComputeClient.prototype.getStatus = async function(/*jobInfo*/) {
-        unimplemented(this.logger, 'getStatus');
-    };
+        createJob (/*hash*/) {
+            unimplemented(this.logger, 'createJob');
+        }
 
-    ComputeClient.prototype.getResultsInfo = async function(/*jobInfo*/) {
-        unimplemented(this.logger, 'getResultsInfo');
-    };
+        getStatus (/*jobInfo*/) {
+            unimplemented(this.logger, 'getStatus');
+        }
 
-    ComputeClient.prototype.getConsoleOutput = async function(/*hash*/) {
-        unimplemented(this.logger, 'getConsoleOutput');
-    };
+        getResultsInfo (/*jobInfo*/) {
+            unimplemented(this.logger, 'getResultsInfo');
+        }
 
-    ComputeClient.prototype.isFinishedStatus = function(status) {
-        const notFinishedStatuses = [this.QUEUED, this.PENDING, this.RUNNING];
-        return !notFinishedStatuses.includes(status);
-    };
+        getConsoleOutput (/*hash*/) {
+            unimplemented(this.logger, 'getConsoleOutput');
+        }
 
-    // Some functions for event support
-    ComputeClient.prototype.on = function(ev, cb) {
-        this._events[ev] = this._events[ev] || [];
-        this._events[ev].push(cb);
-    };
+        isFinishedStatus (status) {
+            const notFinishedStatuses = [this.QUEUED, this.PENDING, this.RUNNING];
+            return !notFinishedStatuses.includes(status);
+        }
 
-    ComputeClient.prototype.emit = function(ev) {
-        const args = Array.prototype.slice.call(arguments, 1);
-        const handlers = this._events[ev] || [];
-        return Promise.all(handlers.map(fn => fn.apply(this, args)));
-    };
+        // Some functions for event support
+        on (ev, cb) {
+            this._events[ev] = this._events[ev] || [];
+            this._events[ev].push(cb);
+        }
+
+        emit (ev) {
+            const args = Array.prototype.slice.call(arguments, 1);
+            const handlers = this._events[ev] || [];
+            return Promise.all(handlers.map(fn => fn.apply(this, args)));
+        }
+    }
 
     ComputeClient.prototype.QUEUED = 'queued';
     ComputeClient.prototype.PENDING = 'pending';
