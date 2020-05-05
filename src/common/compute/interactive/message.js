@@ -29,14 +29,21 @@
             return new Message(type, data);
         }
 
-        static encode(type, data) {
+        encode() {
+            return Message.encode(this.type, this.data);
+        }
+
+        static encode(type, data=0) {
             //const buffer = Buffer.allocUnsafe(1);
             //buffer.writeUInt8(type, 0);
             //if (!data.isBuffer) {
                 //data = Buffer.from(data);
             //}
             //return buffer.concat(data);
-            return JSON.stringify({type, data: data.toString()});
+            if (typeof Buffer !== 'undefined' && data instanceof Buffer) {
+                data = data.toString();
+            }
+            return JSON.stringify({type, data});
         }
     }
     Object.assign(Message, Constants);
