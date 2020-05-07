@@ -1,19 +1,20 @@
-/*globals define */
+/*globals define, $ */
 
 define([
     'deepforge/storage/index',
     'deepforge/compute/interactive/session',
     'widgets/PlotlyGraph/lib/plotly.min',
-    'css!./styles/DatasetExplorerWidget.css'
+    './PlotEditor',
+    'css!./styles/DatasetExplorerWidget.css',
 ], function (
     Storage,
     Session,
     Plotly,
+    PlotEditor,
 ) {
     'use strict';
 
-    // TODO: Get access to the interactive compute
-    var WIDGET_CLASS = 'dataset-explorer';
+    const WIDGET_CLASS = 'dataset-explorer';
 
     class DatasetExplorerWidget {
         constructor(logger, container) {
@@ -21,6 +22,17 @@ define([
 
             this.$el = container;
             this.$el.addClass(WIDGET_CLASS);
+            const row = $('<div>', {class: 'row'});
+            this.$el.append(row);
+
+            this.$plot = $('<div>', {class: 'plot col-9'});
+            this.$plotEditor = $('<div>', {class: 'plot-editor col-3'});
+            this.plotEditor = new PlotEditor(this.$plotEditor);
+            this.plotEditor.on('update', values => {
+                this.setLayout(values);
+            });
+            row.append(this.$plot);
+            row.append(this.$plotEditor);
 
             this.session = new Session('local');
             this.nodeId = null;
@@ -44,7 +56,7 @@ define([
             }
         }
 
-        async getYValues (desc) {
+        async importDataToSession (desc) {
             await this.session.whenConnected();
 
             // TODO: Ask if we should load the data?
@@ -54,6 +66,12 @@ define([
             // TODO: Show loading message...
             const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
             await this.session.addArtifact(name, dataInfo, desc.type, config);
+        }
+
+        async getYValues (desc) {
+            const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
+            await this.importDataToSession(desc);
+
             const command = [
                 `from artifacts.${name} import data`,
                 'import json',
@@ -79,14 +97,30 @@ define([
             this._logger.debug('Widget is resizing...');
         }
 
+        defaultLayout(desc) {
+            const title = `Distribution of Labels for ${desc.name}`;
+            return {title};
+        }
+
+        setLayout(newVals) {
+            this.layout = newVals;
+            this.onPlotUpdated();
+        }
+
+        onPlotUpdated () {
+            Plotly.newPlot(this.$plot[0], this.plotData, this.layout);
+        }
+
         // Adding/Removing/Updating items
         async addNode (desc) {
             this.nodeId = desc.id;
-            const plotData = await this.getPlotData(desc);
+            this.plotData = await this.getPlotData(desc);
             const isStillShown = this.nodeId === desc.id;
             if (isStillShown) {
-                const title = `Distribution of Labels for ${desc.name}`;
-                Plotly.newPlot(this.$el[0], plotData, {title});
+                this.layout = this.defaultLayout(desc);
+                this.plotEditor.set(this.layout);
+                this.onPlotUpdated();
+                //Plotly.newPlot(this.$plot[0], this.plotData, this.layout);
             }
         }
 
@@ -98,7 +132,7 @@ define([
 
         /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
         destroy () {
-            Plotly.purge(this.$el[0]);
+            Plotly.purge(this.$plot[0]);
             this.session.close();
         }
 
