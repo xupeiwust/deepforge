@@ -5,12 +5,14 @@ define([
     'deepforge/compute/interactive/session',
     'widgets/PlotlyGraph/lib/plotly.min',
     './PlotEditor',
+    'underscore',
     'css!./styles/DatasetExplorerWidget.css',
 ], function (
     Storage,
     Session,
     Plotly,
     PlotEditor,
+    _,
 ) {
     'use strict';
 
@@ -29,8 +31,11 @@ define([
             this.$plotEditor = $('<div>', {class: 'plot-editor col-3'});
             this.plotEditor = new PlotEditor(this.$plotEditor);
             this.plotEditor.on('update', values => {
-                this.setLayout(values);
+                // TODO: fetch the layout values and the data values
+                console.log('update:', values);
+                //this.setLayout(values);
             });
+
             row.append(this.$plot);
             row.append(this.$plotEditor);
 
@@ -70,6 +75,7 @@ define([
 
         async getYValues (desc) {
             const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
+            return [1,2,3,4];
             await this.importDataToSession(desc);
 
             const command = [
@@ -81,6 +87,17 @@ define([
             return JSON.parse(stdout);
         }
 
+        async getMetadata (desc) {
+            // TODO: Load the data into the current session
+            return {
+                name: desc.name,
+                data: {
+                    X: [7500, 64, 64, 5],
+                    y: [7500, 1]
+                }
+            };
+        }
+
         async getPlotData (desc) {
             return [
                 {
@@ -88,6 +105,7 @@ define([
                     boxpoints: 'all',
                     jitter: 0.3,
                     pointpos: -1.8,
+                    name: `${desc.name}['y']`,
                     type: 'box'
                 }
             ];
@@ -114,11 +132,22 @@ define([
         // Adding/Removing/Updating items
         async addNode (desc) {
             this.nodeId = desc.id;
+            // TODO: Use a different method of storing what to plot
             this.plotData = await this.getPlotData(desc);
             const isStillShown = this.nodeId === desc.id;
+            // getMetadata 
             if (isStillShown) {
                 this.layout = this.defaultLayout(desc);
-                this.plotEditor.set(this.layout);
+                const data = _.extend({}, this.layout);
+                data.plottedData = [  // FIXME: remove this 
+                    {
+                        id: 123,
+                        name: 'Example Data',
+                        data: `combined_dataset['y']`,
+                        dataSlice: '[:,0]',
+                    }
+                ];
+                this.plotEditor.set(data);
                 this.onPlotUpdated();
                 //Plotly.newPlot(this.$plot[0], this.plotData, this.layout);
             }

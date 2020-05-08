@@ -1,0 +1,36 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title"><%= title %></h3>
+      </div>
+      <div class="modal-body">
+        <form>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text", class="form-control" id="name"/>
+            </div>
+            <div class="form-group">
+                <!-- TODO: Add data selection? -->
+                <!-- TODO: Add view of data -->
+                <!-- TODO: Add color specification -->
+                <!-- TODO: Add other options (depends on dim of data) -->
+                <label for="data"></label>
+                <select id="data">
+                    <option value="combined_dataset['X']">combined_dataset['X']</option>
+                    <option value="combined_dataset['y']">combined_dataset['y']</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="dataSlice">Data Slice</label><!-- TODO: Better name? -->
+                <input type="text", class="form-control" id="dataSlice"/>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-save btn-primary" data-dismiss="modal">Apply</button>
+        <button type="button" class="btn btn-default btn-secondary" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
