@@ -73,7 +73,7 @@ define([
             const newData = await editor.show();
             const index = this.plottedData.findIndex(d => d.id === newData.id);
             if (index > -1) {
-                this.plottedData.splice(index, 1, data);
+                this.plottedData.splice(index, 1, newData);
                 this.refreshPlottedDataList();
                 this.onUpdate();
             }
