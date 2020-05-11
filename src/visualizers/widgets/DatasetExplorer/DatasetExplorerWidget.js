@@ -5,14 +5,18 @@ define([
     'deepforge/compute/interactive/session',
     'widgets/PlotlyGraph/lib/plotly.min',
     './PlotEditor',
+    './ArtifactLoader',
     'underscore',
+    'text!./files/explorer_helpers.py',
     'css!./styles/DatasetExplorerWidget.css',
 ], function (
     Storage,
     Session,
     Plotly,
     PlotEditor,
+    ArtifactLoader,
     _,
+    HELPERS_PY,
 ) {
     'use strict';
 
@@ -22,24 +26,31 @@ define([
         constructor(logger, container) {
             this._logger = logger.fork('Widget');
 
+            // TODO: Prompt for compute info
+            this.session = new Session('local');
+
             this.$el = container;
             this.$el.addClass(WIDGET_CLASS);
             const row = $('<div>', {class: 'row'});
             this.$el.append(row);
 
             this.$plot = $('<div>', {class: 'plot col-9'});
-            this.$plotEditor = $('<div>', {class: 'plot-editor col-3'});
-            this.plotEditor = new PlotEditor(this.$plotEditor);
+
+            const rightPanel = $('<div>', {class: 'col-3'});
+            const $plotEditor = $('<div>', {class: 'plot-editor'});
+            this.plotEditor = new PlotEditor($plotEditor);
             this.plotEditor.on('update', plotData => {
                 this.updatePlot(plotData);
             });
+            const $artifactLoader = $('<div>', {class: 'artifact-loader'});
+            this.artifactLoader = new ArtifactLoader($artifactLoader, this.session);
 
             row.append(this.$plot);
-            row.append(this.$plotEditor);
+            rightPanel.append($plotEditor);
+            //rightPanel.append($artifactLoader);
+            row.append(rightPanel);
 
-            this.session = new Session('local');
-            this.nodeId = null;
-
+            // TODO: start loading message...
             this._logger.debug('ctor finished');
         }
 
@@ -61,6 +72,8 @@ define([
 
         async importDataToSession (desc) {
             await this.session.whenConnected();
+            await this.session.addFile('utils/explorer_helpers.py', HELPERS_PY);
+            console.log('adding file...');
 
             // TODO: Ask if we should load the data?
             const dataInfo = JSON.parse(desc.data);
@@ -71,35 +84,30 @@ define([
             await this.session.addArtifact(name, dataInfo, desc.type, config);
         }
 
-        async getYValues (data) {
+        async getYValues (lineInfo) {
             //const name = data.name.replace(/[^a-zA-Z_]/g, '_');
             return [1,2,3,4];
-            await this.importDataToSession(desc);
 
+            const {data} = lineInfo;
             const command = [
-                `from artifacts.${name} import data`,
+                `from artifacts.${data} import data as ${data}`,
                 'import json',
-                'print(json.dumps([l[0] for l in data["y"]]))'
+                `print(json.dumps([l[0] for l in ${data}]))`
             ].join(';');
             const {stdout} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
             return JSON.parse(stdout);
         }
 
         async getMetadata (desc) {
-            // TODO: Load the data into the current session
-            return {
-                name: desc.name,
-                entries: [
-                    {
-                        name: 'X',
-                        shape: [7500, 64, 64, 5],
-                    },
-                    {
-                        name: 'y',
-                        shape: [7500, 1]
-                    }
-                ]
-            };
+            const {name} = desc;
+            const command = [
+                `from artifacts.${name} import data`,
+                'from utils.explorer_helpers import metadata',
+                'import json',
+                `print(json.dumps(metadata("${name}", data)))`
+            ].join(';');
+            const {stdout} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
+            return JSON.parse(stdout);
         }
 
         async getPlotData (line) {
@@ -130,29 +138,22 @@ define([
             Plotly.newPlot(this.$plot[0], data, layout);
         }
 
-        onPlotUpdated () {
-            Plotly.newPlot(this.$plot[0], this.plotData, this.layout);
-        }
-
         // Adding/Removing/Updating items
         async addNode (desc) {
             // TODO: update the loading messages
             //  - loading data?
             //  - prompt about the type of compute to use?
             // TODO: start loading messages
-            this.nodeId = desc.id;
-            // TODO: Use a different method of storing what to plot
-            const isStillShown = this.nodeId === desc.id;
-            // getMetadata 
-            if (isStillShown) {
-                this.layout = this.defaultLayout(desc);
-                const data = _.extend({}, this.layout);
-                data.plottedData = [  // FIXME: remove this 
-                ];
-                data.metadata = [await this.getMetadata(desc)];
-                this.plotEditor.set(data);
-                this.onPlotUpdated();
-            }
+
+            await this.importDataToSession(desc);
+            const layout = this.defaultLayout(desc);
+
+            const data = _.extend({}, layout);
+            data.plottedData = [];  // FIXME: remove this 
+            data.metadata = [await this.getMetadata(desc)];
+            this.plotEditor.set(data);
+
+            Plotly.react(this.$plot[0]);  // FIXME
         }
 
         removeNode (/*gmeId*/) {
