@@ -24,10 +24,11 @@ define([
 
             this.$plottedData = this.$el.find('.plotted-data');
             this.plottedData = [];
+            this.metadata = null;
         }
 
         async onAddDataClicked() {
-            const editor = new PlottedDataEditor();
+            const editor = new PlottedDataEditor(null, this.metadata);
             const data = await editor.show();
             if (data) {
                 this.plottedData.push(data);
@@ -42,6 +43,7 @@ define([
                 this.plottedData = values.plottedData;
                 this.refreshPlottedDataList();
             }
+            this.metadata = values.metadata;
         }
 
         refreshPlottedDataList() {
@@ -69,7 +71,7 @@ define([
         }
 
         async editPlottedData(data) {
-            const editor = new PlottedDataEditor(data);
+            const editor = new PlottedDataEditor(data, this.metadata);
             const newData = await editor.show();
             const index = this.plottedData.findIndex(d => d.id === newData.id);
             if (index > -1) {

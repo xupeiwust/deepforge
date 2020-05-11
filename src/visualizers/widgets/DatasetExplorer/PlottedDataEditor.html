@@ -15,7 +15,7 @@
                 <!-- TODO: Add view of data -->
                 <!-- TODO: Add color specification -->
                 <!-- TODO: Add other options (depends on dim of data) -->
-                <label for="data"></label>
+                <label for="data">Data</label>
                 <select id="data">
                     <option value="combined_dataset['X']">combined_dataset['X']</option>
                     <option value="combined_dataset['y']">combined_dataset['y']</option>
@@ -24,6 +24,7 @@
             <div class="form-group">
                 <label for="dataSlice">Data Slice</label><!-- TODO: Better name? -->
                 <input type="text", class="form-control" id="dataSlice"/>
+                <span id="dataDims">(10,5,4)</span>
             </div>
         </form>
       </div>

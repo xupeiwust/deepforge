@@ -30,10 +30,8 @@ define([
             this.$plot = $('<div>', {class: 'plot col-9'});
             this.$plotEditor = $('<div>', {class: 'plot-editor col-3'});
             this.plotEditor = new PlotEditor(this.$plotEditor);
-            this.plotEditor.on('update', values => {
-                // TODO: fetch the layout values and the data values
-                console.log('update:', values);
-                //this.setLayout(values);
+            this.plotEditor.on('update', plotData => {
+                this.updatePlot(plotData);
             });
 
             row.append(this.$plot);
@@ -91,10 +89,16 @@ define([
             // TODO: Load the data into the current session
             return {
                 name: desc.name,
-                data: {
-                    X: [7500, 64, 64, 5],
-                    y: [7500, 1]
-                }
+                entries: [
+                    {
+                        name: 'X',
+                        shape: [7500, 64, 64, 5],
+                    },
+                    {
+                        name: 'y',
+                        shape: [7500, 1]
+                    }
+                ]
             };
         }
 
@@ -147,9 +151,9 @@ define([
                         dataSlice: '[:,0]',
                     }
                 ];
+                data.metadata = [await this.getMetadata(desc)];
                 this.plotEditor.set(data);
                 this.onPlotUpdated();
-                //Plotly.newPlot(this.$plot[0], this.plotData, this.layout);
             }
         }
 
