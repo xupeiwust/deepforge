@@ -72,12 +72,14 @@ define([
         };
         this._widget.getConfigDialog = () => new ConfigDialog(this._client);
 
-        this._widget.onNameChange = (id, newName) => {
-            var name = this._client.getNode(id).getAttribute('name'),
-                msg = `Renamed "${name}" artifact to "${newName}"`;
-
+        this._widget.onAttributeChange = (id, attr, newValue) => {
+            const node = this._client.getNode(id);
+            const name = node.getAttribute('name');
+            const oldValue = node.getAttribute(attr);
+            const fromMsg = oldValue ? ` (from ${oldValue})` : '';
+            const msg = `Set ${name} artifact's ${attr} to ${newValue}${fromMsg}`;
             this._client.startTransaction(msg);
-            this._client.setAttribute(id, 'name', newName);
+            this._client.setAttribute(id, attr, newValue);
             this._client.completeTransaction();
         };
     };

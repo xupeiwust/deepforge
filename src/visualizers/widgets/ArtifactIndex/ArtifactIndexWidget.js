@@ -79,19 +79,17 @@ define([
                 event.stopPropagation();
                 event.preventDefault();
             });
-            node.$name.on('dblclick', event => {
-                const name = $(event.target);
-                name.editInPlace({
-                    css: {
-                        'z-index': 1000
-                    },
-                    onChange: (oldVal, newVal) => {
-                        if (newVal && newVal !== oldVal) {
-                            this.onNameChange(desc.id, newVal);
-                        }
-                    }
-                });
-            });
+            node.$name.on('dblclick', event => this.editInPlace(event,{
+                nodeId : desc.id,
+                targetAttribute : 'name',
+                confirmation : null
+            }));
+
+            node.$type.on('dblclick', event => this.editInPlace(event, {
+                nodeId : desc.id,
+                targetAttribute : 'type',
+                confirmation : this.confirmArtifactTypeChange.bind(this, node.$name.text()),
+            }));
 
             node.$info.on('click', event => {
                 event.stopPropagation();
@@ -109,12 +107,19 @@ define([
         return await dialog.show();
     };
 
+    ArtifactIndexWidget.prototype.confirmArtifactTypeChange = async function(target, newValue, oldValue) {
+        const title = `Change data type for <code>${target}</code>?`;
+        const body = `Changing the data type from <code>${oldValue}</code> to <code>${newValue}</code> 
+            will not change the underlying data and can cause deserialization errors when used in a pipeline. Continue?`;
+        const dialog = new ConfirmDialog(title, body);
+        return await dialog.show();
+    };
+
     ArtifactIndexWidget.prototype.getAuthenticationConfig = async function (dataInfo) {
         const {backend} = dataInfo;
         const metadata = Storage.getStorageMetadata(backend);
         metadata.configStructure = metadata.configStructure
             .filter(option => option.isAuth);
-
         if (metadata.configStructure.length) {
             const configDialog = this.getConfigDialog();
             const title = `Authenticate with ${metadata.name}`;
@@ -137,6 +142,29 @@ define([
         if (desc && desc.parentId === this.currentNode) {
             this.nodes[desc.id].update(desc);
         }
+    };
+
+    ArtifactIndexWidget.prototype.editInPlace = function(event, opts) {
+        const el = $(event.target);
+        const id = opts.nodeId;
+        const attr = opts.targetAttribute;
+
+        el.editInPlace({
+            css: {
+                'z-index' : 1000
+            },
+            onChange: async (oldVal, newVal) => {
+                if (newVal && newVal !== oldVal) {
+                    const confirmed = opts.confirmation ? await opts.confirmation.call(
+                        this, newVal, oldVal) : true;
+                    if(confirmed) {
+                        this.onAttributeChange(id, attr, newVal);
+                    } else {
+                        el.text(oldVal);
+                    }
+                }
+            }
+        });
     };
 
     /* * * * * * * * Visualizer event handlers * * * * * * * */
