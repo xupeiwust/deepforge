@@ -1,4 +1,4 @@
-/* globals define */
+/* globals define, $ */
 define([
     'underscore',
     './DataEditorBase',
@@ -31,9 +31,37 @@ define([
             const onDataUpdate = _.debounce(() => this.onPythonDataUpdate(), 250);
             this.dataShapes = dataShapes;
             this.$el.find('#dataSlice').on('input', onDataUpdate);
-            this.$el.find('#data').on('change', onDataUpdate);
+            const $dataDropdown = this.$el.find('#data');
+            this.setDataOptions($dataDropdown, dataShapes);
+            $dataDropdown.on('change', onDataUpdate);
 
             this.$dataDims = this.$el.find('#dataDims');
+        }
+
+        setDataOptions($data, dataShapes) {
+            $data.empty();
+            const names = dataShapes
+                .flatMap(md => PlottedDataEditor.getAllVariableNames(md));
+            const options = names.map(name => {
+                const $el = $('<option>');
+                $el.attr('value', name);
+                $el.text(name);
+                return $el;
+            });
+            options.forEach($opt => $data.append($opt));
+        }
+
+        static getAllVariableNames(metadata, isKey=false) {
+            const name = isKey ? `['${metadata.name}']` : metadata.name;  // TODO: bug if not escaping "'"
+
+            if (metadata.entries) {
+                const names = metadata.entries
+                    .flatMap(entry => PlottedDataEditor.getAllVariableNames(entry, true));
+
+                return names.map(n => name + n);
+            }
+
+            return [name];
         }
 
         async show() {
