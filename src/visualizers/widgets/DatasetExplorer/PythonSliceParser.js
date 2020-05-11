@@ -9,6 +9,12 @@ define([
         }
     }
 
+    class InvalidSliceError extends Error {
+        constructor(text) {
+            super(`Invalid slice string: ${text}`);
+        }
+    }
+
     class ArrayAccessor {
         select(/*dims*/) {
             const typeName = this.constructor.name;
@@ -79,6 +85,14 @@ define([
         }
     }
 
+    function ensureValidSliceString(sliceString) {
+        const sliceRegex = /^\[-?[0-9]*:?-?[0-9]*:?-?[0-9]*((,|\]\[)-?[0-9]*:?-?[0-9]*:?-?[0-9]*)?\]$/;
+        const isValid = sliceRegex.test(sliceString);
+        if (!isValid) {
+            throw new InvalidSliceError(sliceString);
+        }
+    }
+
     function getSliceStrings(rawString) {
         return rawString
             .replace(/(^\[|\]$)/g, '')
@@ -87,6 +101,7 @@ define([
     }
 
     function getSlicedShape(startShape, sliceString) {
+        ensureValidSliceString(sliceString);
         const slices = getSliceStrings(sliceString).map(Slice.from);
         return slices.reduce(
             (shape, slice, position) => slice.select(shape, position),
