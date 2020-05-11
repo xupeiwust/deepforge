@@ -85,14 +85,11 @@ define([
         }
 
         async getYValues (lineInfo) {
-            //const name = data.name.replace(/[^a-zA-Z_]/g, '_');
-            return [1,2,3,4];
-
-            const {data} = lineInfo;
+            const {data, dataSlice=''} = lineInfo;
             const command = [
-                `from artifacts.${data} import data as ${data}`,
+                `from artifacts.${data} import data`,
                 'import json',
-                `print(json.dumps([l[0] for l in ${data}]))`
+                `print(json.dumps([l for l in data${dataSlice}]))`
             ].join(';');
             const {stdout} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
             return JSON.parse(stdout);
