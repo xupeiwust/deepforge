@@ -3,6 +3,12 @@ describe.only('PythonSliceParser', function() {
     const SliceParser = requirejs('widgets/DatasetExplorer/PythonSliceParser');
     const assert = require('assert').strict;
 
+    it('should return start shape if passed blank string', function() {
+        const shape = [10, 5];
+        const newShape = SliceParser(shape, '');
+        assert.deepEqual(newShape, shape);
+    });
+
     describe('indices', function() {
         it('should remove first dimension using "[0]"', function() {
             const shape = [10, 5];
@@ -68,5 +74,10 @@ describe.only('PythonSliceParser', function() {
     });
 
     describe('slices and indices', function() {
+        it('should compute dimensions using "[:,0]"', function() {
+            const shape = [100, 1];
+            const newShape = SliceParser(shape, '[:,0]');
+            assert.deepEqual(newShape, [100]);
+        });
     });
 });

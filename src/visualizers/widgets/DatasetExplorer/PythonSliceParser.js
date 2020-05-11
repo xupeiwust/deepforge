@@ -11,7 +11,7 @@ define([
 
     class InvalidSliceError extends Error {
         constructor(text) {
-            super(`Invalid slice string: ${text}`);
+            super(`Invalid slice string: "${text}"`);
         }
     }
 
@@ -28,18 +28,19 @@ define([
             this.index = index;
         }
 
-        select(dims) {
-            this.ensureValidIndex(dims);
-            return dims.slice(1);
+        select(dims, position) {
+            const len = dims.splice(position, 1, null);
+            this.ensureValidIndex(len);
+            return dims;
         }
 
         isInRange(len) {
             return this.index < len;
         }
 
-        ensureValidIndex(dims) {
-            if (!this.isInRange(dims[0])) {
-                throw new OutOfRangeError(dims[0], this.index);
+        ensureValidIndex(len) {
+            if (!this.isInRange(len)) {
+                throw new OutOfRangeError(len, this.index);
             }
         }
     }
@@ -87,7 +88,8 @@ define([
 
     function ensureValidSliceString(sliceString) {
         const sliceRegex = /^\[-?[0-9]*:?-?[0-9]*:?-?[0-9]*((,|\]\[)-?[0-9]*:?-?[0-9]*:?-?[0-9]*)?\]$/;
-        const isValid = sliceRegex.test(sliceString);
+        const isEmpty = sliceString.length === 0;
+        const isValid = isEmpty || sliceRegex.test(sliceString);
         if (!isValid) {
             throw new InvalidSliceError(sliceString);
         }
@@ -97,16 +99,18 @@ define([
         return rawString
             .replace(/(^\[|\]$)/g, '')
             .split('][')
-            .flatMap(chunk => chunk.split(','));
+            .flatMap(chunk => chunk.split(','))
+            .filter(chunk => !!chunk);
     }
 
     function getSlicedShape(startShape, sliceString) {
+        sliceString = sliceString.trim();
         ensureValidSliceString(sliceString);
         const slices = getSliceStrings(sliceString).map(Slice.from);
         return slices.reduce(
             (shape, slice, position) => slice.select(shape, position),
-            startShape
-        );
+            startShape.slice()
+        ).filter(dim => dim !== null);
     }
 
     return getSlicedShape;
