@@ -92,6 +92,13 @@ define([
             await this.runTask(task);
         }
 
+        async addFile(filepath, content) {
+            this.ensureIdle('add file');
+            const msg = new Message(Message.ADD_FILE, [filepath, content]);
+            const task = new Task(this.ws, msg);
+            await this.runTask(task);
+        }
+
         close() {
             this.ws.close();
         }

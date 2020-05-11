@@ -22,8 +22,6 @@ ws.on('message', async function(data) {
         subprocess.stdout.on('data', data => ws.send(Message.encode(Message.STDOUT, data)));
         subprocess.stderr.on('data', data => ws.send(Message.encode(Message.STDERR, data)));
     } else if (msg.type === Message.ADD_ARTIFACT) {
-        console.log('adding artifact...');
-        console.log(msg);
         const [name, dataInfo, type, config={}] = msg.data;
         const dirs = ['artifacts', name];
         await mkdirp(...dirs);
@@ -35,25 +33,38 @@ ws.on('message', async function(data) {
             const {Storage} = Utils;
 
             async function saveArtifact() {
-                let exitCode = 0;
-                try {
-                    const client = await Storage.getClient(dataInfo.backend, null, config);
-                    const dataPath = path.join(...dirs.concat('data'));
-                    const buffer = await client.getFile(dataInfo);
-                    await fs.writeFile(dataPath, buffer);
-                    const filePath = path.join(...dirs.concat('__init__.py'));
-                    await fs.writeFile(filePath, initFile(name, type));
-                } catch (err) {
-                    exitCode = 1;
-                    console.log('ERROR:', err);
-                }
-                ws.send(Message.encode(Message.COMPLETE, exitCode));
+                const client = await Storage.getClient(dataInfo.backend, null, config);
+                const dataPath = path.join(...dirs.concat('data'));
+                const buffer = await client.getFile(dataInfo);
+                await fs.writeFile(dataPath, buffer);
+                const filePath = path.join(...dirs.concat('__init__.py'));
+                await fs.writeFile(filePath, initFile(name, type));
             }
 
-            saveArtifact();
+            runTask(saveArtifact);
         });
+    } else if (msg.type === Message.ADD_FILE) {
+        runTask(() => writeFile(msg));
     }
 });
+
+async function writeFile(msg) {
+    const [filepath, content] = msg.data;
+    const dirs = path.dirname(filepath).split(path.sep);
+    await mkdirp(...dirs);
+    await fs.writeFile(filepath, content);
+}
+
+async function runTask(fn) {
+    let exitCode = 0;
+    try {
+        await fn();
+    } catch (err) {
+        exitCode = 1;
+        console.log('ERROR:', err);
+    }
+    ws.send(Message.encode(Message.COMPLETE, exitCode));
+}
 
 function parseCommand(cmd) {
     const chunks = [''];
