@@ -41,24 +41,26 @@ class InteractiveClient {
                 const {Storage} = Utils;
 
                 async function saveArtifact() {
-                    let exitCode = 0;
-                    try {
-                        const client = await Storage.getClient(dataInfo.backend, null, config);
-                        const dataPath = path.join(...dirs.concat('data'));
-                        const buffer = await client.getFile(dataInfo);
-                        await fs.writeFile(dataPath, buffer);
-                        const filePath = path.join(...dirs.concat('__init__.py'));
-                        await fs.writeFile(filePath, initFile(name, type));
-                    } catch (err) {
-                        exitCode = 1;
-                        console.error(`addArtifact(${name}) failed:`, err);
-                    }
-                    this.sendMessage(Message.COMPLETE, exitCode);
+                    const client = await Storage.getClient(dataInfo.backend, null, config);
+                    const dataPath = path.join(...dirs.concat('data'));
+                    const buffer = await client.getFile(dataInfo);
+                    await fs.writeFile(dataPath, buffer);
+                    const filePath = path.join(...dirs.concat('__init__.py'));
+                    await fs.writeFile(filePath, initFile(name, type));
                 }
 
-                saveArtifact();
+                runTask(saveArtifact);
             });
+        } else if (msg.type === Message.ADD_FILE) {
+            runTask(() => this.writeFile(msg));
         }
+    }
+
+    async writeFile(msg) {
+        const [filepath, content] = msg.data;
+        const dirs = path.dirname(filepath).split(path.sep);
+        await mkdirp(...dirs);
+        await fs.writeFile(filepath, content);
     }
 
     static parseCommand(cmd) {
@@ -68,7 +70,6 @@ class InteractiveClient {
             const letter = cmd[i];
             const isQuoteChar = letter === '"' || letter === '\'';
             const isInQuotes = !!quoteChar;
-
             if (!isInQuotes && isQuoteChar) {
                 quoteChar = letter;
             } else if (quoteChar === letter) {
@@ -85,6 +86,17 @@ class InteractiveClient {
         }
         return chunks;
     }
+}
+
+async function runTask(fn) {
+    let exitCode = 0;
+    try {
+        await fn();
+    } catch (err) {
+        exitCode = 1;
+        console.log('ERROR:', err);
+    }
+    ws.send(Message.encode(Message.COMPLETE, exitCode));
 }
 
 async function mkdirp() {
