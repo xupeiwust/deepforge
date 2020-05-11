@@ -71,8 +71,8 @@ define([
             await this.session.addArtifact(name, dataInfo, desc.type, config);
         }
 
-        async getYValues (desc) {
-            const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
+        async getYValues (data) {
+            //const name = data.name.replace(/[^a-zA-Z_]/g, '_');
             return [1,2,3,4];
             await this.importDataToSession(desc);
 
@@ -102,17 +102,15 @@ define([
             };
         }
 
-        async getPlotData (desc) {
-            return [
-                {
-                    y: await this.getYValues(desc),
-                    boxpoints: 'all',
-                    jitter: 0.3,
-                    pointpos: -1.8,
-                    name: `${desc.name}['y']`,
-                    type: 'box'
-                }
-            ];
+        async getPlotData (line) {
+            return {
+                y: await this.getYValues(line),
+                boxpoints: 'all',
+                jitter: 0.3,
+                pointpos: -1.8,
+                name: line.name,
+                type: 'box'
+            };
         }
 
         onWidgetContainerResize (/*width, height*/) {
@@ -124,9 +122,12 @@ define([
             return {title};
         }
 
-        setLayout(newVals) {
-            this.layout = newVals;
-            this.onPlotUpdated();
+        async updatePlot (figureData) {
+            const layout = _.pick(figureData, ['title', 'xaxis', 'yaxis']);
+            const data = await Promise.all(
+                figureData.data.map(data => this.getPlotData(data))
+            );
+            Plotly.newPlot(this.$plot[0], data, layout);
         }
 
         onPlotUpdated () {
@@ -135,21 +136,18 @@ define([
 
         // Adding/Removing/Updating items
         async addNode (desc) {
+            // TODO: update the loading messages
+            //  - loading data?
+            //  - prompt about the type of compute to use?
+            // TODO: start loading messages
             this.nodeId = desc.id;
             // TODO: Use a different method of storing what to plot
-            this.plotData = await this.getPlotData(desc);
             const isStillShown = this.nodeId === desc.id;
             // getMetadata 
             if (isStillShown) {
                 this.layout = this.defaultLayout(desc);
                 const data = _.extend({}, this.layout);
                 data.plottedData = [  // FIXME: remove this 
-                    {
-                        id: 123,
-                        name: 'Example Data',
-                        data: `combined_dataset['y']`,
-                        dataSlice: '[:,0]',
-                    }
                 ];
                 data.metadata = [await this.getMetadata(desc)];
                 this.plotEditor.set(data);
