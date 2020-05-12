@@ -77,9 +77,12 @@ define([
             });
         }
 
-        data() {
+        data(shallow) {
             const data = super.data();
             data.id = this.id;
+            if (!shallow) {
+                data.shape = this.getPythonDataShape();
+            }
             return data;
         }
 
@@ -129,7 +132,7 @@ define([
         }
 
         getPythonDataShape() {
-            const {data, dataSlice=''} = this.data();
+            const {data, dataSlice=''} = this.data(true);
             const startShape = this.getInitialDataShape(data);
             const shape = PythonSliceParser(startShape, dataSlice);
             return shape;

@@ -7,3 +7,10 @@ def metadata(name, data):
         info['shape'] = data.shape
 
     return info
+
+def tolist(array):
+    depth = len(array.shape)
+    if depth == 1:
+        return [float(i) for i in array]
+    else:
+        return [tolist(i) for i in array]

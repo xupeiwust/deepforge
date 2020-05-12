@@ -84,14 +84,16 @@ define([
             await this.session.addArtifact(name, dataInfo, desc.type, config);
         }
 
-        async getYValues (lineInfo) {
+        async getPoints (lineInfo) {
             const {data, dataSlice=''} = lineInfo;
             const command = [
                 `from artifacts.${data} import data`,
+                `from utils.explorer_helpers import tolist`,
                 'import json',
-                `print(json.dumps([l for l in data${dataSlice}]))`
+                `print(json.dumps(tolist(data${dataSlice})))`
             ].join(';');
-            const {stdout} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
+            const {stdout, stderr} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
+            if (stderr) console.log('stderr:', stderr);
             return JSON.parse(stdout);
         }
 
@@ -103,19 +105,48 @@ define([
                 'import json',
                 `print(json.dumps(metadata("${name}", data)))`
             ].join(';');
-            const {stdout} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
+            const {stdout, stderr} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
+            if (stderr) console.log('stderr:', stderr);
             return JSON.parse(stdout);
         }
 
         async getPlotData (line) {
-            return {
-                y: await this.getYValues(line),
-                boxpoints: 'all',
-                jitter: 0.3,
-                pointpos: -1.8,
-                name: line.name,
-                type: 'box'
-            };
+            // TODO: Add more types...
+            console.log('line', line);
+            const {shape} = line;
+            const dim = shape[1];
+            const dataDims = dim ? dim : 1;
+            // TODO: Add color?
+            var x,y,z;
+            switch(dataDims) {
+            case 1:
+                return {
+                    y: await this.getPoints(line),
+                    boxpoints: 'all',
+                    jitter: 0.3,
+                    pointpos: -1.8,
+                    name: line.name,
+                    type: 'box'
+                };
+
+            case 2:
+                [x, y] = _.unzip(await this.getPoints(line));
+                return {
+                    name: line.name,
+                    mode: 'markers',  // lines
+                    type: 'scatter',
+                    x, y
+                };
+
+            case 3:
+                [x, y, z] = _.unzip(await this.getPoints(line));
+                return {
+                    name: line.name,
+                    mode: 'markers',  // lines
+                    type: 'scatter3d',
+                    x, y, z
+                };
+            }
         }
 
         onWidgetContainerResize (/*width, height*/) {
