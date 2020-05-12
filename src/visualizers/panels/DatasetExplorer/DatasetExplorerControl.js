@@ -125,7 +125,10 @@ define([
 
     DatasetExplorerControl.prototype._onLoad = function (gmeId) {
         var description = this._getObjectDescriptor(gmeId);
-        this._widget.addNode(description);
+        const isArtifact = description.data;
+        if (isArtifact) {
+            this._widget.addNode(description);
+        }
     };
 
     DatasetExplorerControl.prototype._onUpdate = function (gmeId) {
