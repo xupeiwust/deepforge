@@ -14,3 +14,23 @@ def tolist(array):
         return [float(i) for i in array]
     else:
         return [tolist(i) for i in array]
+
+def scale_colors(array, start_color, end_color):
+    array = set_range_0_to_1(array)
+    red = project_to_range(array, int(start_color[0:2], 16), int(end_color[0:2], 16))
+    green = project_to_range(array, int(start_color[2:4], 16), int(end_color[2:4], 16))
+    blue = project_to_range(array, int(start_color[4:6], 16), int(end_color[4:6], 16))
+    return [ color_string(r, g, b) for (r, g, b) in zip(red, green, blue) ]
+
+def color_string(r, g, b):
+    colors = [ hex(int(num))[2:].rjust(2, '0') for num in (r,g,b) ]
+    return '#' + ''.join(colors)
+
+def project_to_range(array, start, end):
+    size = end - start
+    return (array * size) + start
+
+def set_range_0_to_1(array):
+    array = array - array.min()
+    array = array / array.max()
+    return array
