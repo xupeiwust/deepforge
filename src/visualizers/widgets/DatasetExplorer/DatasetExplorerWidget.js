@@ -110,6 +110,20 @@ define([
             return JSON.parse(stdout);
         }
 
+        async getColorValues (lineInfo) {
+            const {colorData, colorDataSlice='', startColor, endColor} = lineInfo;
+            const command = [
+                `from artifacts.${colorData} import data`,
+                `from utils.explorer_helpers import tolist, scale_colors`,
+                'import json',
+                `colors = scale_colors(data${colorDataSlice}, "${startColor}", "${endColor}")`,
+                `print(json.dumps(colors))`
+            ].join(';');
+            const {stdout, stderr} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
+            if (stderr) console.log('stderr:', stderr);
+            return JSON.parse(stdout);
+        }
+
         async getMetadata (desc) {
             const {name} = desc;
             const command = [
@@ -124,12 +138,9 @@ define([
         }
 
         async getPlotData (line) {
-            // TODO: Add more types...
-            console.log('line', line);
             const {shape} = line;
             const dim = shape[1];
             const dataDims = dim ? dim : 1;
-            // TODO: Add color?
             let x,y,z;
             let plotData = null;
             switch(dataDims) {
@@ -164,12 +175,23 @@ define([
                 };
                 break;
             }
-            this.addPlotColor(plotData, line);
+            await this.addPlotColor(plotData, line);
             return plotData;
         }
 
-        addPlotColor (plotData, line) {
-            plotData.marker = {color: `#${line.uniformColor}`};  // FIXME: Add support for multiple colors...
+        async addPlotColor (plotData, line) {
+            if (line.colorType === 'uniform') {
+                plotData.marker = {
+                    color: `#${line.uniformColor}`,
+                    size: 2,
+                };
+            } else {
+                const colors = await this.getColorValues(line);
+                plotData.marker = {
+                    color: colors,
+                    size: 2
+                };
+            }
             return plotData;
         }
 

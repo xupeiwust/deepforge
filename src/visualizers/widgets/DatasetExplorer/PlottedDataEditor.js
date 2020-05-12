@@ -20,7 +20,8 @@ define([
                 `Edit "${plottedData.name}"`;  // FIXME: fix capitalization?
 
             const fields = ['id', 'name', 'data', 'dataSlice', 'colorData',
-                'colorDataSlice', 'colorType', 'uniformColor'];
+                'colorDataSlice', 'colorType', 'uniformColor', 'startColor',
+                'endColor'];
             super(Html({title}), fields);
 
             if (!isNewData) {
@@ -31,14 +32,18 @@ define([
             }
 
             this.$update = this.$el.find('.btn-primary');
-            const onDataUpdate = _.debounce(() => this.validatePythonData(), 250);
+            this.$dataShape = this.$el.find('.data-shape');
+            const onDataUpdate = _.debounce(() => this.validateAllPythonData(), 250);
+            // TODO: Refactor this
+
             this.dataShapes = dataShapes;
             this.$el.find('#dataSlice').on('input', onDataUpdate);
-            const $dataDropdown = this.$el.find('#data');
-            this.setDataOptions($dataDropdown, dataShapes);
-            $dataDropdown.on('change', onDataUpdate);
+            this.$el.find('#colorDataSlice').on('input', onDataUpdate);
+            this.setDataOptions(dataShapes);
+            this.$el.find('#data').on('change', onDataUpdate);
+            this.$el.find('#colorData').on('change', onDataUpdate);
 
-            this.$dataDims = this.$el.find('#dataDims');
+            this.$dataDims = this.$el.find('#dataDims');  // REMOVE
             const colorInputs = Array.prototype.slice.call(this.$el.find('.jscolor'));
             colorInputs.forEach(input => new jscolor(input, {zIndex: 10000}));
 
@@ -56,11 +61,12 @@ define([
         }
 
         validate() {
-            let isValid = this.validatePythonData();
+            let isValid = this.validateAllPythonData();
             return this.validateName() && isValid;
         }
 
-        setDataOptions($data, dataShapes) {
+        setDataOptions(dataShapes) {
+            const $data = this.$el.find('.artifactData');
             $data.empty();
             const names = dataShapes
                 .flatMap(md => PlottedDataEditor.getAllVariableNames(md));
@@ -88,7 +94,7 @@ define([
 
         async show() {
             this.$el.modal('show');
-            this.validatePythonData();
+            this.validateAllPythonData();
             return new Promise(resolve => {
                 this.$update.on('click', event => {
                     if (this.validate()) {
@@ -105,21 +111,34 @@ define([
             const data = super.data();
             data.id = this.id;
             if (!shallow) {
-                data.shape = this.getPythonDataShape();
+                data.shape = this.getPythonDataShape(data.data, data.dataSlice);
+                // TODO: Include shape of the colors? Probably not
             }
             return data;
         }
 
-        validatePythonData() {
+        validateAllPythonData() {
+            // TODO: Validate the shape of the color inputs
+            const $shapes = Array.prototype.slice.call(this.$dataShape);
+            return $shapes.reduce(
+                (valid, $shape) => this.validatePythonData($shape) && valid,
+                true
+            );
+        }
+
+        validatePythonData($shape) {
+            const dataName = $shape.getAttribute('data-data');
+            const sliceName = $shape.getAttribute('data-slice');
+            const data = this.data(true);
             try {
-                const shape = this.getPythonDataShape();
+                const shape = this.getPythonDataShape(data[dataName], data[sliceName]);
                 const displayShape = `(${shape.join(', ')})`;
-                this.$dataDims.text(displayShape);
-                this.$elements.dataSlice.parent().removeClass('has-error');
+                $shape.innerText = displayShape;
+                this.$elements[sliceName].parent().removeClass('has-error');
                 return true;
             } catch (err) {
-                this.$elements.dataSlice.parent().addClass('has-error');
-                this.$dataDims.text(err.message);
+                this.$elements[sliceName].parent().addClass('has-error');
+                $shape.innerText = err.message;
                 return false;
             }
         }
@@ -169,8 +188,7 @@ define([
             return metadata.shape;
         }
 
-        getPythonDataShape() {
-            const {data, dataSlice=''} = this.data(true);
+        getPythonDataShape(data, dataSlice='') {
             const startShape = this.getInitialDataShape(data);
             const shape = PythonSliceParser(startShape, dataSlice);
             return shape;
