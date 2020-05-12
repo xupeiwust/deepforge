@@ -28,6 +28,7 @@ define([
 
             // TODO: Prompt for compute info
             this.session = new Session('local');
+            this.initSession();
 
             this.$el = container;
             this.$el.addClass(WIDGET_CLASS);
@@ -42,16 +43,24 @@ define([
             this.plotEditor.on('update', plotData => {
                 this.updatePlot(plotData);
             });
+            this.metadata = [];
             const $artifactLoader = $('<div>', {class: 'artifact-loader'});
             this.artifactLoader = new ArtifactLoader($artifactLoader, this.session);
             this.artifactLoader.getConfigDialog = () => this.getConfigDialog();  // HACK
+            this.artifactLoader.on('load', async desc => {
+                this.metadata.push(await this.getMetadata(desc));
+                //const layout = this.defaultLayout(desc);
+
+                //const data = _.extend({}, layout);
+                //data.plottedData = [];  // FIXME: remove this 
+                this.plotEditor.set({metadata: this.metadata});
+            });
 
             row.append(this.$plot);
             rightPanel.append($plotEditor);
             rightPanel.append($artifactLoader);
             row.append(rightPanel);
 
-            // TODO: start loading message...
             this._logger.debug('ctor finished');
         }
 
@@ -71,9 +80,12 @@ define([
             }
         }
 
-        async importDataToSession (desc) {
+        async initSession (desc) {
             await this.session.whenConnected();
             await this.session.addFile('utils/explorer_helpers.py', HELPERS_PY);
+        }
+
+        async importDataToSession (desc) {
             console.log('adding file...');
 
             // TODO: Ask if we should load the data?
