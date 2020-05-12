@@ -1,9 +1,10 @@
-/* globals define, $ */
+/* globals define, $, jscolor */
 define([
     'underscore',
     './DataEditorBase',
     './PythonSliceParser',
     'text!./PlottedDataEditor.html',
+    './lib/jscolor',
 ], function(
     _,
     DataEditorBase,
@@ -18,7 +19,9 @@ define([
             const title = isNewData ? `Add data to figure` :
                 `Edit "${plottedData.name}"`;  // FIXME: fix capitalization?
 
-            super(Html({title}), ['id', 'name', 'data', 'dataSlice']);
+            const fields = ['id', 'name', 'data', 'dataSlice', 'colorData',
+                'colorDataSlice', 'colorType', 'uniformColor'];
+            super(Html({title}), fields);
 
             if (!isNewData) {
                 this.set(plottedData);
@@ -36,6 +39,20 @@ define([
             $dataDropdown.on('change', onDataUpdate);
 
             this.$dataDims = this.$el.find('#dataDims');
+            const colorInputs = Array.prototype.slice.call(this.$el.find('.jscolor'));
+            colorInputs.forEach(input => new jscolor(input, {zIndex: 10000}));
+
+            const colorType = isNewData ? 'uniform' : plottedData.colorType;
+            this.showColorOptions(colorType);
+            this.$elements.colorType.on('change', () => {
+                const type = this.$elements.colorType.val();
+                this.showColorOptions(type);
+            });
+        }
+
+        showColorOptions(colorType) {
+            this.$el.find('.color-type').css('display', 'none');
+            this.$el.find(`.color-type.${colorType}`).css('display', 'block');
         }
 
         validate() {
