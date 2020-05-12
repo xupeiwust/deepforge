@@ -28,7 +28,7 @@ define([
             }
 
             this.$update = this.$el.find('.btn-primary');
-            const onDataUpdate = _.debounce(() => this.onPythonDataUpdate(), 250);
+            const onDataUpdate = _.debounce(() => this.validatePythonData(), 250);
             this.dataShapes = dataShapes;
             this.$el.find('#dataSlice').on('input', onDataUpdate);
             const $dataDropdown = this.$el.find('#data');
@@ -36,6 +36,11 @@ define([
             $dataDropdown.on('change', onDataUpdate);
 
             this.$dataDims = this.$el.find('#dataDims');
+        }
+
+        validate() {
+            let isValid = this.validatePythonData();
+            return this.validateName() && isValid;
         }
 
         setDataOptions($data, dataShapes) {
@@ -66,13 +71,15 @@ define([
 
         async show() {
             this.$el.modal('show');
-            this.onPythonDataUpdate();
+            this.validatePythonData();
             return new Promise(resolve => {
                 this.$update.on('click', event => {
-                    this.$el.modal('hide');
-                    event.stopPropagation();
-                    event.preventDefault();
-                    resolve(this.data());
+                    if (this.validate()) {
+                        this.$el.modal('hide');
+                        event.stopPropagation();
+                        event.preventDefault();
+                        resolve(this.data());
+                    }
                 });
             });
         }
@@ -86,16 +93,30 @@ define([
             return data;
         }
 
-        onPythonDataUpdate() {
+        validatePythonData() {
             try {
                 const shape = this.getPythonDataShape();
                 const displayShape = `(${shape.join(', ')})`;
                 this.$dataDims.text(displayShape);
                 this.$elements.dataSlice.parent().removeClass('has-error');
+                return true;
             } catch (err) {
                 this.$elements.dataSlice.parent().addClass('has-error');
                 this.$dataDims.text(err.message);
+                return false;
             }
+        }
+
+        validateName() {
+            const name = this.$elements.name.val();
+            const isValid = !!name.trim();
+            if (!isValid) {
+                this.$elements.name.parent().addClass('has-error');
+            } else {
+                this.$elements.name.parent().removeClass('has-error');
+            }
+
+            return isValid;
         }
 
         findMetadataEntry(metadata, varName) {
