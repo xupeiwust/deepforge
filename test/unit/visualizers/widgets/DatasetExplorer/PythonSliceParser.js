@@ -1,4 +1,4 @@
-describe.only('PythonSliceParser', function() {
+describe('PythonSliceParser', function() {
     const {requirejs} = require('../../../../globals');
     const SliceParser = requirejs('widgets/DatasetExplorer/PythonSliceParser');
     const assert = require('assert').strict;
