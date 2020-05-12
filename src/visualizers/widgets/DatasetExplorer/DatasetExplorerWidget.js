@@ -44,10 +44,11 @@ define([
             });
             const $artifactLoader = $('<div>', {class: 'artifact-loader'});
             this.artifactLoader = new ArtifactLoader($artifactLoader, this.session);
+            this.artifactLoader.getConfigDialog = () => this.getConfigDialog();  // HACK
 
             row.append(this.$plot);
             rightPanel.append($plotEditor);
-            //rightPanel.append($artifactLoader);
+            rightPanel.append($artifactLoader);
             row.append(rightPanel);
 
             // TODO: start loading message...
@@ -175,23 +176,25 @@ define([
 
         // Adding/Removing/Updating items
         async addNode (desc) {
+            this.artifactLoader.register(desc);
             // TODO: update the loading messages
             //  - loading data?
             //  - prompt about the type of compute to use?
             // TODO: start loading messages
 
-            await this.importDataToSession(desc);
-            const layout = this.defaultLayout(desc);
+            //await this.importDataToSession(desc);
+            //const layout = this.defaultLayout(desc);
 
-            const data = _.extend({}, layout);
-            data.plottedData = [];  // FIXME: remove this 
-            data.metadata = [await this.getMetadata(desc)];
-            this.plotEditor.set(data);
+            //const data = _.extend({}, layout);
+            //data.plottedData = [];  // FIXME: remove this 
+            //data.metadata = [await this.getMetadata(desc)];
+            //this.plotEditor.set(data);
 
             Plotly.react(this.$plot[0]);  // FIXME
         }
 
-        removeNode (/*gmeId*/) {
+        removeNode (gmeId) {
+            this.artifactLoader.unregister(gmeId);
         }
 
         updateNode (/*desc*/) {
