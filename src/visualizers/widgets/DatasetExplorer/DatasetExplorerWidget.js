@@ -160,9 +160,17 @@ define([
 
         async updatePlot (figureData) {
             const layout = _.pick(figureData, ['title', 'xaxis', 'yaxis']);
-            const data = await Promise.all(
-                figureData.data.map(data => this.getPlotData(data))
-            );
+            // FIXME: Labels are broken...
+            if (layout.xaxis) {
+                layout.xaxis = {text: layout.xaxis};
+            }
+            if (layout.yaxis) {
+                layout.yaxis = {text: layout.yaxis};
+            }
+            const data = [];
+            for (let i = 0; i < figureData.data.length; i++) {
+                data.push(await this.getPlotData(figureData.data[i]));
+            }
             Plotly.newPlot(this.$plot[0], data, layout);
         }
 
