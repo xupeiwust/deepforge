@@ -1,16 +1,19 @@
 /*globals define, $*/
 define([
+    'deepforge/EventEmitter',
     'deepforge/storage/index',
     'underscore',
     'text!./ArtifactLoader.html',
     'css!./styles/ArtifactLoader.css',
 ], function(
+    EventEmitter,
     Storage,
     _,
     Html,
 ) {
-    class ArtifactLoader {
+    class ArtifactLoader extends EventEmitter {
         constructor(container, session) {
+            super();
             this.session = session;
             this.$el = container;
             this.$el.addClass('artifact-loader');
@@ -44,6 +47,7 @@ define([
             await loading;
             artifact.state = ArtifactState.LOADED;
             this.render();
+            this.emit('load', desc);
         }
 
         async getAuthenticationConfig (dataInfo) {
