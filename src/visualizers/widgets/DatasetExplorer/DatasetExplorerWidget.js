@@ -31,10 +31,10 @@ define([
 
             this.$el = container;
             this.$el.addClass(WIDGET_CLASS);
-            const row = $('<div>', {class: 'row'});
+            const row = $('<div>', {class: 'row', style: 'height: 100%'});
             this.$el.append(row);
 
-            this.$plot = $('<div>', {class: 'plot col-9'});
+            this.$plot = $('<div>', {class: 'plot col-9', style: 'height: 100%'});
 
             const rightPanel = $('<div>', {class: 'col-3'});
             const $plotEditor = $('<div>', {class: 'plot-editor'});
