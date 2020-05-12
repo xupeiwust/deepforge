@@ -130,10 +130,11 @@ define([
             const dim = shape[1];
             const dataDims = dim ? dim : 1;
             // TODO: Add color?
-            var x,y,z;
+            let x,y,z;
+            let plotData = null;
             switch(dataDims) {
             case 1:
-                return {
+                plotData = {
                     y: await this.getPoints(line),
                     boxpoints: 'all',
                     jitter: 0.3,
@@ -141,25 +142,35 @@ define([
                     name: line.name,
                     type: 'box'
                 };
+                break;
 
             case 2:
                 [x, y] = _.unzip(await this.getPoints(line));
-                return {
+                plotData = {
                     name: line.name,
                     mode: 'markers',  // lines
                     type: 'scatter',
                     x, y
                 };
+                break;
 
             case 3:
                 [x, y, z] = _.unzip(await this.getPoints(line));
-                return {
+                plotData = {
                     name: line.name,
                     mode: 'markers',  // lines
                     type: 'scatter3d',
                     x, y, z
                 };
+                break;
             }
+            this.addPlotColor(plotData, line);
+            return plotData;
+        }
+
+        addPlotColor (plotData, line) {
+            plotData.marker = {color: `#${line.uniformColor}`};  // FIXME: Add support for multiple colors...
+            return plotData;
         }
 
         onWidgetContainerResize (/*width, height*/) {
