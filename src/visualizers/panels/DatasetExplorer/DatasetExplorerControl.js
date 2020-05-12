@@ -61,6 +61,7 @@ define([
             // Put new node's info into territory rules
             self._selfPatterns = {};
             self._selfPatterns[nodeId] = {children: 0};  // Territory "rule"
+            self._selfPatterns[desc.parentId] = {children: 1};  // Territory "rule"
 
             self._widget.setTitle(desc.name.toUpperCase());
 
