@@ -80,7 +80,7 @@ define([
         }
 
         static getAllVariableNames(metadata, isKey=false) {
-            const name = isKey ? `['${metadata.name}']` : metadata.name;  // TODO: bug if not escaping "'"
+            const name = isKey ? `["${metadata.name}"]` : metadata.name;  // TODO: bug if not escaping "'"
 
             if (metadata.entries) {
                 const names = metadata.entries
@@ -165,13 +165,13 @@ define([
                 const nextEntry = metadata.entries
                     .find(md => {
                         const {name} = md;
-                        const entryVarName = `${metadata.name}['${name}']`;
+                        const entryVarName = `${metadata.name}["${name}"]`;
 
                         return varName.startsWith(entryVarName);
                     });
 
                 const relVarName = varName
-                    .replace(`${metadata.name}['${nextEntry.name}']`, nextEntry.name);
+                    .replace(`${metadata.name}["${nextEntry.name}"]`, nextEntry.name);
                 return this.findMetadataEntry(nextEntry, relVarName);
             }
         }

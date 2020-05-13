@@ -99,11 +99,12 @@ define([
 
         async getPoints (lineInfo) {
             const {data, dataSlice=''} = lineInfo;
+            const [artifactName] = data.split('[');
             const command = [
-                `from artifacts.${data} import data`,
+                `from artifacts.${artifactName} import data as ${artifactName}`,
                 `from utils.explorer_helpers import tolist`,
                 'import json',
-                `print(json.dumps(tolist(data${dataSlice})))`
+                `print(json.dumps(tolist(${data}${dataSlice})))`
             ].join(';');
             const {stdout, stderr} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
             if (stderr) console.log('stderr:', stderr);
@@ -112,11 +113,13 @@ define([
 
         async getColorValues (lineInfo) {
             const {colorData, colorDataSlice='', startColor, endColor} = lineInfo;
+            const [artifactName] = colorData.split('[');
             const command = [
-                `from artifacts.${colorData} import data`,
+                `from artifacts.${artifactName} import data as ${artifactName}`,
                 `from utils.explorer_helpers import tolist, scale_colors`,
                 'import json',
-                `colors = scale_colors(data${colorDataSlice}, "${startColor}", "${endColor}")`,
+                `data = ${colorData}${colorDataSlice}`,
+                `colors = scale_colors(data, "${startColor}", "${endColor}")`,
                 `print(json.dumps(colors))`
             ].join(';');
             const {stdout, stderr} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
