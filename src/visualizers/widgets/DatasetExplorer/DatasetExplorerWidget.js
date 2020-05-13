@@ -2,7 +2,7 @@
 
 define([
     'deepforge/storage/index',
-    'deepforge/compute/interactive/session',
+    'deepforge/compute/interactive/session-with-queue',
     'widgets/PlotlyGraph/lib/plotly.min',
     './PlotEditor',
     './ArtifactLoader',
