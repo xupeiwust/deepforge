@@ -1,77 +1,90 @@
-const Message = require('./message');
 const {spawn} = require('child_process');
-const [, , SERVER_URL, ID] = process.argv;
 const WebSocket = require('ws');
 const fs = require('fs').promises;
 const path = require('path');
 const requirejs = require('requirejs');
+let Message;
 
-const ws = new WebSocket(SERVER_URL);
-ws.on('open', () => ws.send(ID));
-
-ws.on('message', async function(data) {
-    const msg = Message.decode(data);
-    if (msg.type === Message.RUN) {
-        const [cmd, ...opts] = parseCommand(msg.data);
-        const subprocess = spawn(cmd, opts);
-        subprocess.on('close', code => ws.send(Message.encode(Message.COMPLETE, code)));
-        subprocess.stdout.on('data', data => ws.send(Message.encode(Message.STDOUT, data)));
-        subprocess.stderr.on('data', data => ws.send(Message.encode(Message.STDERR, data)));
-    } else if (msg.type === Message.ADD_ARTIFACT) {
-        const [name, dataInfo, type, config={}] = msg.data;
-        const dirs = ['artifacts', name];
-        await mkdirp(...dirs);
-        requirejs([
-            './utils.build',
-        ], function(
-            Utils,
-        ) {
-            const {Storage} = Utils;
-
-            async function saveArtifact() {
-                let exitCode = 0;
-                try {
-                    const client = await Storage.getClient(dataInfo.backend, null, config);
-                    const dataPath = path.join(...dirs.concat('data'));
-                    const buffer = await client.getFile(dataInfo);
-                    await fs.writeFile(dataPath, buffer);
-                    const filePath = path.join(...dirs.concat('__init__.py'));
-                    await fs.writeFile(filePath, initFile(name, type));
-                } catch (err) {
-                    exitCode = 1;
-                    console.error(`addArtifact(${name}) failed:`, err);
-                }
-                ws.send(Message.encode(Message.COMPLETE, exitCode));
-            }
-
-            saveArtifact();
-        });
+class InteractiveClient {
+    constructor(id, host) {
+        this.id = id;
+        this.host = host;
+        this.ws = null;
     }
-});
 
-function parseCommand(cmd) {
-    const chunks = [''];
-    let quoteChar = null;
-    for (let i = 0; i < cmd.length; i++) {
-        const letter = cmd[i];
-        const isQuoteChar = letter === '"' || letter === '\'';
-        const isInQuotes = !!quoteChar;
+    connect() {
+        this.ws = new WebSocket(this.host);
+        this.ws.on('open', () => this.ws.send(this.id));
+        this.ws.on('message', data => this.onMessage(Message.decode(data)));
+    }
 
-        if (!isInQuotes && isQuoteChar) {
-            quoteChar = letter;
-        } else if (quoteChar === letter) {
-            quoteChar = null;
-        } else {
-            const isNewChunk = letter === ' ' && !isInQuotes;
-            if (isNewChunk) {
-                chunks.push('');
-            } else {
-                const lastChunk = chunks[chunks.length - 1];
-                chunks[chunks.length - 1] = lastChunk + letter;
-            }
+    async sendMessage(type, data) {
+        this.ws.send(Message.encode(Message[type], data));
+    }
+
+    async onMessage(msg) {
+        if (msg.type === Message.RUN) {
+            const [cmd, ...opts] = InteractiveClient.parseCommand(msg.data);
+            const subprocess = spawn(cmd, opts);
+            subprocess.on('close', code => this.sendMessage(Message.COMPLETE, code));
+            subprocess.stdout.on('data', data => this.sendMessage(Message.STDOUT, data));
+            subprocess.stderr.on('data', data => this.sendMessage(Message.STDERR, data));
+        } else if (msg.type === Message.ADD_ARTIFACT) {
+            const [name, dataInfo, type, config={}] = msg.data;
+            const dirs = ['artifacts', name];
+            await mkdirp(...dirs);
+            requirejs([
+                './utils.build',
+            ], function(
+                Utils,
+            ) {
+                const {Storage} = Utils;
+
+                async function saveArtifact() {
+                    let exitCode = 0;
+                    try {
+                        const client = await Storage.getClient(dataInfo.backend, null, config);
+                        const dataPath = path.join(...dirs.concat('data'));
+                        const buffer = await client.getFile(dataInfo);
+                        await fs.writeFile(dataPath, buffer);
+                        const filePath = path.join(...dirs.concat('__init__.py'));
+                        await fs.writeFile(filePath, initFile(name, type));
+                    } catch (err) {
+                        exitCode = 1;
+                        console.error(`addArtifact(${name}) failed:`, err);
+                    }
+                    this.sendMessage(Message.COMPLETE, exitCode);
+                }
+
+                saveArtifact();
+            });
         }
     }
-    return chunks;
+
+    static parseCommand(cmd) {
+        const chunks = [''];
+        let quoteChar = null;
+        for (let i = 0; i < cmd.length; i++) {
+            const letter = cmd[i];
+            const isQuoteChar = letter === '"' || letter === '\'';
+            const isInQuotes = !!quoteChar;
+
+            if (!isInQuotes && isQuoteChar) {
+                quoteChar = letter;
+            } else if (quoteChar === letter) {
+                quoteChar = null;
+            } else {
+                const isNewChunk = letter === ' ' && !isInQuotes;
+                if (isNewChunk) {
+                    chunks.push('');
+                } else {
+                    const lastChunk = chunks[chunks.length - 1];
+                    chunks[chunks.length - 1] = lastChunk + letter;
+                }
+            }
+        }
+        return chunks;
+    }
 }
 
 async function mkdirp() {
@@ -98,4 +111,14 @@ function initFile(name, type) {
         `type = '${type}'`,
         `data = deepforge.serialization.load('${type}', open(${dataPathCode}, 'rb'))`
     ].join('\n');
+}
+
+module.exports = {InteractiveClient};
+
+const isImportedModule = require.main !== module;
+if (!isImportedModule) {
+    Message = require('./message');
+    const [, , SERVER_URL, ID] = process.argv;
+    const client = new InteractiveClient(ID, SERVER_URL);
+    client.connect();
 }
