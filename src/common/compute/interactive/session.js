@@ -55,7 +55,7 @@ define([
         }
 
         async runTask(task) {
-            this.ensureIdle('spawn a task');
+            this.ensureIdle('run task');
 
             this.currentTask = task;
             await task.run();
