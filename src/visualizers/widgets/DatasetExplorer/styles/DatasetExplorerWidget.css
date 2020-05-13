@@ -1,0 +1,93 @@
+.dataset-explorer {
+  outline: none; }
+  .dataset-explorer .plot {
+    display: inline-block; }
+  .dataset-explorer .plot-editor {
+    padding: 20px;
+    display: inline-block; }
+  .dataset-explorer .container {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto; }
+    @media only screen and (min-width: 33.75em) {
+      .dataset-explorer .container {
+        width: 80%; } }
+    @media only screen and (min-width: 60em) {
+      .dataset-explorer .container {
+        width: 75%;
+        max-width: 60rem; } }
+  .dataset-explorer .row {
+    position: relative;
+    width: 100%; }
+  .dataset-explorer .row [class^="col"] {
+    float: left;
+    margin: 0.5rem 2%;
+    min-height: 0.125rem; }
+  .dataset-explorer .row::after {
+    content: "";
+    display: table;
+    clear: both; }
+  .dataset-explorer .col-1,
+  .dataset-explorer .col-2,
+  .dataset-explorer .col-3,
+  .dataset-explorer .col-4,
+  .dataset-explorer .col-5,
+  .dataset-explorer .col-6,
+  .dataset-explorer .col-7,
+  .dataset-explorer .col-8,
+  .dataset-explorer .col-9,
+  .dataset-explorer .col-10,
+  .dataset-explorer .col-11,
+  .dataset-explorer .col-12 {
+    width: 96%; }
+  .dataset-explorer .col-1-sm {
+    width: 4.33333%; }
+  .dataset-explorer .col-2-sm {
+    width: 12.66667%; }
+  .dataset-explorer .col-3-sm {
+    width: 21%; }
+  .dataset-explorer .col-4-sm {
+    width: 29.33333%; }
+  .dataset-explorer .col-5-sm {
+    width: 37.66667%; }
+  .dataset-explorer .col-6-sm {
+    width: 46%; }
+  .dataset-explorer .col-7-sm {
+    width: 54.33333%; }
+  .dataset-explorer .col-8-sm {
+    width: 62.66667%; }
+  .dataset-explorer .col-9-sm {
+    width: 71%; }
+  .dataset-explorer .col-10-sm {
+    width: 79.33333%; }
+  .dataset-explorer .col-11-sm {
+    width: 87.66667%; }
+  .dataset-explorer .col-12-sm {
+    width: 96%; }
+  @media only screen and (min-width: 45em) {
+    .dataset-explorer .col-1 {
+      width: 4.33333%; }
+    .dataset-explorer .col-2 {
+      width: 12.66667%; }
+    .dataset-explorer .col-3 {
+      width: 21%; }
+    .dataset-explorer .col-4 {
+      width: 29.33333%; }
+    .dataset-explorer .col-5 {
+      width: 37.66667%; }
+    .dataset-explorer .col-6 {
+      width: 46%; }
+    .dataset-explorer .col-7 {
+      width: 54.33333%; }
+    .dataset-explorer .col-8 {
+      width: 62.66667%; }
+    .dataset-explorer .col-9 {
+      width: 71%; }
+    .dataset-explorer .col-10 {
+      width: 79.33333%; }
+    .dataset-explorer .col-11 {
+      width: 87.66667%; }
+    .dataset-explorer .col-12 {
+      width: 96%; }
+    .dataset-explorer .hidden-sm {
+      display: block; } }
