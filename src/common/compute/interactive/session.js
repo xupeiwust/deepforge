@@ -3,12 +3,15 @@ define([
     'deepforge/utils',
     'deepforge/compute/interactive/task',
     'deepforge/compute/interactive/message',
+    'deepforge/compute/interactive/errors',
 ], function(
     utils,
     Task,
     Message,
+    Errors,
 ) {
     const {defer} = utils;
+    const {CommandFailedError} = Errors;
     class InteractiveSession {
         constructor(computeID, config) {
             this.currentTask = null;
@@ -82,6 +85,9 @@ define([
             task.on(Message.STDERR, data => result.stderr += data.toString());
             task.on(Message.COMPLETE, code => result.exitCode = code);
             await this.runTask(task);
+            if (result.exitCode) {
+                throw new CommandFailedError(cmd, result);
+            }
             return result;
         }
 
