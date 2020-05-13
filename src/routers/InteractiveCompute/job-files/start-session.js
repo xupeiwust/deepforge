@@ -9,11 +9,7 @@ const requirejs = require('requirejs');
 const ws = new WebSocket(SERVER_URL);
 ws.on('open', () => ws.send(ID));
 
-// TODO: Should this run in a single subprocess or in many?
-// For now, let's run it in a single subprocess...
 ws.on('message', async function(data) {
-    // TODO: Run the command and send the results back
-    // TODO: Queue the commands here?
     const msg = Message.decode(data);
     if (msg.type === Message.RUN) {
         const [cmd, ...opts] = parseCommand(msg.data);
@@ -22,8 +18,6 @@ ws.on('message', async function(data) {
         subprocess.stdout.on('data', data => ws.send(Message.encode(Message.STDOUT, data)));
         subprocess.stderr.on('data', data => ws.send(Message.encode(Message.STDERR, data)));
     } else if (msg.type === Message.ADD_ARTIFACT) {
-        console.log('adding artifact...');
-        console.log(msg);
         const [name, dataInfo, type, config={}] = msg.data;
         const dirs = ['artifacts', name];
         await mkdirp(...dirs);
@@ -45,7 +39,7 @@ ws.on('message', async function(data) {
                     await fs.writeFile(filePath, initFile(name, type));
                 } catch (err) {
                     exitCode = 1;
-                    console.log('ERROR:', err);
+                    console.error(`addArtifact(${name}) failed:`, err);
                 }
                 ws.send(Message.encode(Message.COMPLETE, exitCode));
             }
@@ -77,7 +71,6 @@ function parseCommand(cmd) {
             }
         }
     }
-    console.log(`parsed command:\n${cmd}\n${chunks.join('|')}`);
     return chunks;
 }
 

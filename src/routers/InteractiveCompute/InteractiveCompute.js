@@ -18,7 +18,6 @@ class ComputeBroker {
 
     listen (port) {
         // TODO: Can I piggyback off the webgme server? Maybe using a different path?
-
         this.clientServer = new WebSocket.Server({port});  // FIXME: this might be tricky on the current deployment
         this.workerServer = new WebSocket.Server({port: port + 1});
 
@@ -67,7 +66,6 @@ function initialize(middlewareOpts) {
     broker.listen(gmeConfig.server.port + 1);
     logger.debug('initializing ...');
 
-    // TODO: additional auth required?
     logger.debug('ready');
 }
 

@@ -34,12 +34,6 @@
         }
 
         static encode(type, data=0) {
-            //const buffer = Buffer.allocUnsafe(1);
-            //buffer.writeUInt8(type, 0);
-            //if (!data.isBuffer) {
-                //data = Buffer.from(data);
-            //}
-            //return buffer.concat(data);
             if (typeof Buffer !== 'undefined' && data instanceof Buffer) {
                 data = data.toString();
             }
