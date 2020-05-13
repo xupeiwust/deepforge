@@ -49,10 +49,6 @@ define([
             this.artifactLoader.getConfigDialog = () => this.getConfigDialog();  // HACK
             this.artifactLoader.on('load', async desc => {
                 this.metadata.push(await this.getMetadata(desc));
-                //const layout = this.defaultLayout(desc);
-
-                //const data = _.extend({}, layout);
-                //data.plottedData = [];  // FIXME: remove this 
                 this.plotEditor.set({metadata: this.metadata});
             });
 
@@ -88,11 +84,9 @@ define([
         async importDataToSession (desc) {
             console.log('adding file...');
 
-            // TODO: Ask if we should load the data?
             const dataInfo = JSON.parse(desc.data);
             const config = await this.getAuthenticationConfig(dataInfo);
 
-            // TODO: Show loading message...
             const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
             await this.session.addArtifact(name, dataInfo, desc.type, config);
         }
@@ -106,8 +100,7 @@ define([
                 'import json',
                 `print(json.dumps(tolist(${data}${dataSlice})))`
             ].join(';');
-            const {stdout, stderr} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
-            if (stderr) console.log('stderr:', stderr);
+            const {stdout} = await this.session.exec(`python -c '${command}'`);  // TODO: Add error handling
             return JSON.parse(stdout);
         }
 
