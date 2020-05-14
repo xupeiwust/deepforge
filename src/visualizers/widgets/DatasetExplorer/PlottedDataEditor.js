@@ -12,6 +12,7 @@ define([
     Html,
 ) {
 
+    const {InvalidSliceError} = PythonSliceParser;
     Html = _.template(Html);
     class PlottedDataEditor extends DataEditorBase {
         constructor(plottedData, dataShapes) {
@@ -34,14 +35,15 @@ define([
             this.$update = this.$el.find('.btn-primary');
             this.$dataShape = this.$el.find('.data-shape');
             const onDataUpdate = _.debounce(() => this.validateAllPythonData(), 250);
+            const onDataChange = _.debounce(() => this.validateAllPythonData(true), 250);
             // TODO: Refactor this
 
             this.dataShapes = dataShapes;
             this.$el.find('#dataSlice').on('input', onDataUpdate);
             this.$el.find('#colorDataSlice').on('input', onDataUpdate);
             this.setDataOptions(dataShapes);
-            this.$el.find('#data').on('change', onDataUpdate);
-            this.$el.find('#colorData').on('change', onDataUpdate);
+            this.$el.find('#data').on('change', onDataChange);
+            this.$el.find('#colorData').on('change', onDataChange);
 
             this.$dataDims = this.$el.find('#dataDims');  // REMOVE
             const colorInputs = Array.prototype.slice.call(this.$el.find('.jscolor'));
@@ -117,16 +119,15 @@ define([
             return data;
         }
 
-        validateAllPythonData() {
-            // TODO: Validate the shape of the color inputs
+        validateAllPythonData(showSyntaxErrors = false) {
             const $shapes = Array.prototype.slice.call(this.$dataShape);
             return $shapes.reduce(
-                (valid, $shape) => this.validatePythonData($shape) && valid,
+                (valid, $shape) => this.validatePythonData($shape, showSyntaxErrors) && valid,
                 true
             );
         }
 
-        validatePythonData($shape) {
+        validatePythonData($shape, showSyntaxErrors) {
             const dataName = $shape.getAttribute('data-data');
             const sliceName = $shape.getAttribute('data-slice');
             const data = this.data(true);
@@ -137,8 +138,12 @@ define([
                 this.$elements[sliceName].parent().removeClass('has-error');
                 return true;
             } catch (err) {
-                this.$elements[sliceName].parent().addClass('has-error');
-                $shape.innerText = err.message;
+                const isSyntaxError = err instanceof InvalidSliceError;
+                const showError = !isSyntaxError || showSyntaxErrors;
+                if (showError) {
+                    this.$elements[sliceName].parent().addClass('has-error');
+                    $shape.innerText = err.message;
+                }
                 return false;
             }
         }

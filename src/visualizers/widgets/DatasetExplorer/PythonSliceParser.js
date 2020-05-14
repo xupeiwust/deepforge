@@ -113,5 +113,6 @@ define([
         ).filter(dim => dim !== null);
     }
 
+    getSlicedShape.InvalidSliceError = InvalidSliceError;
     return getSlicedShape;
 });
