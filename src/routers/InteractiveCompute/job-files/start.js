@@ -19,7 +19,7 @@ class InteractiveClient {
     }
 
     async sendMessage(type, data) {
-        this.ws.send(Message.encode(Message[type], data));
+        this.ws.send(Message.encode(type, data));
     }
 
     async onMessage(msg) {
@@ -35,9 +35,9 @@ class InteractiveClient {
             await mkdirp(...dirs);
             requirejs([
                 './utils.build',
-            ], function(
+            ], (
                 Utils,
-            ) {
+            ) => {
                 const {Storage} = Utils;
 
                 async function saveArtifact() {
@@ -49,10 +49,10 @@ class InteractiveClient {
                     await fs.writeFile(filePath, initFile(name, type));
                 }
 
-                runTask(saveArtifact);
+                this.runTask(saveArtifact);
             });
         } else if (msg.type === Message.ADD_FILE) {
-            runTask(() => this.writeFile(msg));
+            this.runTask(() => this.writeFile(msg));
         }
     }
 
@@ -61,6 +61,17 @@ class InteractiveClient {
         const dirs = path.dirname(filepath).split(path.sep);
         await mkdirp(...dirs);
         await fs.writeFile(filepath, content);
+    }
+
+    async runTask(fn) {
+        let exitCode = 0;
+        try {
+            await fn();
+        } catch (err) {
+            exitCode = 1;
+            console.log('Task failed with error:', err);
+        }
+        this.sendMessage(Message.COMPLETE, exitCode);
     }
 
     static parseCommand(cmd) {
@@ -86,17 +97,7 @@ class InteractiveClient {
         }
         return chunks;
     }
-}
 
-async function runTask(fn) {
-    let exitCode = 0;
-    try {
-        await fn();
-    } catch (err) {
-        exitCode = 1;
-        console.log('ERROR:', err);
-    }
-    ws.send(Message.encode(Message.COMPLETE, exitCode));
 }
 
 async function mkdirp() {
