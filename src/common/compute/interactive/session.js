@@ -109,8 +109,8 @@ define([
             this.ws.close();
         }
 
-        static async new(computeID, config={}) {
-            const session = new InteractiveSession(computeID, config);
+        static async new(computeID, config={}, SessionClass=InteractiveSession) {
+            const session = new SessionClass(computeID, config);
             await session.whenConnected();
             return session;
         }

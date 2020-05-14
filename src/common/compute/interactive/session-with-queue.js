@@ -51,6 +51,10 @@ define([
             queuedTask.resolve();
             this.checkTaskQueue();
         }
+
+        static async new(id, config) {
+            return await Session.new(id, config, SessionWithQueue);
+        }
     }
 
     class QueuedTask {
