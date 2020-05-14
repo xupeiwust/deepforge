@@ -3,7 +3,7 @@ const Files = requireJS('deepforge/plugin/GeneratedFiles');
 const Templates = requireJS('plugin/GenerateJob/GenerateJob/templates/index');
 const fs = require('fs');
 const path = require('path');
-const START_SESSION = fs.readFileSync(path.join(__dirname, 'start-session.js'), 'utf8');
+const START_SESSION = fs.readFileSync(path.join(__dirname, 'start.js'), 'utf8');
 const srcDir = path.join(__dirname, '..', '..', '..');
 const interactiveDir = path.join(srcDir, 'common', 'compute', 'interactive');
 const MESSAGE = fs.readFileSync(path.join(interactiveDir, 'message.js'), 'utf8');
@@ -20,12 +20,12 @@ class StartSessionFiles extends Files {
     createFiles(url, id) {
         const config = JSON.stringify({
             cmd: 'node',
-            args: ['start-session.js', url, id],
+            args: ['start.js', url, id],
             outputInterval: -1,
             resultArtifacts: []
         }, null, 2);
         this.addFile('executor_config.json', config);
-        this.addFile('start-session.js', START_SESSION);
+        this.addFile('start.js', START_SESSION);
         this.addFile('message.js', MESSAGE);
         this.addFile('utils.build.js', Templates.UTILS);
         this.addFile('deepforge/__init__.py', Templates.DEEPFORGE_INIT);
