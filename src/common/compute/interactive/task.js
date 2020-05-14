@@ -25,11 +25,9 @@ define([
                     await wsMsg.data.text() : wsMsg.data;
 
                 const msg = Message.decode(data);
-                console.log('received msg:', msg);
                 this.emitMessage(msg);
                 if (msg.type === Message.COMPLETE) {
                     this.ws.onmessage = null;
-                    console.log('resolving', this.msg);
                     deferred.resolve();
                 }
             };
