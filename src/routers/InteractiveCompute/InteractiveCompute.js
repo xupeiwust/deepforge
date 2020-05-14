@@ -5,6 +5,7 @@ const WebSocket = require('ws');
 const router = require('express').Router();
 const Compute = requireJS('deepforge/compute/index');
 const BlobClient = requireJS('blob/BlobClient');
+const Message = requireJS('deepforge/compute/interactive/message');
 const InteractiveSession = require('./Session');
 
 class ComputeBroker {
@@ -30,7 +31,9 @@ class ComputeBroker {
                     const session = new InteractiveSession(this.blobClient, client, ws);
                     this.initSessions.push(session);
                 } catch (err) {
+                    ws.send(Message.encode(Message.COMPLETE, err.message));
                     this.logger.warn(`Error creating session: ${err}`);
+                    ws.close();
                 }
             });
         });

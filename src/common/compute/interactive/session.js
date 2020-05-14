@@ -22,8 +22,22 @@ define([
             this.connected = defer();
             this.ws.onopen = () => {
                 this.ws.send(JSON.stringify([computeID, config]));
-                this.checkReady();
-                this.connected.resolve();
+                this.ws.onmessage = async (wsMsg) => {
+                    const data = wsMsg.data instanceof Blob ?
+                        await wsMsg.data.text() : wsMsg.data;
+
+                    const msg = Message.decode(data);
+                    if (msg.type === Message.COMPLETE) {
+                        const err = msg.data;
+                        this.ws.onmessage = null;
+                        if (err) {
+                            this.connected.reject(err);
+                        } else {
+                            this.connected.resolve();
+                            this.checkReady();
+                        }
+                    }
+                };
             };
 
             this.ready = null;
@@ -109,8 +123,8 @@ define([
             this.ws.close();
         }
 
-        static async new(computeID, config={}) {
-            const session = new InteractiveSession(computeID, config);
+        static async new(computeID, config={}, SessionClass=InteractiveSession) {
+            const session = new SessionClass(computeID, config);
             await session.whenConnected();
             return session;
         }
