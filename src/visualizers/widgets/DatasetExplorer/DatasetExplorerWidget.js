@@ -1,6 +1,7 @@
 /*globals define, $ */
 
 define([
+    'deepforge/viz/widgets/WidgetWithCompute',
     'deepforge/storage/index',
     'deepforge/compute/interactive/session-with-queue',
     'widgets/PlotlyGraph/lib/plotly.min',
@@ -10,6 +11,7 @@ define([
     'text!./files/explorer_helpers.py',
     'css!./styles/DatasetExplorerWidget.css',
 ], function (
+    WidgetWithCompute,
     Storage,
     Session,
     Plotly,
@@ -22,14 +24,12 @@ define([
 
     const WIDGET_CLASS = 'dataset-explorer';
 
-    class DatasetExplorerWidget {
+    class DatasetExplorerWidget extends WidgetWithCompute {
         constructor(logger, container) {
+            super(container);
             this._logger = logger.fork('Widget');
 
-            // TODO: Prompt for compute info
-            this.session = new Session('local');
-            this.initSession();
-
+            this.session = null;
             this.$el = container;
             this.$el.addClass(WIDGET_CLASS);
             const row = $('<div>', {class: 'row', style: 'height: 100%'});
@@ -45,7 +45,7 @@ define([
             });
             this.metadata = [];
             const $artifactLoader = $('<div>', {class: 'artifact-loader'});
-            this.artifactLoader = new ArtifactLoader($artifactLoader, this.session);
+            this.artifactLoader = new ArtifactLoader($artifactLoader);
             this.artifactLoader.getConfigDialog = () => this.getConfigDialog();  // HACK
             this.artifactLoader.on('load', async desc => {
                 this.metadata.push(await this.getMetadata(desc));
@@ -58,6 +58,12 @@ define([
             row.append(rightPanel);
 
             this._logger.debug('ctor finished');
+        }
+
+        async createInteractiveSession(computeId, config) {
+            this.session = await Session.new(computeId, config);
+            this.initSession();
+            this.artifactLoader.session = this.session;
         }
 
         async getAuthenticationConfig (dataInfo) {
