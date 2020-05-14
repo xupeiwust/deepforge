@@ -24,7 +24,7 @@ define([
 
             this.$plottedData = this.$el.find('.plotted-data');
             this.plottedData = [];
-            this.metadata = null;
+            this.metadata = [];
         }
 
         async onAddDataClicked() {

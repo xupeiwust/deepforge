@@ -12,9 +12,9 @@ define([
     Html,
 ) {
     class ArtifactLoader extends EventEmitter {
-        constructor(container, session) {
+        constructor(container) {
             super();
-            this.session = session;
+            this.session = null;
             this.$el = container;
             this.$el.addClass('artifact-loader');
             this.$el.append($(Html));

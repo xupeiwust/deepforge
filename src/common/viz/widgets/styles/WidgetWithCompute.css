@@ -1,0 +1,18 @@
+.compute-shield {
+    z-index: 100;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background-color:#00000099;
+}
+
+.compute-shield span {
+    text-align: center;
+    margin: auto;
+    display: block;
+    padding-top: 25%;
+    font-size: 2em;
+    color: whitesmoke;
+}
