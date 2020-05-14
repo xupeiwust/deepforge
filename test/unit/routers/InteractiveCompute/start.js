@@ -1,7 +1,7 @@
 describe('InteractiveClient', function() {
     const testFixture = require('../../../globals');
     const assert = require('assert').strict;
-    const {InteractiveClient} = require(testFixture.PROJECT_ROOT + '/src/routers/InteractiveCompute/job-files/start-session');
+    const {InteractiveClient} = require(testFixture.PROJECT_ROOT + '/src/routers/InteractiveCompute/job-files/start');
 
     describe('parseCommand', function() {
         it('should parse separate words ("ab cd efg h")', function() {
