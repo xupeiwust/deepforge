@@ -37,7 +37,9 @@ class Session extends EventEmitter {
         const hash = await files.upload();
         this.jobInfo = this.compute.createJob(hash);
         this.compute.on('end', (id, info) => {
-            if (info.status !== ComputeClient.SUCCESS) {
+            const isError = this.clientSocket.readyState === this.clientState.OPEN &&
+                info.status !== ComputeClient.SUCCESS;
+            if (isError) {
                 this.clientSocket.send(Message.encode(Message.ERROR, info));
             }
         });
