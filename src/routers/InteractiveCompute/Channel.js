@@ -12,7 +12,7 @@ class Channel extends EventEmitter {
         this.ws2.onclose = () => this.close();
     }
 
-    async close () {
+    close () {
         this.ws1.close();
         this.ws2.close();
         this.emit('close');
