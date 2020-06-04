@@ -32,6 +32,10 @@ class ComputeBroker {
         });
     }
 
+    stop () {
+        this.wss.close();
+    }
+
     onClientConnected (ws, id, config) {
         try {
             const backend = Compute.getBackend(id);
@@ -57,10 +61,12 @@ class ComputeBroker {
     }
 }
 
+let broker = null;
+let gmeConfig;
 function initialize(middlewareOpts) {
     const logger = middlewareOpts.logger.fork('InteractiveCompute');
 
-    const {gmeConfig} = middlewareOpts;
+    gmeConfig = middlewareOpts.gmeConfig;
     // TODO: Do I need to add authorization for the blob client?
     const blobClient = new BlobClient({
         logger: logger,
@@ -68,18 +74,19 @@ function initialize(middlewareOpts) {
         server: '127.0.0.1',
         httpsecure: false,
     });
-    const broker = new ComputeBroker(logger, blobClient);
-    broker.listen(gmeConfig.server.port + 1);
+    broker = new ComputeBroker(logger, blobClient);
     logger.debug('initializing ...');
 
     logger.debug('ready');
 }
 
 function start(callback) {
+    broker.listen(gmeConfig.server.port + 1);
     callback();
 }
 
 function stop(callback) {
+    broker.stop();
     callback();
 }
 
