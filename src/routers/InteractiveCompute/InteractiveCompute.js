@@ -12,45 +12,48 @@ class ComputeBroker {
     constructor(logger, blobClient) {
         this.logger = logger.fork('broker');
         this.initSessions = [];
-        this.clientServer = null;
-        this.workerServer = null;
+        this.wss = null;
         this.blobClient = blobClient;
     }
 
     listen (port) {
         // TODO: Can I piggyback off the webgme server? Maybe using a different path?
-        this.clientServer = new WebSocket.Server({port});  // FIXME: this might be tricky on the current deployment
-        this.workerServer = new WebSocket.Server({port: port + 1});
+        this.wss = new WebSocket.Server({port});  // FIXME: this might be tricky on the current deployment
 
-        this.clientServer.on('connection', ws => {
+        this.wss.on('connection', ws => {
             ws.once('message', data => {
-                try {
-                    const [id, config] = JSON.parse(data);
-                    const backend = Compute.getBackend(id);
-                    const client = backend.getClient(this.logger, this.blobClient, config);
-                    const session = new InteractiveSession(this.blobClient, client, ws);
-                    this.initSessions.push(session);
-                } catch (err) {
-                    ws.send(Message.encode(Message.COMPLETE, err.message));
-                    this.logger.warn(`Error creating session: ${err}`);
-                    ws.close();
-                }
-            });
-        });
-
-        this.workerServer.on('connection', ws => {
-            ws.once('message', data => {
-                const id = data.toString();
-                const index = this.initSessions.findIndex(session => session.id === id);
-                if (index > -1) {
-                    const [session] = this.initSessions.splice(index, 1);
-                    session.setWorkerWebSocket(ws);
+                const isClient = data.startsWith('[');
+                if (isClient) {
+                    this.onClientConnected(ws, ...JSON.parse(data));
                 } else {
-                    console.error(`Session not found for ${id}`);
-                    ws.close();
+                    this.onWorkerConnected(ws, data);
                 }
             });
         });
+    }
+
+    onClientConnected (ws, id, config) {
+        try {
+            const backend = Compute.getBackend(id);
+            const client = backend.getClient(this.logger, this.blobClient, config);
+            const session = new InteractiveSession(this.blobClient, client, ws);
+            this.initSessions.push(session);
+        } catch (err) {
+            ws.send(Message.encode(Message.COMPLETE, err.message));
+            this.logger.warn(`Error creating session: ${err}`);
+            ws.close();
+        }
+    }
+
+    onWorkerConnected (ws, id) {
+        const index = this.initSessions.findIndex(session => session.id === id);
+        if (index > -1) {
+            const [session] = this.initSessions.splice(index, 1);
+            session.setWorkerWebSocket(ws);
+        } else {
+            this.logger.warn(`Session not found for ${id}`);
+            ws.close();
+        }
     }
 }
 
