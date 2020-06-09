@@ -12,19 +12,19 @@ define([
 ) {
     const {defer} = utils;
     const {CommandFailedError} = Errors;
+    const isNodeJs = typeof window === 'undefined';
+    const WebSocket = isNodeJs ? require('ws') : window.WebSocket;
+
     class InteractiveSession {
-        constructor(computeID, config) {
+        constructor(computeID, config={}) {
             this.currentTask = null;
-            // TODO: Get the server address...
-            // TODO: detect if ssl
-            const address = 'ws://localhost:8889';
+            const address = this.getServerURL();
             this.ws = new WebSocket(address);
             this.connected = defer();
             this.ws.onopen = () => {
-                this.ws.send(JSON.stringify([computeID, config]));
+                this.ws.send(JSON.stringify([computeID, config, this.getGMEToken()]));
                 this.ws.onmessage = async (wsMsg) => {
-                    const data = wsMsg.data instanceof Blob ?
-                        await wsMsg.data.text() : wsMsg.data;
+                    const data = await Task.getMessageData(wsMsg);
 
                     const msg = Message.decode(data);
                     if (msg.type === Message.COMPLETE) {
@@ -41,6 +41,25 @@ define([
             };
 
             this.ready = null;
+        }
+
+        getServerURL() {
+            if (isNodeJs) {
+                return 'ws://127.0.0.1:8081';
+            }
+            const isSecure = location.protocol.includes('s');
+            const protocol = isSecure ? 'wss' : 'ws';
+            //const address = location.origin.replace(location.protocol, protocol);
+            return `${protocol}://localhost:8889`;  // TODO
+        }
+
+        getGMEToken() {
+            if (isNodeJs) {
+                return '';
+            }
+
+            const [, token] = (document.cookie || '').split('=');
+            return token;
         }
 
         checkReady() {

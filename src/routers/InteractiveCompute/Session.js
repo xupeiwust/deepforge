@@ -1,4 +1,5 @@
 /* globals requireJS */
+const WebSocket = require('ws');
 const JobFiles = require('./job-files');
 const chance = require('chance')();
 const config = require('../../../config');
@@ -37,7 +38,7 @@ class Session extends EventEmitter {
         const hash = await files.upload();
         this.jobInfo = this.compute.createJob(hash);
         this.compute.on('end', (id, info) => {
-            const isError = this.clientSocket.readyState === this.clientState.OPEN &&
+            const isError = this.clientSocket.readyState === WebSocket.OPEN &&
                 info.status !== ComputeClient.SUCCESS;
             if (isError) {
                 this.clientSocket.send(Message.encode(Message.ERROR, info));

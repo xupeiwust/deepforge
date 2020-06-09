@@ -9,11 +9,10 @@ const Message = requireJS('deepforge/compute/interactive/message');
 const InteractiveSession = require('./Session');
 
 class ComputeBroker {
-    constructor(logger, blobClient) {
+    constructor(logger) {
         this.logger = logger.fork('broker');
         this.initSessions = [];
         this.wss = null;
-        this.blobClient = blobClient;
     }
 
     listen (port) {
@@ -24,7 +23,7 @@ class ComputeBroker {
             ws.once('message', data => {
                 const isClient = data.startsWith('[');
                 if (isClient) {
-                    this.onClientConnected(ws, ...JSON.parse(data));
+                    this.onClientConnected(port, ws, ...JSON.parse(data));
                 } else {
                     this.onWorkerConnected(ws, data);
                 }
@@ -36,11 +35,18 @@ class ComputeBroker {
         this.wss.close();
     }
 
-    onClientConnected (ws, id, config) {
+    onClientConnected (port, ws, id, config, gmeToken) {
         try {
             const backend = Compute.getBackend(id);
-            const client = backend.getClient(this.logger, this.blobClient, config);
-            const session = new InteractiveSession(this.blobClient, client, ws);
+            const blobClient = new BlobClient({
+                logger: this.logger.fork('BlobClient'),
+                serverPort: port-1,
+                server: '127.0.0.1',
+                httpsecure: false,
+                webgmeToken: gmeToken
+            });
+            const client = backend.getClient(this.logger, blobClient, config);
+            const session = new InteractiveSession(blobClient, client, ws);
             this.initSessions.push(session);
         } catch (err) {
             ws.send(Message.encode(Message.COMPLETE, err.message));
@@ -67,14 +73,7 @@ function initialize(middlewareOpts) {
     const logger = middlewareOpts.logger.fork('InteractiveCompute');
 
     gmeConfig = middlewareOpts.gmeConfig;
-    // TODO: Do I need to add authorization for the blob client?
-    const blobClient = new BlobClient({
-        logger: logger,
-        serverPort: gmeConfig.server.port,
-        server: '127.0.0.1',
-        httpsecure: false,
-    });
-    broker = new ComputeBroker(logger, blobClient);
+    broker = new ComputeBroker(logger);
     logger.debug('initializing ...');
 
     logger.debug('ready');
