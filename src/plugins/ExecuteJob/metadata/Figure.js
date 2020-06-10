@@ -52,7 +52,8 @@ define([
         }
 
         async clearSubGraphs() {
-            const subGraphs = await this.core.loadChildren(this.node);
+            const subGraphs = await this.loadChildren();
+
             subGraphs.forEach(subGraph => this.core.deleteNode(subGraph));
         }
 
