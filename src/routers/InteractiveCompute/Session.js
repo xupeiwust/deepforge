@@ -1,11 +1,14 @@
 /* globals requireJS */
+const WebSocket = require('ws');
 const JobFiles = require('./job-files');
 const chance = require('chance')();
 const config = require('../../../config');
-const SERVER_URL = `http://localhost:${config.server.port + 2}`; // FIXME
+const SERVER_URL = process.env.DEEPFORGE_INTERACTIVE_COMPUTE_HOST ||
+    `http://localhost:${config.server.port + 1}`;
 const Channel = require('./Channel');
 const EventEmitter = requireJS('deepforge/EventEmitter');
 const Message = requireJS('deepforge/compute/interactive/message');
+const ComputeClient = requireJS('deepforge/compute/backends/ComputeClient');
 
 class Session extends EventEmitter {
     constructor(blobClient, compute, clientSocket) {
@@ -34,7 +37,13 @@ class Session extends EventEmitter {
         const files = new JobFiles(blobClient, SERVER_URL, this.id);
         const hash = await files.upload();
         this.jobInfo = this.compute.createJob(hash);
-        this.compute.on('data', (id, data) => console.log('-->', data.toString()));
+        this.compute.on('end', (id, info) => {
+            const isError = this.clientSocket.readyState === WebSocket.OPEN &&
+                info.status !== ComputeClient.SUCCESS;
+            if (isError) {
+                this.clientSocket.send(Message.encode(Message.ERROR, info));
+            }
+        });
     }
 
     async close () {

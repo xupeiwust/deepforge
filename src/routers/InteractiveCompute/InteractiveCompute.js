@@ -9,74 +9,83 @@ const Message = requireJS('deepforge/compute/interactive/message');
 const InteractiveSession = require('./Session');
 
 class ComputeBroker {
-    constructor(logger, blobClient) {
+    constructor(logger) {
         this.logger = logger.fork('broker');
         this.initSessions = [];
-        this.clientServer = null;
-        this.workerServer = null;
-        this.blobClient = blobClient;
+        this.wss = null;
     }
 
     listen (port) {
         // TODO: Can I piggyback off the webgme server? Maybe using a different path?
-        this.clientServer = new WebSocket.Server({port});  // FIXME: this might be tricky on the current deployment
-        this.workerServer = new WebSocket.Server({port: port + 1});
+        this.wss = new WebSocket.Server({port});  // FIXME: this might be tricky on the current deployment
 
-        this.clientServer.on('connection', ws => {
+        this.wss.on('connection', ws => {
             ws.once('message', data => {
-                try {
-                    const [id, config] = JSON.parse(data);
-                    const backend = Compute.getBackend(id);
-                    const client = backend.getClient(this.logger, this.blobClient, config);
-                    const session = new InteractiveSession(this.blobClient, client, ws);
-                    this.initSessions.push(session);
-                } catch (err) {
-                    ws.send(Message.encode(Message.COMPLETE, err.message));
-                    this.logger.warn(`Error creating session: ${err}`);
-                    ws.close();
-                }
-            });
-        });
-
-        this.workerServer.on('connection', ws => {
-            ws.once('message', data => {
-                const id = data.toString();
-                const index = this.initSessions.findIndex(session => session.id === id);
-                if (index > -1) {
-                    const [session] = this.initSessions.splice(index, 1);
-                    session.setWorkerWebSocket(ws);
+                const isClient = data.startsWith('[');
+                if (isClient) {
+                    this.onClientConnected(port, ws, ...JSON.parse(data));
                 } else {
-                    console.error(`Session not found for ${id}`);
-                    ws.close();
+                    this.onWorkerConnected(ws, data);
                 }
             });
         });
     }
+
+    stop () {
+        this.wss.close();
+    }
+
+    onClientConnected (port, ws, id, config, gmeToken) {
+        try {
+            const backend = Compute.getBackend(id);
+            const blobClient = new BlobClient({
+                logger: this.logger.fork('BlobClient'),
+                serverPort: port-1,
+                server: '127.0.0.1',
+                httpsecure: false,
+                webgmeToken: gmeToken
+            });
+            const client = backend.getClient(this.logger, blobClient, config);
+            const session = new InteractiveSession(blobClient, client, ws);
+            this.initSessions.push(session);
+        } catch (err) {
+            ws.send(Message.encode(Message.COMPLETE, err.message));
+            this.logger.warn(`Error creating session: ${err}`);
+            ws.close();
+        }
+    }
+
+    onWorkerConnected (ws, id) {
+        const index = this.initSessions.findIndex(session => session.id === id);
+        if (index > -1) {
+            const [session] = this.initSessions.splice(index, 1);
+            session.setWorkerWebSocket(ws);
+        } else {
+            this.logger.warn(`Session not found for ${id}`);
+            ws.close();
+        }
+    }
 }
 
+let broker = null;
+let gmeConfig;
 function initialize(middlewareOpts) {
     const logger = middlewareOpts.logger.fork('InteractiveCompute');
 
-    const {gmeConfig} = middlewareOpts;
-    // TODO: Do I need to add authorization for the blob client?
-    const blobClient = new BlobClient({
-        logger: logger,
-        serverPort: gmeConfig.server.port,
-        server: '127.0.0.1',
-        httpsecure: false,
-    });
-    const broker = new ComputeBroker(logger, blobClient);
-    broker.listen(gmeConfig.server.port + 1);
+    gmeConfig = middlewareOpts.gmeConfig;
+    broker = new ComputeBroker(logger);
     logger.debug('initializing ...');
 
     logger.debug('ready');
 }
 
 function start(callback) {
+    broker.listen(gmeConfig.server.port + 1);
     callback();
 }
 
 function stop(callback) {
+    broker.stop();
     callback();
 }
 

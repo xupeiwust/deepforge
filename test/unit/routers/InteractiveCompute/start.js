@@ -1,7 +1,11 @@
-describe('InteractiveClient', function() {
+describe('InteractiveClient worker script', function() {
     const testFixture = require('../../../globals');
     const assert = require('assert').strict;
-    const {InteractiveClient} = require(testFixture.PROJECT_ROOT + '/src/routers/InteractiveCompute/job-files/start');
+    let InteractiveClient;
+
+    before(() => {
+        InteractiveClient = require(testFixture.PROJECT_ROOT + '/src/routers/InteractiveCompute/job-files/start').InteractiveClient;
+    });
 
     describe('parseCommand', function() {
         it('should parse separate words ("ab cd efg h")', function() {

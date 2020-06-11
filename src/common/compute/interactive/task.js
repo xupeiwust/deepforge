@@ -9,6 +9,7 @@ define([
     utils,
 ) {
 
+    const isNodeJs = typeof window === 'undefined';
     class Task extends EventEmitter {
         constructor(ws, msg) {
             super();
@@ -21,8 +22,7 @@ define([
 
             this.ws.send(this.msg.encode());
             this.ws.onmessage = async wsMsg => {
-                const data = wsMsg.data instanceof Blob ?
-                    await wsMsg.data.text() : wsMsg.data;
+                const data = await Task.getMessageData(wsMsg);
 
                 const msg = Message.decode(data);
                 this.emitMessage(msg);
@@ -38,6 +38,17 @@ define([
         emitMessage(msg) {
             this.emit(msg.type, msg.data);
         }
+
+        static async getMessageData(wsMsg) {
+            if (isNodeJs) {
+                return wsMsg.data;
+            }
+
+            const data = wsMsg.data instanceof Blob ?
+                await wsMsg.data.text() : wsMsg.data;
+            return data;
+        }
+
     }
 
     return Task;
