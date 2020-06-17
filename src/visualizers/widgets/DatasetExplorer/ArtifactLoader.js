@@ -41,7 +41,8 @@ define([
             const dataInfo = JSON.parse(desc.data);
             const config = await this.getAuthenticationConfig(dataInfo);
 
-            const loading = this.session.addArtifact(desc.name, dataInfo, desc.type, config);
+            const pyName = desc.name.replace(/\..*$/, '');
+            const loading = this.session.addArtifact(pyName, dataInfo, desc.type, config);
             artifact.state = ArtifactState.LOADING;
             this.render();
             await loading;

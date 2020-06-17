@@ -46,7 +46,7 @@ define([
             this.metadata = [];
             const $artifactLoader = $('<div>', {class: 'artifact-loader'});
             this.artifactLoader = new ArtifactLoader($artifactLoader);
-            this.artifactLoader.getConfigDialog = () => this.getConfigDialog();  // HACK
+            this.artifactLoader.getConfigDialog = () => this.getConfigDialog();
             this.artifactLoader.on('load', async desc => {
                 this.metadata.push(await this.getMetadata(desc));
                 this.plotEditor.set({metadata: this.metadata});
@@ -82,19 +82,10 @@ define([
             }
         }
 
-        async initSession (desc) {
+        async initSession () {
             await this.session.whenConnected();
+            // TODO: Prepend initialization code?
             await this.session.addFile('utils/explorer_helpers.py', HELPERS_PY);
-        }
-
-        async importDataToSession (desc) {
-            console.log('adding file...');
-
-            const dataInfo = JSON.parse(desc.data);
-            const config = await this.getAuthenticationConfig(dataInfo);
-
-            const name = desc.name.replace(/[^a-zA-Z_]/g, '_');
-            await this.session.addArtifact(name, dataInfo, desc.type, config);
         }
 
         async getPoints (lineInfo) {
@@ -128,8 +119,9 @@ define([
 
         async getMetadata (desc) {
             const {name} = desc;
+            const pyName = name.replace(/\..*$/, '');
             const command = [
-                `from artifacts.${name} import data`,
+                `from artifacts.${pyName} import data`,
                 'from utils.explorer_helpers import metadata',
                 'import json',
                 `print(json.dumps(metadata("${name}", data)))`
@@ -224,19 +216,6 @@ define([
         // Adding/Removing/Updating items
         async addNode (desc) {
             this.artifactLoader.register(desc);
-            // TODO: update the loading messages
-            //  - loading data?
-            //  - prompt about the type of compute to use?
-            // TODO: start loading messages
-
-            //await this.importDataToSession(desc);
-            //const layout = this.defaultLayout(desc);
-
-            //const data = _.extend({}, layout);
-            //data.plottedData = [];  // FIXME: remove this 
-            //data.metadata = [await this.getMetadata(desc)];
-            //this.plotEditor.set(data);
-
             Plotly.react(this.$plot[0]);  // FIXME
         }
 
@@ -245,6 +224,7 @@ define([
         }
 
         updateNode (/*desc*/) {
+            // TODO: handle node changes, etc
         }
 
         /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */

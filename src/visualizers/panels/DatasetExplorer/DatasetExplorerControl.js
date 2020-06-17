@@ -60,6 +60,8 @@ define([
         if (typeof self._currentNodeId === 'string') {
             // Put new node's info into territory rules
             self._selfPatterns = {};
+            const rootId = '';
+            self._selfPatterns[rootId] = {children: 1};  // Territory "rule"
             self._selfPatterns[nodeId] = {children: 0};  // Territory "rule"
             self._selfPatterns[desc.parentId] = {children: 1};  // Territory "rule"
 
