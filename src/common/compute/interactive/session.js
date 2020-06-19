@@ -4,11 +4,13 @@ define([
     'deepforge/compute/interactive/task',
     'deepforge/compute/interactive/message',
     'deepforge/compute/interactive/errors',
+    'deepforge/gmeConfig',
 ], function(
     utils,
     Task,
     Message,
     Errors,
+    gmeConfig,
 ) {
     const {defer} = utils;
     const {CommandFailedError} = Errors;
@@ -18,7 +20,8 @@ define([
     class InteractiveSession {
         constructor(computeID, config={}) {
             this.currentTask = null;
-            const address = this.getServerURL();
+            const address = gmeConfig.extensions.InteractiveComputeHost ||
+                this.getDefaultServerURL();
             this.ws = new WebSocket(address);
             this.connected = defer();
             this.ws.onopen = () => {
@@ -43,14 +46,12 @@ define([
             this.ready = null;
         }
 
-        getServerURL() {
-            if (isNodeJs) {
-                return 'ws://127.0.0.1:8081';
-            }
-            const isSecure = location.protocol.includes('s');
+        getDefaultServerURL() {
+            const isSecure = !isNodeJs && location.protocol.includes('s');
             const protocol = isSecure ? 'wss' : 'ws';
-            //const address = location.origin.replace(location.protocol, protocol);
-            return `${protocol}://localhost:8889`;  // TODO
+            const defaultHost = isNodeJs ? '127.0.0.1' :
+                location.origin.replace(location.protocol + '://', '');
+            return `${protocol}://${defaultHost}:${gmeConfig.server.port + 1}`;
         }
 
         getGMEToken() {
