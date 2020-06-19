@@ -50,7 +50,9 @@ define([
             const isSecure = !isNodeJs && location.protocol.includes('s');
             const protocol = isSecure ? 'wss' : 'ws';
             const defaultHost = isNodeJs ? '127.0.0.1' :
-                location.origin.replace(location.protocol + '://', '');
+                location.origin
+                    .replace(location.protocol + '//', '')
+                    .replace(/:[0-9]+$/, '');
             return `${protocol}://${defaultHost}:${gmeConfig.server.port + 1}`;
         }
 
