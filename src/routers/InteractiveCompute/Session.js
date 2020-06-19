@@ -2,9 +2,9 @@
 const WebSocket = require('ws');
 const JobFiles = require('./job-files');
 const chance = require('chance')();
-const config = require('../../../config');
-const SERVER_URL = process.env.DEEPFORGE_INTERACTIVE_COMPUTE_HOST ||
-    `http://localhost:${config.server.port + 1}`;
+const gmeConfig = requireJS('deepforge/gmeConfig');
+const SERVER_URL = gmeConfig.extensions.InteractiveComputeHost ||
+    `http://localhost:${gmeConfig.server.port + 1}`;
 const Channel = require('./Channel');
 const EventEmitter = requireJS('deepforge/EventEmitter');
 const Message = requireJS('deepforge/compute/interactive/message');

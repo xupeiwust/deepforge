@@ -16,8 +16,7 @@ class ComputeBroker {
     }
 
     listen (port) {
-        // TODO: Can I piggyback off the webgme server? Maybe using a different path?
-        this.wss = new WebSocket.Server({port});  // FIXME: this might be tricky on the current deployment
+        this.wss = new WebSocket.Server({port});
 
         this.wss.on('connection', ws => {
             ws.once('message', data => {
