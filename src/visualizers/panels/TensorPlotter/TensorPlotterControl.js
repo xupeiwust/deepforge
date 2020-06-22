@@ -17,7 +17,7 @@ define([
 
     'use strict';
 
-    function DatasetExplorerControl(options) {
+    function TensorPlotterControl(options) {
 
         this._logger = options.logger.fork('Control');
 
@@ -35,7 +35,7 @@ define([
         this._logger.debug('ctor finished');
     }
 
-    DatasetExplorerControl.prototype._initWidgetEventHandlers = function () {
+    TensorPlotterControl.prototype._initWidgetEventHandlers = function () {
         this._widget.getConfigDialog = () => new ConfigDialog(this._client);
     };
 
@@ -43,7 +43,7 @@ define([
     // One major concept here is with managing the territory. The territory
     // defines the parts of the project that the visualizer is interested in
     // (this allows the browser to then only load those relevant parts).
-    DatasetExplorerControl.prototype.selectedObjectChanged = function (nodeId) {
+    TensorPlotterControl.prototype.selectedObjectChanged = function (nodeId) {
         var desc = this._getObjectDescriptor(nodeId),
             self = this;
 
@@ -78,7 +78,7 @@ define([
     };
 
     // This next function retrieves the relevant node information for the widget
-    DatasetExplorerControl.prototype._getObjectDescriptor = function (nodeId) {
+    TensorPlotterControl.prototype._getObjectDescriptor = function (nodeId) {
         var node = this._client.getNode(nodeId),
             objDescriptor;
 
@@ -98,7 +98,7 @@ define([
     };
 
     /* * * * * * * * Node Event Handling * * * * * * * */
-    DatasetExplorerControl.prototype._eventCallback = function (events) {
+    TensorPlotterControl.prototype._eventCallback = function (events) {
         var i = events ? events.length : 0,
             event;
 
@@ -125,7 +125,7 @@ define([
         this._logger.debug('_eventCallback \'' + events.length + '\' items - DONE');
     };
 
-    DatasetExplorerControl.prototype._onLoad = function (gmeId) {
+    TensorPlotterControl.prototype._onLoad = function (gmeId) {
         var description = this._getObjectDescriptor(gmeId);
         const isArtifact = description.data;
         if (isArtifact) {
@@ -133,16 +133,16 @@ define([
         }
     };
 
-    DatasetExplorerControl.prototype._onUpdate = function (gmeId) {
+    TensorPlotterControl.prototype._onUpdate = function (gmeId) {
         var description = this._getObjectDescriptor(gmeId);
         this._widget.updateNode(description);
     };
 
-    DatasetExplorerControl.prototype._onUnload = function (gmeId) {
+    TensorPlotterControl.prototype._onUnload = function (gmeId) {
         this._widget.removeNode(gmeId);
     };
 
-    DatasetExplorerControl.prototype._stateActiveObjectChanged = function (model, activeObjectId) {
+    TensorPlotterControl.prototype._stateActiveObjectChanged = function (model, activeObjectId) {
         if (this._currentNodeId === activeObjectId) {
             // The same node selected as before - do not trigger
         } else {
@@ -151,24 +151,24 @@ define([
     };
 
     /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
-    DatasetExplorerControl.prototype.destroy = function () {
+    TensorPlotterControl.prototype.destroy = function () {
         this._detachClientEventListeners();
     };
 
-    DatasetExplorerControl.prototype._attachClientEventListeners = function () {
+    TensorPlotterControl.prototype._attachClientEventListeners = function () {
         this._detachClientEventListeners();
         if (!this._embedded) {
             WebGMEGlobal.State.on('change:' + CONSTANTS.STATE_ACTIVE_OBJECT, this._stateActiveObjectChanged, this);
         }
     };
 
-    DatasetExplorerControl.prototype._detachClientEventListeners = function () {
+    TensorPlotterControl.prototype._detachClientEventListeners = function () {
         if (!this._embedded) {
             WebGMEGlobal.State.off('change:' + CONSTANTS.STATE_ACTIVE_OBJECT, this._stateActiveObjectChanged);
         }
     };
 
-    DatasetExplorerControl.prototype.onActivate = function () {
+    TensorPlotterControl.prototype.onActivate = function () {
         this._attachClientEventListeners();
 
         if (typeof this._currentNodeId === 'string') {
@@ -176,9 +176,9 @@ define([
         }
     };
 
-    DatasetExplorerControl.prototype.onDeactivate = function () {
+    TensorPlotterControl.prototype.onDeactivate = function () {
         this._detachClientEventListeners();
     };
 
-    return DatasetExplorerControl;
+    return TensorPlotterControl;
 });

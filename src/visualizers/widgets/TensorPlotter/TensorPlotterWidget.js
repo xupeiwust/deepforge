@@ -9,7 +9,7 @@ define([
     './ArtifactLoader',
     'underscore',
     'text!./files/explorer_helpers.py',
-    'css!./styles/DatasetExplorerWidget.css',
+    'css!./styles/TensorPlotterWidget.css',
 ], function (
     WidgetWithCompute,
     Storage,
@@ -24,7 +24,7 @@ define([
 
     const WIDGET_CLASS = 'dataset-explorer';
 
-    class DatasetExplorerWidget extends WidgetWithCompute {
+    class TensorPlotterWidget extends WidgetWithCompute {
         constructor(logger, container) {
             super(container);
             this._logger = logger.fork('Widget');
@@ -234,13 +234,13 @@ define([
         }
 
         onActivate () {
-            this._logger.debug('DatasetExplorerWidget has been activated');
+            this._logger.debug('TensorPlotterWidget has been activated');
         }
 
         onDeactivate () {
-            this._logger.debug('DatasetExplorerWidget has been deactivated');
+            this._logger.debug('TensorPlotterWidget has been deactivated');
         }
     }
 
-    return DatasetExplorerWidget;
+    return TensorPlotterWidget;
 });

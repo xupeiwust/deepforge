@@ -282,12 +282,12 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/OperationDepEditor"
       },
-      "DatasetExplorer": {
-        "src": "panels/DatasetExplorer/DatasetExplorerPanel",
-        "title": "DatasetExplorer",
-        "panel": "src/visualizers/panels/DatasetExplorer",
+      "TensorPlotter": {
+        "src": "panels/TensorPlotter/TensorPlotterPanel",
+        "title": "TensorPlotter",
+        "panel": "src/visualizers/panels/TensorPlotter",
         "secondary": false,
-        "widget": "src/visualizers/widgets/DatasetExplorer"
+        "widget": "src/visualizers/widgets/TensorPlotter"
       }
     },
     "addons": {},

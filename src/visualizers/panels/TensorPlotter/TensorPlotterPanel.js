@@ -6,20 +6,20 @@
 define([
     'js/PanelBase/PanelBaseWithHeader',
     'js/PanelManager/IActivePanel',
-    'widgets/DatasetExplorer/DatasetExplorerWidget',
-    './DatasetExplorerControl'
+    'widgets/TensorPlotter/TensorPlotterWidget',
+    './TensorPlotterControl'
 ], function (
     PanelBaseWithHeader,
     IActivePanel,
-    DatasetExplorerWidget,
-    DatasetExplorerControl
+    TensorPlotterWidget,
+    TensorPlotterControl
 ) {
     'use strict';
 
-    function DatasetExplorerPanel(layoutManager, params) {
+    function TensorPlotterPanel(layoutManager, params) {
         var options = {};
         //set properties from options
-        options[PanelBaseWithHeader.OPTIONS.LOGGER_INSTANCE_NAME] = 'DatasetExplorerPanel';
+        options[PanelBaseWithHeader.OPTIONS.LOGGER_INSTANCE_NAME] = 'TensorPlotterPanel';
         options[PanelBaseWithHeader.OPTIONS.FLOATING_TITLE] = true;
 
         //call parent's constructor
@@ -35,22 +35,22 @@ define([
     }
 
     //inherit from PanelBaseWithHeader
-    _.extend(DatasetExplorerPanel.prototype, PanelBaseWithHeader.prototype);
-    _.extend(DatasetExplorerPanel.prototype, IActivePanel.prototype);
+    _.extend(TensorPlotterPanel.prototype, PanelBaseWithHeader.prototype);
+    _.extend(TensorPlotterPanel.prototype, IActivePanel.prototype);
 
-    DatasetExplorerPanel.prototype._initialize = function () {
+    TensorPlotterPanel.prototype._initialize = function () {
         var self = this;
 
         //set Widget title
         this.setTitle('');
 
-        this.widget = new DatasetExplorerWidget(this.logger, this.$el);
+        this.widget = new TensorPlotterWidget(this.logger, this.$el);
 
         this.widget.setTitle = function (title) {
             self.setTitle(title);
         };
 
-        this.control = new DatasetExplorerControl({
+        this.control = new TensorPlotterControl({
             logger: this.logger,
             client: this._client,
             embedded: this._embedded,
@@ -62,19 +62,19 @@ define([
 
     /* OVERRIDE FROM WIDGET-WITH-HEADER */
     /* METHOD CALLED WHEN THE WIDGET'S READ-ONLY PROPERTY CHANGES */
-    DatasetExplorerPanel.prototype.onReadOnlyChanged = function (isReadOnly) {
+    TensorPlotterPanel.prototype.onReadOnlyChanged = function (isReadOnly) {
         //apply parent's onReadOnlyChanged
         PanelBaseWithHeader.prototype.onReadOnlyChanged.call(this, isReadOnly);
 
     };
 
-    DatasetExplorerPanel.prototype.onResize = function (width, height) {
+    TensorPlotterPanel.prototype.onResize = function (width, height) {
         this.logger.debug('onResize --> width: ' + width + ', height: ' + height);
         this.widget.onWidgetContainerResize(width, height);
     };
 
     /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
-    DatasetExplorerPanel.prototype.destroy = function () {
+    TensorPlotterPanel.prototype.destroy = function () {
         this.control.destroy();
         this.widget.destroy();
 
@@ -83,19 +83,19 @@ define([
         WebGMEGlobal.Toolbar.refresh();
     };
 
-    DatasetExplorerPanel.prototype.onActivate = function () {
+    TensorPlotterPanel.prototype.onActivate = function () {
         this.widget.onActivate();
         this.control.onActivate();
         WebGMEGlobal.KeyboardManager.setListener(this.widget);
         WebGMEGlobal.Toolbar.refresh();
     };
 
-    DatasetExplorerPanel.prototype.onDeactivate = function () {
+    TensorPlotterPanel.prototype.onDeactivate = function () {
         this.widget.onDeactivate();
         this.control.onDeactivate();
         WebGMEGlobal.KeyboardManager.setListener(undefined);
         WebGMEGlobal.Toolbar.refresh();
     };
 
-    return DatasetExplorerPanel;
+    return TensorPlotterPanel;
 });

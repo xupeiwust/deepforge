@@ -1,6 +1,6 @@
 describe('PythonSliceParser', function() {
     const {requirejs} = require('../../../../globals');
-    const SliceParser = requirejs('widgets/DatasetExplorer/PythonSliceParser');
+    const SliceParser = requirejs('widgets/TensorPlotter/PythonSliceParser');
     const assert = require('assert').strict;
 
     it('should return start shape if passed blank string', function() {

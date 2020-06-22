@@ -150,9 +150,9 @@
     "DEBUG_ONLY": false
   },
   {
-    "id": "DatasetExplorer",
-    "title": "DatasetExplorer",
-    "panel": "panels/DatasetExplorer/DatasetExplorerPanel",
+    "id": "TensorPlotter",
+    "title": "TensorPlotter",
+    "panel": "panels/TensorPlotter/TensorPlotterPanel",
     "DEBUG_ONLY": false
   }
 ]

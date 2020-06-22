@@ -1,6 +1,6 @@
 describe('PlottedDataEditor', function() {
     const {requirejs} = require('../../../../globals');
-    const PlottedDataEditor = requirejs('widgets/DatasetExplorer/PlottedDataEditor');
+    const PlottedDataEditor = requirejs('widgets/TensorPlotter/PlottedDataEditor');
     const assert = require('assert').strict;
 
     describe('getAllVariableNames', function() {
