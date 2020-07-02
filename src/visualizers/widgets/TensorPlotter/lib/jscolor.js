@@ -14,7 +14,7 @@
 "use strict";
 
 
-if (!window.jscolor) { window.jscolor = (function () {
+if (typeof window !== 'undefined' && !window.jscolor) { window.jscolor = (function () {
 
 
 var jsc = {
