@@ -4,6 +4,7 @@ define([
     'deepforge/viz/widgets/WidgetWithCompute',
     'deepforge/storage/index',
     'deepforge/compute/interactive/session-with-queue',
+    'deepforge/globals',
     'widgets/PlotlyGraph/lib/plotly.min',
     './PlotEditor',
     './ArtifactLoader',
@@ -14,6 +15,7 @@ define([
     WidgetWithCompute,
     Storage,
     Session,
+    DeepForge,
     Plotly,
     PlotEditor,
     ArtifactLoader,
@@ -22,7 +24,7 @@ define([
 ) {
     'use strict';
 
-    const WIDGET_CLASS = 'dataset-explorer';
+    const WIDGET_CLASS = 'tensor-plotter';
 
     class TensorPlotterWidget extends WidgetWithCompute {
         constructor(logger, container) {
@@ -60,10 +62,16 @@ define([
             this._logger.debug('ctor finished');
         }
 
+        async getSaveData() {
+            console.log(this.plotEditor.data());
+            return this.plotEditor.data();
+        }
+
         async createInteractiveSession(computeId, config) {
             this.session = await Session.new(computeId, config);
             this.initSession();
             this.artifactLoader.session = this.session;
+            DeepForge.registerAction('Save', 'save', 10, () => this.getSaveData());
         }
 
         async getAuthenticationConfig (dataInfo) {
@@ -230,7 +238,9 @@ define([
         /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
         destroy () {
             Plotly.purge(this.$plot[0]);
-            this.session.close();
+            if (this.session) {
+                this.session.close();
+            }
         }
 
         onActivate () {
