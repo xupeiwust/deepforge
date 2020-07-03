@@ -1,0 +1,29 @@
+/**
+ * This file is for any css that you may want for this visualizer.
+ *
+ * Ideally, you would use the scss file also provided in this directory 
+ * and then generate this file automatically from that. However, you can 
+ * simply write css if you prefer
+ */
+
+.interactive-editor {
+  outline: none; }
+
+.compute-shield {
+    z-index: 100;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background-color:#00000099;
+}
+
+.compute-shield span {
+    text-align: center;
+    margin: auto;
+    display: block;
+    padding-top: 25%;
+    font-size: 2em;
+    color: whitesmoke;
+}

@@ -4,15 +4,17 @@ define([
     'deepforge/viz/ConfigDialog',
     'deepforge/viz/ConfirmDialog',
     'deepforge/compute/index',
-    'css!./styles/WidgetWithCompute.css',
+    'deepforge/globals',
+    'css!./styles/InteractiveEditorWidget.css',
 ], function(
     Session,
     ConfigDialog,
     ConfirmDialog,
     Compute,
+    DeepForge,
 ) {
     const COMPUTE_MESSAGE = 'Compute Required. Click to configure.';
-    class WidgetWithCompute {
+    class InteractiveEditorWidget {
         constructor(container) {
             this.showComputeShield(container);
         }
@@ -27,6 +29,10 @@ define([
                 const {id, config} = await this.promptComputeConfig();
                 try {
                     await this.createInteractiveSession(id, config);
+                    const features = this.getCapabilities();
+                    if (features.save) {
+                        DeepForge.registerAction('Save', 'save', 10, () => this.save());
+                    }
                     overlay.remove();
                 } catch (err) {
                     const title = 'Compute Creation Error';
@@ -37,6 +43,20 @@ define([
                     dialog.show();
                 }
             });
+        }
+
+        getCapabilities() {
+            return {
+                suspend: this.isOveridden('getEditorState') &&
+                    this.isOveridden('resume'),
+                save: this.isOveridden('getSnapshot') &&
+                    this.isOveridden('getOperation') &&
+                    this.isOveridden('getEditorState'),
+            };
+        }
+
+        isOveridden(name) {
+            return this[name] !== InteractiveEditorWidget.prototype[name];
         }
 
         async promptComputeConfig() {
@@ -76,5 +96,5 @@ define([
         }
     }
 
-    return WidgetWithCompute;
+    return InteractiveEditorWidget;
 });

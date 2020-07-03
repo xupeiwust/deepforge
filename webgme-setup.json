@@ -288,6 +288,13 @@
         "panel": "src/visualizers/panels/TensorPlotter",
         "secondary": false,
         "widget": "src/visualizers/widgets/TensorPlotter"
+      },
+      "InteractiveEditor": {
+        "src": "panels/InteractiveEditor/InteractiveEditorPanel",
+        "title": "InteractiveEditor",
+        "panel": "src/visualizers/panels/InteractiveEditor",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/InteractiveEditor"
       }
     },
     "addons": {},
