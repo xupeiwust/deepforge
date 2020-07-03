@@ -1,10 +1,9 @@
 /*globals define, $ */
 
 define([
-    'deepforge/viz/widgets/WidgetWithCompute',
+    'widgets/InteractiveEditor/InteractiveEditorWidget',
     'deepforge/storage/index',
     'deepforge/compute/interactive/session-with-queue',
-    'deepforge/globals',
     'widgets/PlotlyGraph/lib/plotly.min',
     './PlotEditor',
     './ArtifactLoader',
@@ -12,10 +11,9 @@ define([
     'text!./files/explorer_helpers.py',
     'css!./styles/TensorPlotterWidget.css',
 ], function (
-    WidgetWithCompute,
+    InteractiveComputeWidget,
     Storage,
     Session,
-    DeepForge,
     Plotly,
     PlotEditor,
     ArtifactLoader,
@@ -26,7 +24,7 @@ define([
 
     const WIDGET_CLASS = 'tensor-plotter';
 
-    class TensorPlotterWidget extends WidgetWithCompute {
+    class TensorPlotterWidget extends InteractiveComputeWidget {
         constructor(logger, container) {
             super(container);
             this._logger = logger.fork('Widget');
@@ -62,16 +60,10 @@ define([
             this._logger.debug('ctor finished');
         }
 
-        async getSaveData() {
-            console.log(this.plotEditor.data());
-            return this.plotEditor.data();
-        }
-
         async createInteractiveSession(computeId, config) {
             this.session = await Session.new(computeId, config);
             this.initSession();
             this.artifactLoader.session = this.session;
-            DeepForge.registerAction('Save', 'save', 10, () => this.getSaveData());
         }
 
         async getAuthenticationConfig (dataInfo) {
@@ -250,6 +242,38 @@ define([
         onDeactivate () {
             this._logger.debug('TensorPlotterWidget has been deactivated');
         }
+
+        getEditorState() {
+            const data = this.plotEditor.data();
+
+            return {
+                type: 'pipeline.TensorPlotter',
+                attributes: data
+            };
+        }
+
+        getOperation() {
+            // TODO: Create an operation to make this stuff...
+        }
+
+        getSnapshot() {
+            const figureData = this.plotEditor.data();
+            const attributes = _.pick(figureData, ['title', 'xaxis', 'yaxis']);
+            const lines = figureData.data.map(lineData => {
+                // TODO: is it 3D?
+            });
+
+            return {
+                type: 'pipeline.Graph',
+                attributes,
+                children: lines,
+            };
+            // TODO: convert to figure...
+            // TODO: transform the data into a figure
+            // TODO: create the implicit operation
+            // TODO: create the contained operation
+        }
+
     }
 
     return TensorPlotterWidget;
