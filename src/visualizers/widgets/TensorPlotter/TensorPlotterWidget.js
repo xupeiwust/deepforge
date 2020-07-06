@@ -28,6 +28,7 @@ define([
         constructor(logger, container) {
             super(container);
             this._logger = logger.fork('Widget');
+            this.currentPlotData = null;
 
             this.session = null;
             this.$el = container;
@@ -198,7 +199,7 @@ define([
             return {title};
         }
 
-        async updatePlot (figureData) {
+        async getPlotlyJSON (figureData) {
             const layout = _.pick(figureData, ['title', 'xaxis', 'yaxis']);
             if (layout.xaxis) {
                 layout.xaxis = {title: layout.xaxis};
@@ -210,6 +211,12 @@ define([
             for (let i = 0; i < figureData.data.length; i++) {
                 data.push(await this.getPlotData(figureData.data[i]));
             }
+            return {data, layout};
+        }
+
+        async updatePlot (figureData) {
+            this.currentPlotData = await this.getPlotlyJSON(figureData);
+            const {data, layout} = this.currentPlotData;
             Plotly.newPlot(this.$plot[0], data, layout);
         }
 
@@ -257,21 +264,14 @@ define([
         }
 
         getSnapshot() {
-            const figureData = this.plotEditor.data();
-            const attributes = _.pick(figureData, ['title', 'xaxis', 'yaxis']);
-            const lines = figureData.data.map(lineData => {
-                // TODO: is it 3D?
-            });
+            const plotlyJSON = this.currentPlotData || {};
 
             return {
                 type: 'pipeline.Graph',
-                attributes,
-                children: lines,
+                attributes: {
+                    data: plotlyJSON
+                },
             };
-            // TODO: convert to figure...
-            // TODO: transform the data into a figure
-            // TODO: create the implicit operation
-            // TODO: create the contained operation
         }
 
     }
