@@ -24,6 +24,7 @@ define([
                 'colorDataSlice', 'colorType', 'uniformColor', 'startColor',
                 'endColor'];
             super(Html({title}), fields);
+            this.setDataOptions(dataShapes);
 
             if (!isNewData) {
                 this.set(plottedData);
@@ -36,16 +37,13 @@ define([
             this.$dataShape = this.$el.find('.data-shape');
             const onDataUpdate = _.debounce(() => this.validateAllPythonData(), 250);
             const onDataChange = _.debounce(() => this.validateAllPythonData(true), 250);
-            // TODO: Refactor this
 
             this.dataShapes = dataShapes;
             this.$el.find('#dataSlice').on('input', onDataUpdate);
             this.$el.find('#colorDataSlice').on('input', onDataUpdate);
-            this.setDataOptions(dataShapes);
             this.$el.find('#data').on('change', onDataChange);
             this.$el.find('#colorData').on('change', onDataChange);
 
-            this.$dataDims = this.$el.find('#dataDims');  // REMOVE
             const colorInputs = Array.prototype.slice.call(this.$el.find('.jscolor'));
             colorInputs.forEach(input => new jscolor(input, {zIndex: 10000}));
 
