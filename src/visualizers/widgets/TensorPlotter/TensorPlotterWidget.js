@@ -9,6 +9,7 @@ define([
     './ArtifactLoader',
     'underscore',
     'text!./files/explorer_helpers.py',
+    'text!./OperationTemplate.py',
     'css!./styles/TensorPlotterWidget.css',
 ], function (
     InteractiveComputeWidget,
@@ -19,10 +20,12 @@ define([
     ArtifactLoader,
     _,
     HELPERS_PY,
+    OPERATION_TPL_TEXT,
 ) {
     'use strict';
 
     const WIDGET_CLASS = 'tensor-plotter';
+    const OperationTpl = _.template(OPERATION_TPL_TEXT);
 
     class TensorPlotterWidget extends InteractiveComputeWidget {
         constructor(logger, container) {
@@ -260,7 +263,18 @@ define([
         }
 
         getOperation() {
+            const data = this.plotEditor.data();
+            // TODO: Generate the correct code
+            const code = OperationTpl(data);
             // TODO: Create an operation to make this stuff...
+            // TODO: create the inputs
+            // what attributes should be defined?
+            // none for now...
+            return {
+                attributes: {
+                    code,
+                }
+            };
         }
 
         getSnapshot() {
