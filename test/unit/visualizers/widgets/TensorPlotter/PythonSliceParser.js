@@ -79,5 +79,11 @@ describe('PythonSliceParser', function() {
             const newShape = SliceParser(shape, '[:,0]');
             assert.deepEqual(newShape, [100]);
         });
+
+        it('should compute dimensions using "[:,0,0,0:2]"', function() {
+            const shape = [100, 65, 65, 5];
+            const newShape = SliceParser(shape, '[:,0,0,0:2]');
+            assert.deepEqual(newShape, [100, 2]);
+        });
     });
 });

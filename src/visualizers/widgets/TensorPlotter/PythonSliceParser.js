@@ -87,7 +87,7 @@ define([
     }
 
     function ensureValidSliceString(sliceString) {
-        const sliceRegex = /^\[-?[0-9]*:?-?[0-9]*:?-?[0-9]*((,|\]\[)-?[0-9]*:?-?[0-9]*:?-?[0-9]*)?\]$/;
+        const sliceRegex = /^\[-?[0-9]*:?-?[0-9]*:?-?[0-9]*((,|\]\[)-?[0-9]*:?-?[0-9]*:?-?[0-9]*)*\]$/;
         const isEmpty = sliceString.length === 0;
         const isValid = isEmpty || sliceRegex.test(sliceString);
         if (!isValid) {
