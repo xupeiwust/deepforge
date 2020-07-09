@@ -2,14 +2,14 @@
 define([
     'deepforge/compute/interactive/session-with-queue',
     'deepforge/viz/ConfigDialog',
-    'deepforge/viz/ConfirmDialog',
+    'deepforge/viz/InformDialog',
     'deepforge/compute/index',
     'deepforge/globals',
     'css!./styles/InteractiveEditorWidget.css',
 ], function(
     Session,
     ConfigDialog,
-    ConfirmDialog,
+    InformDialog,
     Compute,
     DeepForge,
 ) {
@@ -37,9 +37,8 @@ define([
                 } catch (err) {
                     const title = 'Compute Creation Error';
                     const body = 'Unable to create compute. Please verify the credentials are correct.';
-                    // TODO: Switch to inform
                     // TODO: Detect authorization errors...
-                    const dialog = new ConfirmDialog(title, body);
+                    const dialog = new InformDialog(title, body);
                     dialog.show();
                 }
             });
