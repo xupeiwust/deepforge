@@ -17,13 +17,14 @@ define([
         constructor(options) {
 
             this._logger = options.logger.fork('Control');
-            this._client = options.client;
+            this.client = options.client;
 
             // Initialize core collections and variables
             this._widget = options.widget;
             this.initializeWidgetHandlers(this._widget);
             this._widget.save = () => this.save();
             this._embedded = options.embedded;
+            this.territoryEventFilters = [];
 
             this._currentNodeId = null;
 
@@ -35,7 +36,7 @@ define([
             if (features.save) {
                 widget.save = () => this.save();
             }
-            widget.getConfigDialog = () => new ConfigDialog(this._client);
+            widget.getConfigDialog = () => new ConfigDialog(this.client);
         }
 
         /* * * * * * * * Visualizer content update callbacks * * * * * * * */
@@ -49,69 +50,71 @@ define([
 
             // Remove current territory patterns
             if (this._currentNodeId) {
-                this._client.removeUI(this._territoryId);
+                this.client.removeUI(this._territoryId);
             }
 
             this._currentNodeId = nodeId;
 
             if (typeof this._currentNodeId === 'string') {
                 // Put new node's info into territory rules
-                this._selfPatterns = {};
-                this._selfPatterns[nodeId] = {children: 0};  // Territory "rule"
-
+                const territory = this.getTerritory(nodeId);
                 this._widget.setTitle(desc.name.toUpperCase());
 
-
-                this._territoryId = this._client
+                this._territoryId = this.client
                     .addUI(this, events => this._eventCallback(events));
 
-                // Update the territory
-                this._client.updateTerritory(this._territoryId, this._selfPatterns);
+                this.client.updateTerritory(this._territoryId, territory);
             }
+        }
+
+        getTerritory(nodeId) {
+            const territory = {};
+            territory[nodeId] = {children: 0};
+            return territory;
         }
 
         createNode(desc, parent) {
             if (!parent) {
-                parent = this._client.getNode(this._currentNodeId);
+                parent = this.client.getNode(this._currentNodeId);
             }
             desc.pointers = desc.pointers || {};
             desc.attributes = desc.attributes || {};
             desc.pointers.base = desc.pointers.base || desc.type;
 
-            const metanodes = this._client.getAllMetaNodes();
+            const metanodes = this.client.getAllMetaNodes();
             const base = metanodes
                 .find(node => node.getAttribute('name') === desc.pointers.base);
 
-            const node = this._client.createNode({parent, base});
+            const node = this.client.createNode({parent, base});
             const attributes = Object.entries(desc.attributes);
             const pointers = Object.entries(desc.pointers);
 
             attributes.forEach(entry => {
                 const [name, value] = entry;
-                this._client.setAttribute(node.getId(), name, value);
+                this.client.setAttribute(node.getId(), name, value);
             });
 
             pointers.forEach(entry => {
                 const [name, id] = entry;
-                this._client.setPointer(node.getId(), name, id);
+                this.client.setPointer(node.getId(), name, id);
             });
 
             return node;
         }
 
         save() {
-            this._client.startTransaction();
+            this.client.startTransaction();
             const data = this.createNode(this._widget.getSnapshot());
             //const implicitOp = this.createNode(this._widget.getEditorState(), data);
-            //this._client.setPointer(data.getId(), 'provenance', implicitOp.getId());
+            //this.client.setPointer(data.getId(), 'provenance', implicitOp.getId());
             //const operation = this.createNode(this._widget.getOperation(), implicitOp);
-            //this._client.setPointer(implicitOp.getId(), 'operation', operation.getId());
-            this._client.completeTransaction();
+            //this.client.setPointer(implicitOp.getId(), 'operation', operation.getId());
+            this.client.completeTransaction();
         }
 
         // This next function retrieves the relevant node information for the widget
         getObjectDescriptor (nodeId) {
-            const node = this._client.getNode(nodeId);
+            const node = this.client.getNode(nodeId);
 
             if (node) {
                 return {
@@ -124,45 +127,48 @@ define([
         }
 
         /* * * * * * * * Node Event Handling * * * * * * * */
-        _eventCallback (events) {
-            var i = events ? events.length : 0,
-                event;
-
+        _eventCallback (events=[]) {
             this._logger.debug('_eventCallback \'' + i + '\' items');
 
-            while (i--) {
-                event = events[i];
-                switch (event.etype) {
+            events
+                .filter(event => this.isRelevantEvent(event))
+                .forEach(event => {
+                    switch (event.etype) {
 
-                case CONSTANTS.TERRITORY_EVENT_LOAD:
-                    this._onLoad(event.eid);
-                    break;
-                case CONSTANTS.TERRITORY_EVENT_UPDATE:
-                    this._onUpdate(event.eid);
-                    break;
-                case CONSTANTS.TERRITORY_EVENT_UNLOAD:
-                    this._onUnload(event.eid);
-                    break;
-                default:
-                    break;
-                }
-            }
+                    case CONSTANTS.TERRITORY_EVENT_LOAD:
+                        this.onNodeLoad(event.eid);
+                        break;
+                    case CONSTANTS.TERRITORY_EVENT_UPDATE:
+                        this.onNodeUpdate(event.eid);
+                        break;
+                    case CONSTANTS.TERRITORY_EVENT_UNLOAD:
+                        this.onNodeUnload(event.eid);
+                        break;
+                    default:
+                        break;
+                    }
+                });
 
             this._logger.debug('_eventCallback \'' + events.length + '\' items - DONE');
         }
 
-        _onLoad (gmeId) {
-            var description = this.getObjectDescriptor(gmeId);
+        onNodeLoad (gmeId) {
+            const description = this.getObjectDescriptor(gmeId);
             this._widget.addNode(description);
         }
 
-        _onUpdate (gmeId) {
-            var description = this.getObjectDescriptor(gmeId);
+        onNodeUpdate (gmeId) {
+            const description = this.getObjectDescriptor(gmeId);
             this._widget.updateNode(description);
         }
 
-        _onUnload (gmeId) {
+        onNodeUnload (gmeId) {
             this._widget.removeNode(gmeId);
+        }
+
+        isRelevantEvent (event) {
+            return this.territoryEventFilters
+                .reduce((keep, fn) => keep && fn(event), true);
         }
 
         _stateActiveObjectChanged (model, activeObjectId) {
