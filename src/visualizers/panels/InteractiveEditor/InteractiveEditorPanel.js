@@ -26,9 +26,9 @@ define([
         PanelBaseWithHeader.apply(this, [options, layoutManager]);
 
         this._client = params.client;
+        this._embedded = params.embedded;
 
-        //initialize UI
-        this._initialize();
+        this.initialize();
 
         this.logger.debug('ctor finished');
     }
@@ -37,7 +37,7 @@ define([
     _.extend(InteractiveEditorPanel.prototype, PanelBaseWithHeader.prototype);
     _.extend(InteractiveEditorPanel.prototype, IActivePanel.prototype);
 
-    InteractiveEditorPanel.prototype._initialize = function () {
+    InteractiveEditorPanel.prototype.initialize = function () {
         var self = this;
 
         //set Widget title
@@ -52,6 +52,7 @@ define([
         this.control = new InteractiveEditorControl({
             logger: this.logger,
             client: this._client,
+            embedded: this._embedded,
             widget: this.widget
         });
 

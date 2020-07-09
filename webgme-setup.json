@@ -295,6 +295,13 @@
         "panel": "src/visualizers/panels/InteractiveEditor",
         "secondary": false,
         "widget": "src/visualizers/widgets/InteractiveEditor"
+      },
+      "InteractiveExplorer": {
+        "src": "panels/InteractiveExplorer/InteractiveExplorerPanel",
+        "title": "InteractiveExplorer",
+        "panel": "src/visualizers/panels/InteractiveExplorer",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/InteractiveExplorer"
       }
     },
     "addons": {},

@@ -154,5 +154,11 @@
     "title": "TensorPlotter",
     "panel": "panels/TensorPlotter/TensorPlotterPanel",
     "DEBUG_ONLY": false
+  },
+  {
+    "id": "InteractiveExplorer",
+    "title": "InteractiveExplorer",
+    "panel": "panels/InteractiveExplorer/InteractiveExplorerPanel",
+    "DEBUG_ONLY": false
   }
 ]
