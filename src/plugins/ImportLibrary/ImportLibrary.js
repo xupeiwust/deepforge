@@ -51,6 +51,7 @@ define([
         const libraryInfo = config.libraryInfo;
 
         const {branchInfo, rootHash, libraryData} = await this.createGMELibraryFromSeed(libraryInfo.seed);
+        // FIXME: libraryData isn't very good...
         await this.core.addLibrary(this.rootNode, libraryInfo.name, rootHash, libraryData);
         await this.removeTemporaryBranch(branchInfo);
 
