@@ -165,13 +165,6 @@ define([
     };
 
     SidebarPanel.prototype.applyUpdates = async function (updates) {
-        //const seedUpdates = updates.filter(update => update.type === Updates.SEED);
-
-        //for (let i = seedUpdates.length; i--;) {
-            //const {name, hash} = seedUpdates[i];
-            //await Q.ninvoke(this._client, 'updateLibrary', name, hash);
-        //}
-
         const pluginId = 'ApplyUpdates';
         const migrations = updates
             .filter(update => update.type === Updates.MIGRATION)
