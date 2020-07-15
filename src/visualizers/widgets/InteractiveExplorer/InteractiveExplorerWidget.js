@@ -15,6 +15,8 @@ define([
                 suspend: this.isOveridden('getEditorState') &&
                     this.isOveridden('resume'),
                 save: this.isOveridden('getSnapshot'),
+                provenance: this.isOveridden('getEditorState') &&
+                this.isOveridden('getOperation'),
             };
         }
     }

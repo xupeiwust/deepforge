@@ -4,14 +4,14 @@
  */
 
 define([
-    'panels/InteractiveEditor/InteractiveEditorControl',
+    'panels/InteractiveExplorer/InteractiveExplorerControl',
 ], function (
-    InteractiveEditorControl,
+    InteractiveExplorerControl,
 ) {
 
     'use strict';
 
-    class TensorPlotterControl extends InteractiveEditorControl {
+    class TensorPlotterControl extends InteractiveExplorerControl {
 
         getObjectDescriptor(nodeId) {
             const desc = super.getObjectDescriptor(nodeId);

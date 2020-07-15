@@ -66,42 +66,54 @@ define([
             return territory;
         }
 
+        getMetaNode(name) {
+            const metanodes = this.client.getAllMetaNodes();
+            return metanodes
+                .find(node => {
+                    const namespace = node.getNamespace();
+                    const fullName = namespace ? namespace + '.' + node.getAttribute('name') :
+                        node.getAttribute('name');
+
+                    return fullName === name;
+                });
+        }
+
+
         createNode(desc, parent) {
             if (!parent) {
                 parent = this.client.getNode(this._currentNodeId);
             }
             desc.pointers = desc.pointers || {};
             desc.attributes = desc.attributes || {};
-            desc.pointers.base = desc.pointers.base || desc.type;
 
-            const metanodes = this.client.getAllMetaNodes();
-            const base = metanodes
-                .find(node => node.getAttribute('name') === desc.pointers.base);
+            const base = this.getMetaNode(desc.type) || this.client.getNode(desc.pointers.base);
+            const nodeId = this.client.createNode({
+                parentId: parent.getId(),
+                baseId: base.getId()
+            });
 
-            const node = this.client.createNode({parent, base});
             const attributes = Object.entries(desc.attributes);
-            const pointers = Object.entries(desc.pointers);
-
             attributes.forEach(entry => {
                 const [name, value] = entry;
-                this.client.setAttribute(node.getId(), name, value);
+                this.client.setAttribute(nodeId, name, value);
             });
 
+            const pointers = Object.entries(desc.pointers);
             pointers.forEach(entry => {
                 const [name, id] = entry;
-                this.client.setPointer(node.getId(), name, id);
+                this.client.setPointer(nodeId, name, id);
             });
 
-            return node;
+            return nodeId;
         }
 
         save() {
             this.client.startTransaction();
-            const data = this.createNode(this._widget.getSnapshot());
-            //const implicitOp = this.createNode(this._widget.getEditorState(), data);
-            //this.client.setPointer(data.getId(), 'provenance', implicitOp.getId());
-            //const operation = this.createNode(this._widget.getOperation(), implicitOp);
-            //this.client.setPointer(implicitOp.getId(), 'operation', operation.getId());
+            const nodeId = this.createNode(this._widget.getSnapshot());
+            const implicitOp = this.createNode(this._widget.getEditorState(), data);
+            this.client.setPointer(data.getId(), 'provenance', implicitOp.getId());
+            const operation = this.createNode(this._widget.getOperation(), implicitOp);
+            this.client.setPointer(implicitOp.getId(), 'operation', operation.getId());
             this.client.completeTransaction();
         }
 

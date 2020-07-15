@@ -1,7 +1,7 @@
 /*globals define, $ */
 
 define([
-    'widgets/InteractiveEditor/InteractiveEditorWidget',
+    'widgets/InteractiveExplorer/InteractiveExplorerWidget',
     'deepforge/storage/index',
     'deepforge/compute/interactive/session-with-queue',
     'widgets/PlotlyGraph/lib/plotly.min',
@@ -12,7 +12,7 @@ define([
     'text!./OperationTemplate.py',
     'css!./styles/TensorPlotterWidget.css',
 ], function (
-    InteractiveComputeWidget,
+    InteractiveExplorerWidget,
     Storage,
     Session,
     Plotly,
@@ -27,7 +27,7 @@ define([
     const WIDGET_CLASS = 'tensor-plotter';
     const OperationTpl = _.template(OPERATION_TPL_TEXT);
 
-    class TensorPlotterWidget extends InteractiveComputeWidget {
+    class TensorPlotterWidget extends InteractiveExplorerWidget {
         constructor(logger, container) {
             super(container);
             this._logger = logger.fork('Widget');
@@ -253,37 +253,16 @@ define([
             this._logger.debug('TensorPlotterWidget has been deactivated');
         }
 
-        getEditorState() {
-            const data = this.plotEditor.data();
-
-            return {
-                type: 'pipeline.TensorPlotter',
-                attributes: data
-            };
-        }
-
-        getOperation() {
-            const data = this.plotEditor.data();
-            // TODO: Generate the correct code
-            const code = OperationTpl(data);
-            // TODO: Create an operation to make this stuff...
-            // TODO: create the inputs
-            // what attributes should be defined?
-            // none for now...
-            return {
-                attributes: {
-                    code,
-                }
-            };
-        }
-
         getSnapshot() {
             const plotlyJSON = this.currentPlotData || {};
+            const data = this.plotEditor.data();
 
             return {
                 type: 'pipeline.Graph',
                 attributes: {
-                    data: plotlyJSON
+                    name: `Graph of ${data.title}`,
+                    title: data.title,
+                    data: JSON.stringify(plotlyJSON)
                 },
             };
         }
