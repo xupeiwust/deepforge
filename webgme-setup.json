@@ -282,6 +282,13 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/OperationDepEditor"
       },
+      "TensorPlotter": {
+        "src": "panels/TensorPlotter/TensorPlotterPanel",
+        "title": "TensorPlotter",
+        "panel": "src/visualizers/panels/TensorPlotter",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/TensorPlotter"
+      },
       "InteractiveEditor": {
         "src": "panels/InteractiveEditor/InteractiveEditorPanel",
         "title": "InteractiveEditor",
