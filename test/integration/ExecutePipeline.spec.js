@@ -61,9 +61,12 @@ describe('Pipeline execution', function () {
         console.log('creating branch');
         await project.createBranch('test', commitHash);
         console.log('starting server');
-        await server.start();
         console.log('starting worker');
-        worker = await startWorker();
+        await Promise.all(
+            server.start(),
+            startWorker().then(w => worker = w)
+        );
+        //worker = await startWorker();
     });
 
     after(async function () {
