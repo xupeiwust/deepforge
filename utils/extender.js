@@ -219,8 +219,8 @@ makeInstallFor({
 
 // Add the extension type for another domain/library
 const libraryType = 'Library';
-const LIBRARY_TEMPLATE_PATH = path.join(__dirname, '..', 'src', 'visualizers',
-    'panels', 'ForgeActionButton', 'Libraries.json.ejs');
+const LIBRARY_TEMPLATE_PATH = path.join(__dirname, '..', 'src', 'common',
+    'extensions', 'Libraries.json.ejs');
 extender.install[libraryType] = async (config, project/*, isReinstall*/) => {
     await webgme.all.import(project.arg);  // import the seed and stuff
     // Add the initCode to the config
