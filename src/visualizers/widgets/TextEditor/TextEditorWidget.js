@@ -6,6 +6,8 @@ define([
     'underscore',
     'js/Utils/ComponentSettings',
     './MonacoThemesProvider',
+    'deepforge/gmeConfig',
+    './DeepForgeLanguageClient',
     'text!./MonacoLanguages.json',
     'vs/editor/editor.main',
     'jquery-contextMenu',
@@ -14,7 +16,9 @@ define([
     _,
     ComponentSettings,
     MonacoThemesProvider,
-    MonacoLanguages,
+    gmeConfig,
+    DeepforgeLanguageClient,
+    MonacoLanguages
 ) {
     'use strict';
 
@@ -23,6 +27,18 @@ define([
     MonacoLanguages = JSON.parse(MonacoLanguages);
 
     const AVAILABLE_KEYBINDINGS = ['default', 'vim'];
+    const LANGAUGE_SERVER_HOST = gmeConfig.extensions.languageServers.host || getDefaultServerURL();
+    const AVAILABLE_LANGUAGE_SERVERS = gmeConfig.extensions.languageServers.servers;
+
+    // ToDo: Move this to utils??
+    function getDefaultServerURL() {
+        const isSecure = location.protocol.includes('s');
+        const protocol = isSecure ? 'wss' : 'ws';
+        const defaultHost = location.origin
+            .replace(location.protocol + '//', '')
+            .replace(/:[0-9]+$/, '');
+        return `${protocol}://${defaultHost}:${gmeConfig.server.port + 2}`;
+    }
 
     const TextEditorWidget = function (logger, container, config={}) {
         this.logger = logger.fork('Widget');
@@ -68,7 +84,23 @@ define([
 
         this.nodes = {};
         this._initialize();
+
+        if (AVAILABLE_LANGUAGE_SERVERS.includes(this.language)) {
+            this._initializeLanguageClient();
+        }
         this.logger.debug('ctor finished');
+    };
+
+    TextEditorWidget.prototype._initializeLanguageClient = function () {
+        this.languageClient = new DeepforgeLanguageClient(
+            this.editor,
+            `${LANGAUGE_SERVER_HOST}/${this.language}`,
+            {
+                language: this.language,
+                rootUri: 'file:///tmp/py-models',
+                socket: {}
+            }
+        );
     };
 
     TextEditorWidget.prototype.getModel = function(monacoURI, value) {

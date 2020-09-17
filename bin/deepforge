@@ -236,12 +236,23 @@ var spawn = function (cmd, args, opts) {
     return deferred.promise;
 };
 
+function startLanguageServers(serversYML, port) {
+    const command = path.join(__dirname, '..', 'node_modules', 'jsonrpc-ws-proxy', 'dist', 'server.js')
+    const args = ['--port' , port, '--languageServers', serversYML];
+    spawn(
+        command,
+        args,
+        true
+    )
+}
+
 program.command('start')
     .description('start deepforge locally (default) or specific components')
     .option('-p, --port <port>', 'specify the port to use')
     .option('-s, --server', 'start the server')
     .option('-N, --no-conda', 'do not start deepforge server in a conda environment.')
     .option('-m, --mongo', 'start MongoDB')
+    .option('-l, --langServers', 'Start Language servers listed in language-servers.yml file for activating IntelliSense in code editors')
     .action(async args => {
         if(args.conda){
             try {
@@ -254,10 +265,11 @@ program.command('start')
             }
         }
         const serverCommand = getDeepForgeServerCommand(args.conda);
-        const startAll = !args.server && !args.mongo;
+        const startAll = !args.server && !args.mongo && !args.langServers;
         if (startAll) {
             args.server = true;
             args.mongo = true;
+            args.langServers = true;
         }
 
         if (args.port) {
@@ -268,6 +280,11 @@ program.command('start')
             await checkMongo(args, true);
         }
 
+        if (args.langServers) {
+            const serversYML = path.join(__dirname, '..', 'language-servers.yml');
+            startLanguageServers(serversYML, parseInt(process.env.PORT || gmeConfig.server.port) + 2);
+        }
+
         if (args.server) {
             await checkMongo(args);
             const main = path.join(__dirname, '..', 'app.js');
@@ -275,6 +292,7 @@ program.command('start')
                 shell: SHELL
             });
         }
+
     });
 
 // update
