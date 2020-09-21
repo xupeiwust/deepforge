@@ -1,0 +1,13 @@
+FROM continuumio/anaconda3
+
+EXPOSE 3000
+
+ENV PORT 3000
+
+RUN apt-get update && curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt-get install -y nodejs
+
+RUN npm install -g npm && npm install -g jsonrpc-ws-proxy
+
+RUN conda update conda -yq && pip install python-language-server==0.25.0
+
+ENTRYPOINT node $(npm root -g)/jsonrpc-ws-proxy/dist/server.js --port $PORT --languageServers ~/language-servers.yml

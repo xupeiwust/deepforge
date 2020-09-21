@@ -49,6 +49,19 @@ jobs:
           dockerfile: docker/Dockerfile.kitchensink
           buildargs: "TAG=${{ env.TAG }}"
 
+      - name: Publish to docker hub (language-servers)
+        uses: elgohr/Publish-Docker-Github-Action@master
+
+        with:
+          name: deepforge/language-servers
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          # ToDo: When should this image be updated? On every push to master??
+          tags: latest
+          dockerfile: dockerfile/Dockerfile.langservers
+        if: github.event_name != 'release'
+
+
       - name: Deploy (dev.deepforge.org)
         uses: appleboy/ssh-action@master
         with:

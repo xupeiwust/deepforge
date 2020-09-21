@@ -26,3 +26,14 @@ services:
       - "${DEEPFORGE_DEPLOYMENT_DIR}/../config/components.json:/deepforge/config/components.json"
     depends_on:
       - mongo
+
+  language_servers:
+    image: deepforge/language-servers:latest
+    ports:
+      - "8890:3000"
+    volumes:
+      -  "${DEEPFORGE_DEPLOYMENT_DIR}/../language-servers.yml:/root/language-servers.yml"
+      - "/tmp/py-models:/tmp/py-models"
+    depends_on:
+      - server
+      - server_stable
