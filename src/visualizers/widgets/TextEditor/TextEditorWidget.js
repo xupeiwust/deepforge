@@ -37,7 +37,7 @@ define([
         const defaultHost = location.origin
             .replace(location.protocol + '//', '')
             .replace(/:[0-9]+$/, '');
-        return `${protocol}://${defaultHost}:${gmeConfig.server.port + 2}`;
+        return `${protocol}://${defaultHost}:5000`;
     }
 
     const TextEditorWidget = function (logger, container, config={}) {
@@ -50,7 +50,8 @@ define([
         this.model = this.getModel(monacoURI, value);
         this.model.updateOptions({
             tabSize: 4,
-            insertSpaces: true
+            insertSpaces: true,
+            trimAutoWhitespace: true
         });
 
         const displayMiniMap = config.displayMiniMap !== false;
@@ -97,7 +98,7 @@ define([
             `${LANGAUGE_SERVER_HOST}/${this.language}`,
             {
                 language: this.language,
-                rootUri: 'file:///tmp/py-models',
+                rootUri: gmeConfig.extensions.languageServers.workspaceURIs[this.language],
                 socket: {}
             }
         );

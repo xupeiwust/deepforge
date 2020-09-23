@@ -47,7 +47,8 @@ define([
     }
 
     const createLanguageClient = function (connection, opts) {
-        return new MonacoLanguageClient({
+        return new MonacoLanguageClient(
+            {
                 name: opts.name || 'DeepForge Language Client',
                 clientOptions: {
                     documentSelector: [opts.language || 'python'],
@@ -57,7 +58,7 @@ define([
                     }
                 },
                 connectionProvider: {
-                    get(errorHandler, closeHandler, outputChannel) {
+                    get(errorHandler, closeHandler, /*outputChannel*/) {
                         return Promise.resolve(
                             createConnection(connection, errorHandler, closeHandler)
                         );

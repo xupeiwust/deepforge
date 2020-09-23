@@ -9,12 +9,22 @@ function getAvailableLanguageServers () {
     return parsed.langservers ? Object.keys(parsed.langservers): [];
 }
 
+function getWorkspaceURIs() {
+    const availableServers = getAvailableLanguageServers();
+    const workspaces = {};
+    availableServers.forEach(server => {
+        workspaces[server] = `file:///tmp/${server}-models/`;
+    });
+    return workspaces;
+}
+
 module.exports = config => {
     config.extensions = {};
     config.extensions.InteractiveComputeHost = process.env.DEEPFORGE_INTERACTIVE_COMPUTE_HOST;
     config.extensions.languageServers = {
         host: process.env.DEEPFORGE_LANGUAGE_SERVER_HOST,
-        servers: getAvailableLanguageServers()
+        servers: getAvailableLanguageServers(),
+        workspaceURIs: getWorkspaceURIs(),
     };
     return config;
 };

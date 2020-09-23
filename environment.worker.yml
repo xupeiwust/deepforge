@@ -6,3 +6,4 @@ dependencies:
       - matplotlib==3.2.2
       - simplejson
       - plotly
+      - python-language-server==0.25.0
