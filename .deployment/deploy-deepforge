@@ -13,8 +13,9 @@ fi;
 < config/components.json  jq '.Compute.backends=(.Compute.backends | map(select(. != "local")))' \
 > config/components2.json
 < config/components2.json jq '.Storage.backends=(.Storage.backends | map(select(. != "gme")))' \
-> config/components.json
-rm config/components2.json
+> config/components3.json
+jq '.LanguageServers=[input]' config/components3.json .deployment/languageServers.json > config/components.json
+rm config/components3.json config/components2.json
 
 # Merging the custom override yml file
 yq m -a docker/docker-compose.yml "$DEEPFORGE_DEPLOYMENT_DIR"/docker-compose-overrides.yml > custom-docker-compose.yml

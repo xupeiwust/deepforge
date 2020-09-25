@@ -1,0 +1,15 @@
+{
+  "python": {
+    "command": "Microsoft.Python.LanguageServer",
+    "init": {
+      "interpreter": {
+        "properties": {
+          "InterpreterPath": "/usr/bin/python3"
+        },
+        "code": "import func",
+        "item": "functools"
+      }
+    },
+    "workspace": "/tmp/pythonModels/"
+  }
+}

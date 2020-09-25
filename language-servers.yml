@@ -1,5 +1,0 @@
-langservers:
-  python:
-    - pyls
-    - --log-file
-    - pyls.log
