@@ -1,7 +1,7 @@
 const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
-const langServers = require(path.resolve(__dirname, '..', '.deployment', 'languageServers'));
+const langServers = require(path.resolve(__dirname, '..', 'utils', 'languageServers'));
 
 function dumpLangServerYaml(fileName) {
     const serversYml = {

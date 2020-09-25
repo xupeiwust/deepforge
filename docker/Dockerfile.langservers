@@ -13,7 +13,7 @@ ENV PORT 5000
 RUN apt-get update && curl -sL https://deb.nodesource.com/setup_12.x | bash - &&\
  apt-get install -y nodejs && apt-get install unzip
 
-RUN npm install -g npm && npm install -g jsonrpc-ws-proxy js-yaml
+RUN npm install -g npm && npm -g config set user root && npm install -g jsonrpc-ws-proxy js-yaml
 
 RUN conda update conda -yq && conda install python=3.7
 
@@ -23,8 +23,11 @@ COPY utils/install-microsoft-python-langserver.sh .
 
 COPY docker/create-servers-yml.js .
 
-RUN ./install-microsoft-python-langserver.sh && node create-servers-yml.js
+COPY utils/languageServers.json utils/
+
+RUN ./install-microsoft-python-langserver.sh && npm link js-yaml &&\
+ node ./create-servers-yml.js && rm create-servers-yml.js
 
 RUN conda env update -n base --file environment.worker.yml && rm environment.worker.yml && conda clean -afy
 
-ENTRYPOINT node $(npm root -g)/jsonrpc-ws-proxy/dist/server.js --port $PORT --languageServers ~/language-servers.yml
+ENTRYPOINT node $(npm root -g)/jsonrpc-ws-proxy/dist/server.js --port $PORT --languageServers ~/languageServers.yml
