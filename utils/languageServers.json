@@ -1,15 +1,18 @@
 {
-  "python": {
-    "command": "Microsoft.Python.LanguageServer",
-    "init": {
-      "interpreter": {
-        "properties": {
-          "InterpreterPath": "/usr/bin/python3"
-        },
-        "code": "import func",
-        "item": "functools"
-      }
-    },
-    "workspace": "/tmp/pythonModels/"
+  "hostName": "langservers.deepforge.org",
+  "servers": {
+    "python": {
+      "command": "Microsoft.Python.LanguageServer",
+      "init": {
+        "interpreter": {
+          "properties": {
+            "InterpreterPath": "/home/umesh/anaconda3/envs/deepforge/bin/python"
+          },
+          "code": "import func",
+          "item": "functools"
+        }
+      },
+      "workspace": "/tmp/pythonModels/"
+    }
   }
 }

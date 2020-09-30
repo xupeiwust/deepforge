@@ -6,8 +6,8 @@ define([
     'underscore',
     'js/Utils/ComponentSettings',
     './MonacoThemesProvider',
-    'deepforge/gmeConfig',
     './DeepForgeLanguageClient',
+    './TextEditorWidget.langServersHelper',
     'text!./MonacoLanguages.json',
     'vs/editor/editor.main',
     'jquery-contextMenu',
@@ -16,8 +16,8 @@ define([
     _,
     ComponentSettings,
     MonacoThemesProvider,
-    gmeConfig,
     DeepforgeLanguageClient,
+    LanguageServersHelper,
     MonacoLanguages
 ) {
     'use strict';
@@ -25,20 +25,8 @@ define([
     const WIDGET_CLASS = 'text-editor';
 
     MonacoLanguages = JSON.parse(MonacoLanguages);
-
     const AVAILABLE_KEYBINDINGS = ['default', 'vim'];
-    const LANGAUGE_SERVER_HOST = gmeConfig.extensions.languageServers.host || getDefaultServerURL();
-    const AVAILABLE_LANGUAGE_SERVERS = gmeConfig.extensions.languageServers.servers;
 
-    // ToDo: Move this to utils??
-    function getDefaultServerURL() {
-        const isSecure = location.protocol.includes('s');
-        const protocol = isSecure ? 'wss' : 'ws';
-        const defaultHost = location.origin
-            .replace(location.protocol + '//', '')
-            .replace(/:[0-9]+$/, '');
-        return `${protocol}://${defaultHost}:5000`;
-    }
 
     const TextEditorWidget = function (logger, container, config={}) {
         this.logger = logger.fork('Widget');
@@ -86,20 +74,24 @@ define([
         this.nodes = {};
         this._initialize();
 
-        if (AVAILABLE_LANGUAGE_SERVERS.includes(this.language)) {
+        if (this.isLanguageServerAvailable(this.language)) {
             this._initializeLanguageClient();
         }
         this.logger.debug('ctor finished');
     };
 
+    TextEditorWidget.prototype.constructor = TextEditorWidget;
+    Object.assign(TextEditorWidget.prototype, LanguageServersHelper);
+
     TextEditorWidget.prototype._initializeLanguageClient = function () {
         this.languageClient = new DeepforgeLanguageClient(
             this.editor,
-            `${LANGAUGE_SERVER_HOST}/${this.language}`,
+            encodeURI(this.langServerHostName),
             {
                 language: this.language,
-                rootUri: gmeConfig.extensions.languageServers.workspaceURIs[this.language],
-                socket: {}
+                rootUri: this.getWorkspaceURIFor(this.language),
+                socket: {},
+                initializationOptions: this.getInitializationOptionsFor(this.language)
             }
         );
     };
@@ -116,7 +108,7 @@ define([
     TextEditorWidget.prototype._getMonacoURI = function () {
         const modelSuffix = Math.random().toString(36).substring(2, 15);
         return monaco.Uri.parse(
-            `inmemory://model_${modelSuffix}.${MonacoLanguages[this.language].extensions[0]}`
+            `file:///tmp/model_${modelSuffix}.${MonacoLanguages[this.language].extensions[0]}`
         );
     };
 

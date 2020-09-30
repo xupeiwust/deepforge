@@ -51,14 +51,28 @@ define([
             {
                 name: opts.name || 'DeepForge Language Client',
                 clientOptions: {
-                    documentSelector: [opts.language || 'python'],
+                    documentSelector: ['python'],
                     errorHandler: {
                         error: () => ErrorAction.Continue,
                         closed: () => CloseAction.DoNotRestart
-                    }
+                    },
+                    middleware: {
+                        workspace: {
+                            configuration: (
+                                params,
+                                tokens,
+                                configuration
+                            ) => {
+                                return Array(configuration(params, token).length).fill(
+                                    {}
+                                );
+                            }
+                        }
+                    },
+                    initializationOptions: opts.initializationOptions || {}
                 },
                 connectionProvider: {
-                    get(errorHandler, closeHandler, /*outputChannel*/) {
+                    get(errorHandler, closeHandler) {
                         return Promise.resolve(
                             createConnection(connection, errorHandler, closeHandler)
                         );
