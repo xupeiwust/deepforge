@@ -6,22 +6,31 @@ define([
 ], function (
     gmeConfig
 ) {
+    const LangServerConfig = gmeConfig.extensions.LanguageServers;
+
     const LanguageServersHelper = {
         isLanguageServerAvailable: function(language) {
-            return !!gmeConfig.extensions.languageServers &&
-                !!gmeConfig.extensions.languageServers.hostName &&
-                gmeConfig.extensions.languageServers.servers.includes(language);
+            return !!LangServerConfig && !!LangServerConfig.hostName &&
+                Object.keys(LangServerConfig.servers).includes(language);
         },
 
-        getInitializationOptionsFor: function(serverName) {
-            if(Object.keys(this.servers).includes(serverName)) {
-                return this.servers[serverName].init;
+        getLanguageServerHostName: function(language) {
+            if (LangServerConfig) {
+                let protocol = LangServerConfig.hostName.startsWith('https') ? 'wss' : 'ws';
+                return LangServerConfig.hostName.replace(/https?/, protocol) + `/${language}`;
             }
         },
-        getWorkspaceURIFor: function(serverName) {
-            if(Object.keys(this.servers)) {
+
+        getInitializationOptionsFor: function(language) {
+            if(this.isLanguageServerAvailable(language)) {
+                return LangServerConfig.servers[language].init;
+            }
+        },
+
+        getWorkspaceURIFor: function(language) {
+            if(this.isLanguageServerAvailable(language)) {
                 return monaco.Uri.parse(
-                    this.servers[serverName].workspace
+                    LangServerConfig.servers[language].workspace
                 );
             }
         }

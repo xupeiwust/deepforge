@@ -8,8 +8,8 @@ function dumpLangServerYaml(fileName) {
         langservers: {}
     };
 
-    Object.keys(langServers).forEach(server => {
-        const command = langServers[server].command;
+    Object.keys(langServers.servers).forEach(server => {
+        const command = langServers.servers[server].command;
         serversYml.langservers[server] = Array.isArray(command) ? command : [command];
     });
 

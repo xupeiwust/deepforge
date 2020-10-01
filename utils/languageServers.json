@@ -1,12 +1,12 @@
 {
-  "hostName": "langservers.deepforge.org",
+  "hostName": "https://langservers.deepforge.org",
   "servers": {
     "python": {
       "command": "Microsoft.Python.LanguageServer",
       "init": {
         "interpreter": {
           "properties": {
-            "InterpreterPath": "/home/umesh/anaconda3/envs/deepforge/bin/python"
+            "InterpreterPath": "/root/anaconda3/bin/python3"
           },
           "code": "import func",
           "item": "functools"

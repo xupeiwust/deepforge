@@ -51,7 +51,7 @@ define([
             {
                 name: opts.name || 'DeepForge Language Client',
                 clientOptions: {
-                    documentSelector: ['python'],
+                    documentSelector: [opts.language],
                     errorHandler: {
                         error: () => ErrorAction.Continue,
                         closed: () => CloseAction.DoNotRestart

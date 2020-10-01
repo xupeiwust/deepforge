@@ -86,7 +86,7 @@ define([
     TextEditorWidget.prototype._initializeLanguageClient = function () {
         this.languageClient = new DeepforgeLanguageClient(
             this.editor,
-            encodeURI(this.langServerHostName),
+            this.getLanguageServerHostName(this.language),
             {
                 language: this.language,
                 rootUri: this.getWorkspaceURIFor(this.language),
