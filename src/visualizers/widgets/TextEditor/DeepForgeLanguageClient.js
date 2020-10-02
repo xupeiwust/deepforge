@@ -63,7 +63,7 @@ define([
                                 tokens,
                                 configuration
                             ) => {
-                                return Array(configuration(params, token).length).fill(
+                                return Array(configuration(params, tokens).length).fill(
                                     {}
                                 );
                             }

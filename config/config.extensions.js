@@ -3,7 +3,7 @@ const components = require('./components.json');
 function getLanguageServersConfig () {
     if(components.LanguageServers) {
         return {
-            hostName: process.env.DEEPFORGE_LANGAUGE_SERVER_HOST || components.LanguageServers.hostName,
+            hostName: process.env.DEEPFORGE_LANGUAGE_SERVER_HOST || components.LanguageServers.hostName,
             servers: components.LanguageServers.servers
         };
     }
