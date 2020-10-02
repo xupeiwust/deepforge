@@ -6,7 +6,7 @@ define([
     './lib/reconnecting-websocket.min',
 ], function (
     vscodeWSJSONRpc,
-    LangaugeClient,
+    LanguageClient,
     RS
 ) {
     const {ReconnectingWebSocket} = RS,
@@ -23,7 +23,7 @@ define([
         MonacoToProtocolConverter,
         ProtocolToMonacoConverter,
         createConnection
-    } = LangaugeClient;
+    } = LanguageClient;
 
     class DeepForgeLanguageClient {
         constructor(editor, serverURL, opts) {
