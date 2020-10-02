@@ -30,4 +30,4 @@ RUN ./install-microsoft-python-langserver.sh && npm link js-yaml &&\
 
 RUN conda env update -n base --file environment.worker.yml && rm environment.worker.yml && conda clean -afy
 
-ENTRYPOINT node $(npm root -g)/jsonrpc-ws-proxy/dist/server.js --port $PORT --languageServers ~/languageServers.yml
+ENTRYPOINT jsonrpc-ws-proxy --port $PORT --languageServers ~/languageServers.yml
