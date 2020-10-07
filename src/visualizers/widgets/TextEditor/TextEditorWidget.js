@@ -108,7 +108,7 @@ define([
     TextEditorWidget.prototype._getMonacoURI = function () {
         const modelSuffix = Math.random().toString(36).substring(2, 15);
         return monaco.Uri.parse(
-            `file:///tmp/model_${modelSuffix}.${MonacoLanguages[this.language].extensions[0]}`
+            `file:///tmp/python-models/model_${modelSuffix}.${MonacoLanguages[this.language].extensions[0]}`
         );
     };
 
