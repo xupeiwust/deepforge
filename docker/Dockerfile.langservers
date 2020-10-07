@@ -21,11 +21,11 @@ COPY utils/install-microsoft-python-langserver.sh .
 
 COPY docker/create-servers-yml.js .
 
-COPY utils/languageServers.json utils/
+COPY .deployment/languageServers.json .deployment/
 
 RUN ./install-microsoft-python-langserver.sh && npm link js-yaml &&\
  node ./create-servers-yml.js && rm create-servers-yml.js
 
 RUN conda update conda -yq && conda env update -n base --file environment.worker.yml && rm environment.worker.yml && conda clean -afy
 
-ENTRYPOINT jsonrpc-ws-proxy --port $PORT --languageServers ~/languageServers.yml
+ENTRYPOINT jsonrpc-ws-proxy --port $PORT --languageServers languageServers.yml
