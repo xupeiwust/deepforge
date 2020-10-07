@@ -6,7 +6,7 @@
       "init": {
         "interpreter": {
           "properties": {
-            "InterpreterPath": "/root/anaconda3/bin/python3"
+            "InterpreterPath": "/opt/conda/bin/python3"
           },
           "code": "import func",
           "item": "functools"
