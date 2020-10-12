@@ -3,8 +3,9 @@ services:
     entrypoint: /.deployment/dev-entrypoint.sh
     environment:
       - "DEEPFORGE_HOST=https://dev.deepforge.org"
-      - "DEEPFORGE_INTERACTIVE_COMPUTE_HOST=https://dev-compute.deepforge.org"
+      - "DEEPFORGE_INTERACTIVE_COMPUTE_HOST=wss://dev-compute.deepforge.org"
       - "DEEPFORGE_LANGUAGE_SERVER_HOST=https://langservers.deepforge.org"
+
     volumes:
       - "${DEEPFORGE_DEPLOYMENT_DIR}:/.deployment"
       - "${DEEPFORGE_DEPLOYMENT_DIR}/../config/components.json:/deepforge/config/components.json"
@@ -14,7 +15,7 @@ services:
     environment:
       - "MONGO_URI=mongodb://mongo:27017/deepforge"
       - "DEEPFORGE_HOST=https://editor.deepforge.org"
-      - "DEEPFORGE_INTERACTIVE_COMPUTE_HOST=https://compute.deepforge.org"
+      - "DEEPFORGE_INTERACTIVE_COMPUTE_HOST=wss://compute.deepforge.org"
       - "DEEPFORGE_PUBLIC_KEY=/token_keys/public_key"
       - "DEEPFORGE_PRIVATE_KEY=/token_keys/private_key"
       - "DEEPFORGE_LANGUAGE_SERVER_HOST=https://langservers.deepforge.org"

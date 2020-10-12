@@ -5,9 +5,7 @@ The script `deploy-deepforge` is used for standard deployment of deepforge using
 
 Additionally, this contains a file with customizations to the standard docker-compose.yml file which allows us to modify the entrypoint and install a version of tensorflow [compatible with the CPU of the deployment machine](https://github.com/deepforge-dev/deepforge/issues/1561).
 
-Moreover, we also a proxy server with that spins up different language servers that we provide for
- intelligent syntax
- highlighting in deepforge's browser. For more information checkout the language server's docker [file](../docker/Dockerfile.langservers)
+Moreover, we also host a proxy server with that spins up different language servers that we provide for intelligent syntax highlighting in deepforge's browser based text editor. For more information checkout the language server's docker [file](../docker/Dockerfile.langservers)
 
 The deployment is updated by first creating the custom docker compose file using [yq](https://github.com/mikefarah/yq):
 ```
