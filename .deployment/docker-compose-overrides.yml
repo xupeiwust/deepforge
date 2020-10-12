@@ -35,7 +35,6 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      -  "${DEEPFORGE_DEPLOYMENT_DIR}/../language-servers.yml:/root/language-servers.yml"
       - "${DEEPFORGE_DEPLOYMENT_DIR}:/.deployment"
       - "/tmp/python-models:/tmp/python-models"
     entrypoint: /.deployment/langserver-entrypoint.sh
