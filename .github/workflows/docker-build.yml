@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - master
+
+  pull_request:
+    branches:
+      - master
+
   release:
     types:
       - published
@@ -59,7 +64,7 @@ jobs:
           # ToDo: When should this image be updated? On every push to master??
           tags: latest
           dockerfile: dockerfile/Dockerfile.langservers
-        if: github.event_name != 'release'
+        if: github.event_name == 'pull_request'
 
 
       - name: Deploy (dev.deepforge.org)

@@ -2,11 +2,14 @@
 /* eslint-env browser */
 
 define([
-    'deepforge/gmeConfig',
+    'js/Utils/ComponentSettings',
 ], function (
-    gmeConfig
+    ComponentSettings
 ) {
-    const LangServerConfig = gmeConfig.extensions.LanguageServers;
+    const LangServerConfig = ComponentSettings.resolveWithWebGMEGlobal(
+        {},
+        'LanguageServers'
+    );
 
     const LanguageServersHelper = {
         isLanguageServerAvailable: function(language) {
