@@ -309,6 +309,13 @@
         "panel": "src/visualizers/panels/InteractiveWorkspace",
         "secondary": false,
         "widget": "src/visualizers/widgets/InteractiveWorkspace"
+      },
+      "EagerOperation": {
+        "src": "panels/EagerOperation/EagerOperationPanel",
+        "title": "EagerOperation",
+        "panel": "src/visualizers/panels/EagerOperation",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/EagerOperation"
       }
     },
     "addons": {},

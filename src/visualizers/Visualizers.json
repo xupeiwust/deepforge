@@ -172,5 +172,11 @@
     "title": "InteractiveWorkspace",
     "panel": "panels/InteractiveWorkspace/InteractiveWorkspacePanel",
     "DEBUG_ONLY": false
+  },
+  {
+    "id": "EagerOperation",
+    "title": "EagerOperation",
+    "panel": "panels/EagerOperation/EagerOperationPanel",
+    "DEBUG_ONLY": false
   }
 ]
