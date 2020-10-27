@@ -13,6 +13,7 @@ define([
             container.addClass(WIDGET_CLASS);
             super(container);
         }
+        // TODO: embed another widget
     }
 
     return EagerOperationWidget;
