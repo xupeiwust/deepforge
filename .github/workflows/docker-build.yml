@@ -65,7 +65,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           # ToDo: When should this image be updated? On every push to master??
           tags: latest
-          dockerfile: dockerfile/Dockerfile.langservers
+          dockerfile: docker/Dockerfile.langservers
         if: github.event_name == 'pull_request'
 
 
