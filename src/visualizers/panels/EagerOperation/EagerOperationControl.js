@@ -2,10 +2,12 @@
 
 define([
     'panels/InteractiveExplorer/InteractiveExplorerControl',
+    'panels/OperationInterfaceEditor/OperationInterfaceEditorControl',
     'underscore',
     'text!deepforge/NewOperationCode.ejs',
 ], function (
     InteractiveExplorerControl,
+    OperationInterfaceControl,
     _,
     NewOperationCodeTxt,
 ) {
@@ -17,6 +19,7 @@ define([
 
         constructor() {
             super(...arguments);
+            this._client = this.client;
             const operation = this.getInitialOperation();
             this._widget.setOperation(operation);
         }
@@ -24,6 +27,17 @@ define([
         initializeWidgetHandlers (widget) {
             super.initializeWidgetHandlers(widget);
             widget.runOperation = operation => this.runOperation(operation);
+            widget.operationInterface.allValidReferences = () => this.allValidReferences();
+        }
+
+        getResourcesNodeTypes() {
+            return OperationInterfaceControl.prototype.getResourcesNodeTypes.call(this);
+        }
+
+        allValidReferences() {
+            return this.getResourcesNodeTypes().map(node => ({
+                node: OperationInterfaceControl.prototype._getObjectDescriptor.call(this, node.getId())
+            }));
         }
 
         runOperation(operation) {

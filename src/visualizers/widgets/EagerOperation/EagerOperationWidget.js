@@ -66,6 +66,8 @@ define([
             $el = $('<div>');
             let editor = new OperationInterfaceEditorWidget(logger, $el);
             this.tabs.push(newTab('Operation Interface', $el, editor));
+            editor.isValidTerminalNode = () => true;
+            this.operationInterface = editor;
 
             $el = $('<div>');
             editor = new TextEditorWidget(
