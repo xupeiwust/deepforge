@@ -142,7 +142,7 @@ define([
             widget.$tabContent.empty();
             widget.$tabContent.append(tab.$el);
             this.onWidgetContainerResize(this.width, this.height);
-            //tab.editor.onWidgetContainerResize();
+            tab.editor.onWidgetContainerResize();
         }
 
         onActivate() {
