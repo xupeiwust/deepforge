@@ -21,6 +21,15 @@ define([
             this._widget.setOperation(operation);
         }
 
+        initializeWidgetHandlers (widget) {
+            super.initializeWidgetHandlers(widget);
+            widget.runOperation = operation => this.runOperation(operation);
+        }
+
+        runOperation(operation) {
+            // TODO:
+        }
+
         getInitialOperation() {
             const basename = 'NewOperation';
             let name = basename;
@@ -34,6 +43,7 @@ define([
 
             return {
                 name: name,
+                attributes: {},
                 inputs: [],
                 outputs: [],
                 references: [],

@@ -2,6 +2,7 @@
 
 define([
     'deepforge/globals',
+    'deepforge/Constants',
     'widgets/InteractiveEditor/InteractiveEditorWidget',
     'widgets/OperationCodeEditor/OperationCodeEditorWidget',
     'widgets/TabbedTextEditor/TabbedTextEditorWidget',
@@ -10,6 +11,7 @@ define([
     'css!./styles/EagerOperationWidget.css',
 ], function (
     DeepForge,
+    Constants,
     InteractiveEditor,
     OperationCodeEditor,
     TabbedTextEditorWidget,
@@ -29,10 +31,12 @@ define([
             const $leftPane = $('<div>', {class: 'pane'});
             container.append($leftPane);
             this.codeEditor = new OperationCodeEditor(logger, $leftPane);
+            window.codeEditor = this.codeEditor;
 
             const $rightPane = $('<div>', {class: 'pane'});
             container.append($rightPane);
             this.secondaryEditor = this.initializeSecondaryEditor(logger, $rightPane);
+            this.tabs.forEach(tab => this.secondaryEditor.addTab(tab));
         }
 
         initializeSecondaryEditor(logger, $el) {
@@ -77,13 +81,13 @@ define([
                 $el,
                 {language: 'plaintext'}
             );
+            editor.setReadOnly(true);
             this.tabs.push(newTab('Console', $el, editor));
 
             widget.onTabSelected = id => {
                 const tab = this.tabs.find(tab => tab.id === id);
                 this.onTabSelected(widget, tab);
             };
-            this.tabs.forEach(tab => widget.addTab(tab));
 
             return widget;
         }
@@ -94,19 +98,36 @@ define([
                 text: operation.code,
             });
             const [interfaceTab, envTab] = this.tabs;
-            // TODO: update the interface editor
+            const interfaceNodes = this.getOperationInterfaceNodes(operation);
+            console.log('about to add', interfaceNodes);
+            interfaceNodes.forEach(node => interfaceTab.editor.addNode(node));  // FIXME: this is overly simplistic...
 
             envTab.editor.addNode({name: operation.name, text: operation.env});
         }
 
-        registerActions() {
-            // TODO: use the operation name
-            DeepForge.registerAction('Run operation', 'play_arrow', 10, () => this.runOperation());
+        getOperationInterfaceNodes(operation) {
+            //const displayColor = desc.attributes[CONSTANTS.OPERATION.DISPLAY_COLOR];
+            //desc.displayColor = displayColor && displayColor.value;
+            // TODO: Get the attributes and such
+            // TODO: create the interface nodes
+            console.log(operation);
+            const Decorator = WebGMEGlobal.Client.decoratorManager.getDecoratorForWidget('OpIntDecorator', 'EasyDAG');
+            const centralNode = operation;
+            centralNode.Decorator = Decorator;
+            //const 
+            return [centralNode];
         }
 
-        runOperation() {
-            console.log('running operation!');  // TODO
+        registerActions() {
+            // TODO: use the operation name
+            DeepForge.registerAction('Run operation', 'play_arrow', 10, () => this.onRunClicked());
         }
+
+        onRunClicked() {
+            // TODO: get the operation info
+            this.runOperation(this.operation);
+        }
+
         // TODO: add interface editor
         // TODO:   - add save button to outputs
         // TODO:   - add input operations (and outputs?)
@@ -118,20 +139,22 @@ define([
         onTabSelected(widget, tab) {
             widget.$tabContent.empty();
             widget.$tabContent.append(tab.$el);
-            const isDisplayed = this.width && this.height;
-            if (isDisplayed) {
-                this.onWidgetContainerResize(this.width, this.height);
-            }
+            this.onWidgetContainerResize(this.width, this.height);
+            //tab.editor.onWidgetContainerResize();
         }
 
         onActivate() {
             this.codeEditor.onActivate();
             this.secondaryEditor.onActivate();
+            this.tabs.forEach(tab => tab.editor.onActivate());
         }
 
         onWidgetContainerResize(width, height) {
             this.width = width;
             this.height = height;
+            // TODO: get the right width/heights
+            this.codeEditor.onWidgetContainerResize();
+            this.secondaryEditor.onWidgetContainerResize();
         }
 
         destroy() {
