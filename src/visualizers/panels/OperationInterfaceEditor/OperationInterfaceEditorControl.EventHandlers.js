@@ -26,6 +26,7 @@ define([
 
         this._widget.setAttributeMeta = this.setAttributeMeta.bind(this);
         this._widget.deleteAttribute = this.deleteAttribute.bind(this);
+        this._widget.getValidAttributeNames = this.getValidAttributeNames.bind(this);
     };
 
     OperationInterfaceEditorEvents.prototype.getCreationNode = function(type, id) {
@@ -336,6 +337,11 @@ define([
         // update the operation code
         this.updateCode(operation => operation.removeAttribute(name));
         this._client.completeTransaction();
+    };
+
+    OperationInterfaceEditorEvents.prototype.getValidAttributeNames = function(nodeId) {
+        const node = this.client.getNode(nodeId);
+        return node.getValidAttributeNames();
     };
 
     return OperationInterfaceEditorEvents;
