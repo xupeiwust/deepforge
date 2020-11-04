@@ -109,6 +109,7 @@ define([
         this.decorator.changePtrName = this.changePtrName.bind(this);
         this.decorator.setAttributeMeta = this.setAttributeMeta.bind(this);
         this.decorator.deleteAttribute = this.deleteAttribute.bind(this);
+        this.decorator.getValidAttributeNames = this.getValidAttributeNames.bind(this);
     };
 
     return Item;

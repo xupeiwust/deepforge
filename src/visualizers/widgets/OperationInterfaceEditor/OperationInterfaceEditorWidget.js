@@ -63,6 +63,10 @@ define([
             this._widget.deleteAttribute(item.id, name);
         };
 
+        this.ItemClass.prototype.getValidAttributeNames = function() {
+            const item = this;
+            return this._widget.getValidAttributeNames(item.id);
+        };
     };
 
     OperationInterfaceEditorWidget.prototype.onAddItemSelected = function(selected, isInput) {
