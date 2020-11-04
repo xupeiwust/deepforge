@@ -112,11 +112,9 @@ define([
             //desc.displayColor = displayColor && displayColor.value;
             // TODO: Get the attributes and such
             // TODO: create the interface nodes
-            console.log(operation);
             const Decorator = WebGMEGlobal.Client.decoratorManager.getDecoratorForWidget('OpIntDecorator', 'EasyDAG');
             const centralNode = operation;
             centralNode.Decorator = Decorator;
-            //const 
             return [centralNode];
         }
 
