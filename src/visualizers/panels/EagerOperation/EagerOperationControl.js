@@ -4,6 +4,7 @@ define([
     'panels/InteractiveExplorer/InteractiveExplorerControl',
     'panels/OperationInterfaceEditor/OperationInterfaceEditorControl',
     'deepforge/viz/OperationControl',
+    'deepforge/OperationCode',
     'panels/EasyDAG/EasyDAGControl',
     'underscore',
     'text!deepforge/NewOperationCode.ejs',
@@ -11,6 +12,7 @@ define([
     InteractiveExplorerControl,
     OperationInterfaceControl,
     OperationControl,
+    OperationCode,
     EasyDAGControl,
     _,
     NewOperationCodeTxt,
@@ -44,6 +46,8 @@ define([
             widget.operationInterface.deleteNode = this.deleteNode.bind(this);
             widget.operationInterface.saveAttributeForNode = this.saveAttributeForNode.bind(this);
             widget.operationInterface.getValidAttributeNames = this.getValidAttributeNames.bind(this);
+            widget.operationInterface.setAttributeMeta = this.setAttributeMeta.bind(this);
+            widget.operationInterface.deleteAttribute = this.deleteAttribute.bind(this);
         }
 
         runOperation(operation) {
@@ -66,6 +70,7 @@ define([
                 name: name,
                 baseName: 'Operation',
                 attributes: {},
+                attribute_meta: {},
                 inputs: [],
                 outputs: [],
                 references: [],
@@ -79,8 +84,16 @@ define([
             this._widget.registerActions();
         }
 
-        onOperationInterfaceUpdate() {
-            // TODO: Update the
+        updateCode(fn) {
+            this.operation.code = this.getUpdatedCode(
+                this.operation.code,
+                fn
+            );
+            // TODO: update the code
+            this._widget.codeEditor.addNode({
+                name: this.operation.name,
+                text: this.operation.code,
+            });
         }
 
         setOperationCode(newCode) {
@@ -126,17 +139,18 @@ define([
             const node = this.client.getNode(refId);
             const nodeName = node.getAttribute('name');
             const name = uniqueName(
-                nodeName,
+                nodeName.toLowerCase(),
                 this.operation.references.map(ref => ref.name)
             );
             const id = `ptr_${nodeName}_${counter()}`;
             const desc = {
                 baseName: nodeName,
-                name: name.toLowerCase(),
+                name: name,
                 Decorator: this._getNodeDecorator(node),
                 id: id,
                 isPointer: true,
                 attributes: {},
+                attribute_meta: {},
                 isUnknown: false,
                 conn: {
                     id: `conn_${counter()}`,
@@ -145,9 +159,9 @@ define([
                 }
             };
             this.operation.references.push(desc);
-            this._widget.operationInterface.addNode(desc);
+            this.addInterfaceNode(desc);
             this._widget.operationInterface.addConnection(desc.conn);
-            this.onOperationInterfaceUpdate();
+            this.updateCode(operation => operation.addReference(name));
         }
 
         removePtr(name) {
@@ -156,7 +170,7 @@ define([
                 const [ptr] = this.operation.references.splice(index, 1);
                 this._widget.operationInterface.removeNode(ptr.id);
                 this._widget.operationInterface.removeNode(ptr.conn.id);
-                this.onOperationInterfaceUpdate();
+                this.updateCode(operation => operation.removeReference(name));
             } else {
                 throw new Error(`Could not find reference: ${name}`);
             }
@@ -217,6 +231,7 @@ define([
                 name,
                 Decorator: this._getNodeDecorator(node),
                 attributes: {},
+                attribute_meta: {},
                 pointers: {},
                 baseName: 'Data',
                 container: isInput ? 'inputs' : 'outputs',
@@ -231,50 +246,100 @@ define([
                 dataDesc.conn.src = id;
                 dataDesc.conn.dst = this.operation.id;
                 this.operation.inputs.push(dataDesc);
+                this.updateCode(operation => operation.addInput(name));
             } else {
                 dataDesc.conn.src = this.operation.id;
                 dataDesc.conn.dst = id;
                 this.operation.outputs.push(dataDesc);
+                this.updateCode(operation => operation.addOutput(name));
             }
-            // FIXME: move this to the widget?
-            this._widget.operationInterface.addNode(dataDesc);
+            this.addInterfaceNode(dataDesc);
             this._widget.operationInterface.addConnection(dataDesc.conn);
-            this.onOperationInterfaceUpdate();
             return dataDesc.id;
         }
 
         deleteNode(id) {
-            const nodes = this.operation.inputs.find(desc => desc.id === id) ?
-                this.operation.inputs : this.operation.outputs;
+            const isInput = this.operation.inputs.find(desc => desc.id === id);
+            const nodes = isInput ? this.operation.inputs :
+                this.operation.outputs;
             const index = nodes.findIndex(desc => desc.id === id);
             if (index > -1) {
                 const [desc] = nodes.splice(index, 1);
                 this._widget.operationInterface.removeNode(desc.id);
                 this._widget.operationInterface.removeNode(desc.conn.id);
-                this.onOperationInterfaceUpdate();
+                if (isInput) {
+                    this.updateCode(operation => operation.removeInput(desc.name));
+                } else {
+                    this.updateCode(operation => operation.removeOutput(desc.name));
+                }
             } else {
                 throw new Error(`Could not find input/output node: ${id}`);
             }
         }
 
         saveAttributeForNode(id, attr, value) {
-            const desc = _.clone([
+            const desc = this.getDesc(id);
+            if (attr === 'name') {
+                const isEditingOperation = id === this.operation.id;
+                const isRenamingRef = this.operation.references.includes(desc);
+                if (isEditingOperation) {
+                    this.updateCode(operation => operation.setName(value));
+                } else if (isRenamingRef) {
+                    this.updateCode(operation =>
+                        operation.renameIn(OperationCode.CTOR_FN, desc.name, value));
+                } else {
+                    this.updateCode(operation => operation.rename(desc.name, value));
+                }
+                desc.name = value;
+            } else {
+                desc.attributes[attr].value = value;
+                this.updateCode(operation => operation.setAttributeDefault(attr, value));
+            }
+
+            this.updateInterfaceNode(desc);
+        }
+
+        getValidAttributeNames(id) {
+            const desc = this.getDesc(id);
+            return Object.keys(desc.attribute_meta);
+        }
+
+        setAttributeMeta(id, _name, schema) {
+            const {name} = schema;
+            const desc = this.getDesc(id);
+            desc.attribute_meta[name] = schema;
+            desc.attributes[name] = {
+                name,
+                type: schema.type,
+                values: schema.enumValues,
+                value: schema.defaultValue,
+            };
+            this.updateInterfaceNode(desc);
+        }
+
+        deleteAttribute(id, name) {
+            const desc = this.getDesc(id);
+            delete desc.attribute_meta[name];
+            delete desc.attributes[name];
+            this.updateInterfaceNode(desc);
+        }
+
+        addInterfaceNode(desc) {
+            this._widget.operationInterface.addNode(deepCopy(desc));
+        }
+
+        updateInterfaceNode(desc) {
+            this._widget.operationInterface.updateNode(deepCopy(desc));
+        }
+
+        getDesc(id) {
+            const desc = [
                 ...this.operation.inputs,
                 ...this.operation.outputs,
                 ...this.operation.references,
                 this.operation
-            ].find(desc => desc.id === id));
-            if (attr === 'name') {
-                desc.name = value;
-            }
-
-            desc.attributes[attr] = value;
-            this._widget.operationInterface.updateNode(desc);
-            this.onOperationInterfaceUpdate();
-        }
-
-        getValidAttributeNames() {
-            console.log('getValidAttributeNames', arguments);
+            ].find(desc => desc.id === id);
+            return desc;
         }
     }
 
@@ -291,7 +356,14 @@ define([
         return name;
     }
 
-    _.extend(EagerOperationControl.prototype, OperationControl.prototype);
+    function deepCopy(data) {
+        if (typeof data !== 'object') {
+            return data;
+        }
+        return _.mapObject(data, deepCopy);
+    }
+
+    _.extend(EagerOperationControl.prototype, _.omit(OperationControl.prototype, 'updateCode'));
 
     return EagerOperationControl;
 });
