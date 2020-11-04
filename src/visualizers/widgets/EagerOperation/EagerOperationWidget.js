@@ -96,6 +96,7 @@ define([
 
         setOperation(operation) {
             this.codeEditor.addNode({
+                id: operation.id,
                 name: operation.name,
                 text: operation.code,
             });
@@ -113,7 +114,7 @@ define([
             // TODO: Get the attributes and such
             // TODO: create the interface nodes
             const Decorator = WebGMEGlobal.Client.decoratorManager.getDecoratorForWidget('OpIntDecorator', 'EasyDAG');
-            const centralNode = operation;
+            const centralNode = _.clone(operation);
             centralNode.Decorator = Decorator;
             return [centralNode];
         }

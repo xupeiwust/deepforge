@@ -48,6 +48,7 @@ define([
             widget.operationInterface.getValidAttributeNames = this.getValidAttributeNames.bind(this);
             widget.operationInterface.setAttributeMeta = this.setAttributeMeta.bind(this);
             widget.operationInterface.deleteAttribute = this.deleteAttribute.bind(this);
+            widget.codeEditor.saveTextFor = this.saveTextFor.bind(this);
         }
 
         runOperation(operation) {
@@ -91,6 +92,7 @@ define([
             );
             // TODO: update the code
             this._widget.codeEditor.addNode({
+                id: this.operation.id,
                 name: this.operation.name,
                 text: this.operation.code,
             });
@@ -165,12 +167,16 @@ define([
         }
 
         removePtr(name) {
+            this.removeInterfaceReference(name);
+            this.updateCode(operation => operation.removeReference(name));
+        }
+
+        removeInterfaceReference(name) {
             const index = this.operation.references.findIndex(ref => ref.name === name);
             if (index > -1) {
                 const [ptr] = this.operation.references.splice(index, 1);
                 this._widget.operationInterface.removeNode(ptr.id);
                 this._widget.operationInterface.removeNode(ptr.conn.id);
-                this.updateCode(operation => operation.removeReference(name));
             } else {
                 throw new Error(`Could not find reference: ${name}`);
             }
@@ -218,18 +224,22 @@ define([
             return desc;
         }
 
-        createConnectedNode(typeId, isInput) {
-            const node = this.client.getNode(typeId);
+        newDataDesc(isInput, name) {
+            const dataNode = this.client.getAllMetaNodes()
+                .find(node => node.getAttribute('name') === 'Data');
+            const Decorator = this._getNodeDecorator(dataNode);
+
             const nodes = isInput ? this.operation.inputs : this.operation.outputs;
-            const name = uniqueName(
-                'data',
+            name = uniqueName(
+                name || 'data',
                 nodes.map(d => d.name)
             );
+
             const id = `data_${counter()}`;
             const dataDesc = {
                 id,
                 name,
-                Decorator: this._getNodeDecorator(node),
+                Decorator,
                 attributes: {},
                 attribute_meta: {},
                 pointers: {},
@@ -238,24 +248,48 @@ define([
                 isConnection: false,
                 conn: {
                     id: `conn_${counter()}`,
-                    src: null,
-                    dst: null,
+                    src: isInput ? id : this.operation.id,
+                    dst: isInput ? this.operation.id : id,
                 }
             };
+            return dataDesc;
+        }
+
+        createConnectedNode(typeId, isInput) {
+            const {id, name} = this.addDataInterfaceNode(isInput);
             if (isInput) {
-                dataDesc.conn.src = id;
-                dataDesc.conn.dst = this.operation.id;
-                this.operation.inputs.push(dataDesc);
                 this.updateCode(operation => operation.addInput(name));
             } else {
-                dataDesc.conn.src = this.operation.id;
-                dataDesc.conn.dst = id;
-                this.operation.outputs.push(dataDesc);
                 this.updateCode(operation => operation.addOutput(name));
+            }
+            return id;
+        }
+
+        addDataInterfaceNode(isInput, name) {
+            const dataDesc = this.newDataDesc(isInput, name);
+
+            if (isInput) {
+                this.operation.inputs.push(dataDesc);
+            } else {
+                this.operation.outputs.push(dataDesc);
             }
             this.addInterfaceNode(dataDesc);
             this._widget.operationInterface.addConnection(dataDesc.conn);
-            return dataDesc.id;
+            return dataDesc;
+        }
+
+        deleteDataInterfaceNode(name) {
+            const isInput = this.operation.inputs.find(desc => desc.name === name);
+            const nodes = isInput ? this.operation.inputs :
+                this.operation.outputs;
+            const index = nodes.findIndex(desc => desc.name === name);
+            if (index > -1) {
+                const [desc] = nodes.splice(index, 1);
+                this._widget.operationInterface.removeNode(desc.id);
+                this._widget.operationInterface.removeNode(desc.conn.id);
+            } else {
+                throw new Error(`Could not find input/output node: ${name}`);
+            }
         }
 
         deleteNode(id) {
@@ -333,13 +367,92 @@ define([
         }
 
         getDesc(id) {
+            return this.getDescWith(desc => desc.id === id)
+        }
+
+        getDescWith(fn) {
             const desc = [
                 ...this.operation.inputs,
                 ...this.operation.outputs,
                 ...this.operation.references,
                 this.operation
-            ].find(desc => desc.id === id);
+            ].find(fn);
             return desc;
+        }
+
+        // Operation code editor
+        saveTextFor(_id, code) {
+            this.operation.code = code;
+            const operation = OperationCode.findOperation(code);
+            const refs = this.operation.references.map(desc => desc.name);
+
+            this.operation.name = operation.getName();
+
+            // update the attributes
+            // check if the attributes have changed
+            const allAttrs = operation.getAttributes();
+            const removedAttrs = Object.values(this.operation.attributes)
+                .filter(oldAttr => !allAttrs.find(attr => attr.name === oldAttr.name));
+
+            const addAttrs = allAttrs.filter(attr => {
+                const oldAttr = this.operation.attributes[attr.name];
+                const isNewAttribute = !oldAttr;
+                if (isNewAttribute) {
+                    const isReference = refs.includes(attr.name);
+                    return !isReference;
+                }
+                return false;
+            });
+
+            const changedAttrs = allAttrs.filter(attr => {
+                const oldAttr = this.operation.attributes[attr.name];
+                const isNewAttribute = !oldAttr;
+                return !isNewAttribute && attr.value !== oldAttr.value;
+            });
+
+            // update the references (removal only)
+            const rmRefs = _.difference(refs, allAttrs.map(attr => attr.name));
+
+            const [addInputs, rmInputs] = this.listdiff(
+                operation.getInputs().map(input => input.name),
+                this.operation.inputs.map(input => input.name)
+            );
+
+            const [addOutputs, rmOutputs] = this.listdiff(
+                operation.getOutputs().map(input => input.name),
+                this.operation.outputs.map(input => input.name)
+            );
+
+            addAttrs.forEach(attr => {
+                this.operation.attributes[attr.name].value = attr.value;
+                console.log('adding', attr, 'what is the default value?');
+                this.operation.attribute_meta[attr.name] = {
+                    name: attr.name,
+                    type: 'string',
+                    defaultValue: attr.value,
+                };
+            });
+            changedAttrs.forEach(attr =>
+                this.operation.attributes[attr.name].value = attr.value
+            );
+            removedAttrs.forEach(attr => {
+                delete this.operation.attribute_meta[attr.name];
+                delete this.operation.attributes[attr.name];
+            });
+
+            rmRefs.forEach(name => this.removeInterfaceReference(name));
+
+            addInputs.forEach(input => this.addDataInterfaceNode(true, input));
+            addOutputs.forEach(name => this.addDataInterfaceNode(false, name));
+            rmInputs.concat(rmOutputs)
+                .forEach(name => this.deleteDataInterfaceNode(name));
+            this.updateInterfaceNode(this.operation);
+        }
+
+        listdiff(l1, l2) {
+            const newElements = _.difference(l1, l2);
+            const oldElements = _.difference(l2, l1);
+            return [newElements, oldElements];
         }
     }
 
