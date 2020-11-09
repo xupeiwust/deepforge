@@ -33,6 +33,7 @@ define([
             this.operation = this.getInitialOperation();
             this._widget.setOperation(this.operation);
             this.DEFAULT_DECORATOR = 'OpIntDecorator';
+            this.currentTrainTask = trainTask;
         }
 
         initializeWidgetHandlers (widget) {
@@ -51,8 +52,88 @@ define([
             widget.codeEditor.saveTextFor = this.saveTextFor.bind(this);
         }
 
-        runOperation(operation) {
-            // TODO:
+        async runOperation(operation) {
+            await this.createOperationCode(operation);
+            // TODO: run the operation
+            const self = this;
+            return PromiseEvents.new(async function(resolve) {
+                this.emit('update', 'Generating Code');
+                await self.initTrainingCode(modelInfo);
+                this.emit('update', 'Training...');
+                const trainTask = self.session.spawn('python start_train.py');
+                self.currentTrainTask = trainTask;
+                self.currentTrainTask.on(Message.STDOUT, data => {
+                    let line = data.toString();
+                    if (line.startsWith(CONSTANTS.START_CMD)) {
+                        line = line.substring(CONSTANTS.START_CMD.length + 1);
+                        const splitIndex = line.indexOf(' ');
+                        const cmd = line.substring(0, splitIndex);
+                        const content = JSON.parse(line.substring(splitIndex + 1));
+                        if (cmd === 'PLOT') {
+                            this.emit('plot', content);
+                        } else {
+                            console.error('Unrecognized command:', cmd);
+                        }
+                    }
+                });
+                let stderr = '';
+                self.currentTrainTask.on(Message.STDERR, data => stderr += data.toString());
+                self.currentTrainTask.on(Message.COMPLETE, exitCode => {
+                    if (exitCode) {
+                        this.emit('error', stderr);
+                    } else {
+                        this.emit('end');
+                    }
+                    if (self.currentTrainTask === trainTask) {
+                        self.currentTrainTask = null;
+                    }
+                    resolve();
+                });
+            });
+            // TODO: initCode
+            // TODO: load input data
+            // TODO: upload data afterwards?
+            const mainCode = ``;
+            await this.session.addFile('run_operation.py', mainCode);
+
+            const trainTask = this.session.spawn('python start_train.py');
+            this.currentTrainTask = trainTask;
+            this.currentTrainTask.on(Message.STDOUT, data => {
+                let line = data.toString();
+                if (line.startsWith(CONSTANTS.START_CMD)) {
+                    line = line.substring(CONSTANTS.START_CMD.length + 1);
+                    const splitIndex = line.indexOf(' ');
+                    const cmd = line.substring(0, splitIndex);
+                    const content = JSON.parse(line.substring(splitIndex + 1));
+                    if (cmd === 'PLOT') {
+                        this.emit('plot', content);
+                    } else {
+                        console.error('Unrecognized command:', cmd);
+                    }
+                }
+            });
+            let stderr = '';
+            this.currentTrainTask.on(Message.STDERR, data => stderr += data.toString());
+            this.currentTrainTask.on(Message.COMPLETE, exitCode => {
+                if (exitCode) {
+                    this.emit('error', stderr);
+                } else {
+                    this.emit('end');
+                }
+                if (this.currentTrainTask === trainTask) {
+                    this.currentTrainTask = null;
+                }
+                resolve();
+            });
+        }
+
+        async createOperationCode(operation) {
+            const {name, code} = operation;
+            const filename = ;
+            // TODO: Can I reuse some code from the operation plugin?
+            const initCode = `from operations.${filename} import ${name}`;
+            await this.session.addFile('operations/__init__.py', initCode);
+            await this.session.addFile(`operations/${filename}.py`, code);
         }
 
         getInitialOperation() {

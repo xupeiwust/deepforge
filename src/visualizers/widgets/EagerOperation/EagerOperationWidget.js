@@ -105,7 +105,11 @@ define([
             console.log('about to add', interfaceNodes);
             interfaceNodes.forEach(node => interfaceTab.editor.addNode(node));  // FIXME: this is overly simplistic...
 
-            envTab.editor.addNode({name: operation.name, text: operation.env});
+            envTab.editor.addNode({
+                id: `env-${operation.id}`,
+                name: operation.name,
+                text: operation.env,
+            });
         }
 
         getOperationInterfaceNodes(operation) {
