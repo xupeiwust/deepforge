@@ -53,7 +53,7 @@ define([
         }
 
         async runOperation(operation) {
-            await this.createOperationCode(operation);
+            await this.addOperationCode(operation, this.session);
             // TODO: run the operation
             const self = this;
             return PromiseEvents.new(async function(resolve) {
@@ -94,7 +94,6 @@ define([
             // TODO: load input data
             // TODO: upload data afterwards?
             const mainCode = ``;
-            await this.session.addFile('run_operation.py', mainCode);
 
             const trainTask = this.session.spawn('python start_train.py');
             this.currentTrainTask = trainTask;
@@ -127,7 +126,12 @@ define([
             });
         }
 
-        async createOperationCode(operation) {
+        async addOperationCode(operation, session) {
+            // TODO: create a new branch
+            // TODO: save the operation
+            // TODO: generate code from the operation
+            // TODO: copy the generated files into the session
+            // TODO: copy the artifacts into the session
             const {name, code} = operation;
             const filename = ;
             // TODO: Can I reuse some code from the operation plugin?
