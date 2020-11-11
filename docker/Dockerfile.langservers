@@ -1,4 +1,4 @@
-FROM continuumio/anaconda3:latest
+FROM continuumio/anaconda3:2019.10
 
 LABEL maintainer1.name="Brian Broll"\
       maintainer1.email="brian.broll@gmail.com"
