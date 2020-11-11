@@ -62,6 +62,7 @@ define([
         ExecuteJobMetadata.call(this);
         this.pluginMetadata = pluginMetadata;
         this._running = null;
+        this._computeJobs = {};
 
         // Metadata updating
         this.lastAppliedCmd = {};
@@ -183,12 +184,14 @@ define([
                 await this.onUpdate(jobId, status);
             } catch (err) {
                 this.logger.error(`Error when processing operation update: ${err}`);
+                await this.save('Saving remaining edits before pipeline exits w/ error.');
                 throw err;
             }
         });
 
         compute.on('end',
             async (id/*, info*/) => {
+                const computeJob = this._computeJobs[id];
                 try {
                     const job = this.getNodeForJobId(id);
                     if (job === null) {
@@ -196,12 +199,16 @@ define([
                             this.canceled,
                             `Cannot find node for job ID in running pipeline: ${id}`
                         );
+                        await compute.purgeJob(computeJob);
                         return;
                     }
                     this.cleanJobHashInfo(id);
                     await this.onOperationEnd(null, job);
+                    await compute.purgeJob(computeJob);
                 } catch (err) {
                     this.logger.error(`Error when processing operation end: ${err}`);
+                    await this.save('Saving remaining edits before pipeline exits w/ error.');
+                    await compute.purgeJob(computeJob);
                     throw err;
                 }
             }
@@ -532,6 +539,7 @@ define([
             this.startExecHeartBeat();
         }
 
+        this._computeJobs[jobInfo.hash] = computeJob;
         return await this.recordJobOrigin(jobInfo.hash, job);
     };
 
@@ -640,9 +648,11 @@ define([
 
     ExecuteJob.prototype.onOperationEnd = async function (err, job) {
         if (err) {
-            return this.onOperationFail(job, err);
+            await this.onOperationFail(job, err);
+            return;
         } else if (this.isLocalOperation(job)) {
-            return this.onOperationComplete(job);
+            await this.onOperationComplete(job);
+            return;
         }
 
         const op = await this.getOperation(job);
@@ -658,7 +668,7 @@ define([
             this.logger.debug(`"${name}" has been CANCELED!`);
             const stdout = await this.logManager.getLog(jobId);
             this.core.setAttribute(job, 'stdout', stdout);
-            return this.onOperationCanceled(op);
+            await this.onOperationCanceled(op);
         }
 
         if (status === this.compute.SUCCESS || status === this.compute.FAILED) {
@@ -676,9 +686,9 @@ define([
                 // Parse the most precise error and present it in the toast...
                 const lastline = result.stdout.split('\n').filter(l => !!l).pop() || '';
                 if (lastline.includes('Error')) {
-                    this.onOperationFail(op, lastline); 
+                    await this.onOperationFail(op, lastline);
                 } else {
-                    this.onOperationFail(op, `Operation "${opName}" failed!`); 
+                    await this.onOperationFail(op, `Operation "${opName}" failed!`);
                 }
             }
         } else {  // something bad happened...
@@ -687,7 +697,7 @@ define([
 
             this.core.setAttribute(job, 'stdout', consoleErr);
             this.logger.error(err);
-            return this.onOperationFail(op, err);
+            await this.onOperationFail(op, err);
         }
     };
 
