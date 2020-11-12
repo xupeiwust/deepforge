@@ -23,6 +23,6 @@ COPY .deployment/languageServers.json .deployment/
 RUN ./install-microsoft-python-langserver.sh && npm link js-yaml &&\
  node ./create-servers-yml.js && rm create-servers-yml.js
 
-RUN python -m pip install tensorflow==1.14 keras==2.25 matplotlib==3.2.2 simplejson==3.17.2
+RUN python -m pip install tensorflow==1.14 keras==2.2.5 matplotlib==3.2.2 simplejson==3.17.2
 
 ENTRYPOINT jsonrpc-ws-proxy --port $PORT --languageServers languageServers.yml
