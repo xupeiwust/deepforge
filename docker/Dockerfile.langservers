@@ -1,7 +1,6 @@
 FROM continuumio/anaconda3:2019.10
 
 LABEL maintainer1.name="Brian Broll"\
-      maintainer1.email="brian.broll@gmail.com"
 
 LABEL maintainer2.name="Umesh Timalsina"\
       maintainer2.email="umesh.timalsina@vanderbilt.edu"
@@ -15,8 +14,6 @@ RUN apt-get update && curl -sL https://deb.nodesource.com/setup_12.x | bash - &&
 
 RUN npm install -g npm && npm -g config set user root && npm install -g jsonrpc-ws-proxy js-yaml
 
-COPY src/plugins/GenerateJob/templates/environment.worker.yml .
-
 COPY utils/install-microsoft-python-langserver.sh .
 
 COPY docker/create-servers-yml.js .
@@ -26,6 +23,6 @@ COPY .deployment/languageServers.json .deployment/
 RUN ./install-microsoft-python-langserver.sh && npm link js-yaml &&\
  node ./create-servers-yml.js && rm create-servers-yml.js
 
-RUN conda env update -n base --file environment.worker.yml && rm environment.worker.yml && conda clean -afy
+RUN python -m pip install tensorflow==1.14 keras==2.25 matplotlib==3.2.2 simplejson==3.17.2
 
 ENTRYPOINT jsonrpc-ws-proxy --port $PORT --languageServers languageServers.yml
