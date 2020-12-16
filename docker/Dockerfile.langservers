@@ -1,6 +1,7 @@
 FROM continuumio/anaconda3:2019.10
 
 LABEL maintainer1.name="Brian Broll"\
+      maintainer1.email="brain.broll@gmail.com"
 
 LABEL maintainer2.name="Umesh Timalsina"\
       maintainer2.email="umesh.timalsina@vanderbilt.edu"

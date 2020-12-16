@@ -63,10 +63,9 @@ jobs:
           name: deepforge/language-servers
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          # ToDo: When should this image be updated? On every push to master??
           tags: latest
           dockerfile: docker/Dockerfile.langservers
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'push'
 
 
       - name: Deploy (dev.deepforge.org)
