@@ -54,7 +54,6 @@ jobs:
           tags: "${{ env.TAG }},${{ env.RELEASE_TAG }}"
           dockerfile: docker/Dockerfile.kitchensink
           buildargs: "TAG=${{ env.TAG }}"
-        if: github.event_name == 'push'
 
       - name: Publish to docker hub (language-servers)
         uses: elgohr/Publish-Docker-Github-Action@master
