@@ -13,7 +13,7 @@ function dumpLangServerYaml(fileName) {
         serversYml.langservers[server] = Array.isArray(command) ? command : [command];
     });
 
-    fs.writeFileSync(fileName, yaml.safeDump(serversYml));
+    fs.writeFileSync(fileName, yaml.dump(serversYml));
 }
 
 
