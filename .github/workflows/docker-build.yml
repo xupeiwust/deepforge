@@ -32,7 +32,7 @@ jobs:
         run: |
           echo "TAG=latest" >> $GITHUB_ENV
           echo "RELEASE_TAG=$(echo ${GITHUB_REF:11})" >> $GITHUB_ENV
-        if: github.event_name == 'push'
+
 
       - name: Publish to docker hub (server)
         uses: elgohr/Publish-Docker-Github-Action@master
