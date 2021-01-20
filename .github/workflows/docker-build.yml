@@ -74,7 +74,7 @@ jobs:
           port: ${{ secrets.PORT }}
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
-            rm -rf deepforge && git clone git@github.com:deepforge-dev/deepforge && cd deepforge
+            rm -rf deepforge && git clone git@github.com:deepforge-dev/deepforge && cd deepforge && git checkout 1908-pyls-integration origin/1908-pyls-integration
             chmod +x ./.deployment/deploy-deepforge && ./.deployment/deploy-deepforge
 
       - name: Deploy (editor.deepforge.org)
