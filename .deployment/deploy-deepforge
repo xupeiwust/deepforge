@@ -26,7 +26,7 @@ docker-compose --file custom-docker-compose.yml -p deepforge stop $SERVER_NAME
 docker-compose --file custom-docker-compose.yml -p deepforge rm -f $SERVER_NAME
 docker-compose --file custom-docker-compose.yml -p deepforge up -d $SERVER_NAME
 
-if [[ $SERVER_NAME = "server_stable" ]]; then
+if [[ $SERVER_NAME = "server" ]]; then
   docker-compose --file custom-docker-compose.yml -p deepforge pull language_servers
   docker-compose --file custom-docker-compose.yml -p deepforge stop language_servers
   docker-compose --file custom-docker-compose.yml -p deepforge rm -f language_servers
