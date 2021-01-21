@@ -107,9 +107,12 @@ define([
             languages: new MonacoLanguages(p2m, m2p),
             workspace: new MonacoWorkspace(p2m, m2p, opts.rootUri)
         };
-        if (opts.debug) {
-            services.window = new ConsoleWindow();
-        }
+        // if (opts.debug) {
+        //     services.window = new ConsoleWindow();
+        // }
+
+        services.window = new ConsoleWindow();
+
         return services;
     };
 

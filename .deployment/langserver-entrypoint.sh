@@ -4,5 +4,5 @@ source activate base
 pip uninstall tensorflow -y
 conda install tensorflow==1.14 -y
 
-node jsonrpc-ws-proxy --port $PORT --languageServers ~/language-servers.yml
+jsonrpc-ws-proxy --port $PORT --languageServers /languageServers.yml
 
