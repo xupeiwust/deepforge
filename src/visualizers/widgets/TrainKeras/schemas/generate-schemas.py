@@ -25,7 +25,7 @@ def parse_schema(mod_name, module, name):
     return {
         'name': name,
         #'docstring': inspect.getdoc(class_),
-        'arguments': [ {'name': n, 'default': d} for (n, d) in args ],
+        'arguments': [ {'name': n if isinstance(n, str) else n[0], 'default': d} for (n, d) in args ],
         #'url': f'https://keras.io/api/{mod_name}/{name.lower()}/'
     }
 
