@@ -45,7 +45,7 @@ all_schemas = {}
 all_schemas['optimizers'] = parse_module_schemas(keras.optimizers, ['Optimizer'])
 all_schemas['losses'] = parse_module_schemas(keras.losses, ['Loss', 'Reduction', 'KLD', 'MAE', 'MAPE', 'MSE', 'MSLE'])
 all_schemas['reductions'] = [ getattr(keras.losses.Reduction, name) for name in dir(keras.losses.Reduction) if name[0].isupper() ]
-all_schemas['callbacks'] = parse_module_schemas(keras.callbacks, ['BaseLogger', 'Callback', 'CallbackList', 'ProgbarLogger'])
+all_schemas['callbacks'] = parse_module_schemas(keras.callbacks, ['BaseLogger', 'Callback', 'History', 'CallbackList', 'ProgbarLogger'])
 
 
 def is_regression(loss_name):
